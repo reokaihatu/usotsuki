@@ -1334,6 +1334,9 @@ function grid(o) {
     sheriff: { n: 'シェリフ', team: 'crew', tasks: true, threat: false,
       d: '怪しい相手を撃てる。ただし撃った相手がインポスター陣営(設定によっては第三陣営も)でなければ自分が倒れる。', goal: 'クルーと同じ。',
       abil: ['射撃: 近くの1人を撃つ。倒せる相手なら倒す。違えば自分が死ぬ(弾数・クールダウンあり)'] },
+    sniper: { n: '狙撃手', team: 'crew', tasks: true, threat: false, snipe: true,
+      d: '遠くの相手を撃ち抜ける。ただし撃った相手がインポスター陣営(設定によっては第三陣営も)でなければ自分が倒れる。', goal: 'クルーと同じ。',
+      abil: ['狙撃: シェリフより遠くの1人を撃つ。倒せる相手なら倒す。違えば自分が死ぬ(弾数・クールダウンあり)'] },
     guardian: { n: '守護者', team: 'crew', tasks: true, threat: false,
       d: '近くの1人にバリアを張る。バリアは次の会議まで、襲撃を1回防ぐ。', goal: 'クルーと同じ。',
       abil: ['守護: 近くの1人を守る(1ラウンドに1回)'] },
@@ -1349,6 +1352,15 @@ function grid(o) {
     assassin: { n: 'イビルゲッサー', team: 'impostor', tasks: false, threat: true, kill: true, vent: true, sab: true, guess: true,
       d: 'インポスター陣営。会議中に相手の役職を言い当てて撃てる。外すと自分が倒れる。', goal: 'インポスターと同じ。',
       abil: ['襲撃・ベント・妨害(インポスターと同じ)', '役職当て: 会議中に相手と役職を指定して撃つ。当たれば相手が、外れば自分が倒れる(回数制限あり)'] },
+    maskmaker: { n: '仮面師', team: 'impostor', tasks: false, threat: true, kill: true, mask: true, vent: true, sab: true,
+      d: 'インポスター陣営。近くの1人の姿(色と名前)をコピーして、しばらくその人に成りすませる。', goal: '生き残りの数で、クルー側と並ぶか上回る。',
+      abil: ['襲撃・ベント・妨害(インポスターと同じ)', '変装: 近くの1人の色と名前をまねる。ほかの人からはその人に見える(仲間のインポスターには本当の姿が見える)。会議が始まると解ける'] },
+    cleaner: { n: 'クリーナー', team: 'impostor', tasks: false, threat: true, kill: true, clean: true, vent: true, sab: true,
+      d: 'インポスター陣営。倒した相手の遺体を消して、事件をなかったことにできる。', goal: '生き残りの数で、クルー側と並ぶか上回る。',
+      abil: ['襲撃・ベント・妨害(インポスターと同じ)', '掃除: 近くの遺体を消す。消えた遺体は通報できない(クールダウンあり)'] },
+    accomplice: { n: '共犯者', team: 'impostor', helper: true, tasks: false, threat: false, vent: true, sab: true,
+      d: 'インポスター陣営の手下。自分では倒せないが、インポスターの正体を知っていて、ベントや妨害で手助けできる。', goal: 'インポスター陣営の勝利。ただし生き残りの数の勘定では、クルー側と同じ1人として数えられる。',
+      abil: ['インポスター陣営の正体がわかる(インポスター側は、設定しだいで共犯者の正体を知らない)', 'ベント・妨害(インポスターと同じ)', 'タスクはなく、襲撃もできない。投票でクルーを誘導して勝利を目指す'] },
     vampire: { n: 'ヴァンパイア', team: 'impostor', tasks: false, threat: true, kill: true, bite: true, vent: true, sab: true,
       d: 'インポスター陣営。噛みついた相手は、時間がたってから倒れる。非インポスターを1人だけ「眷属」にできる。', goal: '生き残りの数で、クルー側と並ぶか上回る。',
       abil: ['噛みつき: 近くの1人に噛みつく。相手は設定の秒数のあと、その場で倒れる(遺体が現れる)', '眷属化: 非インポスターの1人を眷属にする(ゲーム中1回)', 'ベント・妨害(インポスターと同じ)', '人数モニターに映らず、緊急事態の修理もできない'] },
@@ -1380,13 +1392,16 @@ function grid(o) {
       d: '誰とも組まない単独の殺し屋。壁を貫通するビームで倒していく。', goal: 'インポスターがいない状態で、生き残りの半数以上を自分たちにする。',
       abil: ['波動砲: 向いている方向に、壁を貫通するビームを放つ。ためているあいだは動けない。触れた人は(インポスター陣営も)倒れる'] }
   };
-  var ROLE_ORDER = ['impostor', 'assassin', 'wavecannon', 'vampire', 'jackal', 'wavejackal', 'arsonist', 'jester', 'detective', 'sheriff', 'guardian', 'watcher', 'engineer', 'fortune', 'niceguesser', 'shielder'];
+  var ROLE_ORDER = ['impostor', 'assassin', 'maskmaker', 'cleaner', 'wavecannon', 'vampire', 'accomplice', 'jackal', 'wavejackal', 'arsonist', 'jester', 'detective', 'sheriff', 'sniper', 'guardian', 'watcher', 'engineer', 'fortune', 'niceguesser', 'shielder'];
 
   // ---------- 設定 ----------
   var SETTING_DEFS = [
     { g: 'map', k: 'map', label: 'マップ', min: 0, max: Maps.list.length - 1, step: 1, def: 0, unit: '' },
     { g: 'role', k: 'r_impostor', role: 'impostor', label: 'インポスター', min: 0, max: MAX_PLAYERS, step: 1, def: 1, unit: '人' },
     { g: 'role', k: 'r_assassin', role: 'assassin', label: 'イビルゲッサー', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_maskmaker', role: 'maskmaker', label: '仮面師', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_cleaner', role: 'cleaner', label: 'クリーナー', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_accomplice', role: 'accomplice', label: '共犯者', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_wavecannon', role: 'wavecannon', label: '波動砲', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_vampire', role: 'vampire', label: 'ヴァンパイア', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_jackal', role: 'jackal', label: 'ジャッカル', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
@@ -1395,6 +1410,7 @@ function grid(o) {
     { g: 'role', k: 'r_jester', role: 'jester', label: 'ピエロ', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_detective', role: 'detective', label: '探偵', min: 0, max: MAX_PLAYERS, step: 1, def: 1, unit: '人' },
     { g: 'role', k: 'r_sheriff', role: 'sheriff', label: 'シェリフ', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_sniper', role: 'sniper', label: '狙撃手', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_guardian', role: 'guardian', label: '守護者', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_watcher', role: 'watcher', label: '管制官', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_engineer', role: 'engineer', label: '技師', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
@@ -1427,6 +1443,12 @@ function grid(o) {
     { g: 'abil', r: 'assassin', k: 'assassinPerMeeting', label: '役職当てできる回数(1回の会議)', min: 1, max: 3, step: 1, def: 1, unit: '回' },
     { g: 'abil', r: 'sheriff', k: 'sheriffShots', label: 'シェリフの弾数(殺害できる回数)', min: 1, max: 5, step: 1, def: 1, unit: '発' },
     { g: 'abil', r: 'sheriff', k: 'sheriffCd', label: 'シェリフの射撃クールダウン', min: 10, max: 60, step: 5, def: 25, unit: '秒' },
+    { g: 'abil', r: 'sniper', k: 'snipeShots', label: '狙撃手の弾数(殺害できる回数)', min: 1, max: 5, step: 1, def: 1, unit: '発' },
+    { g: 'abil', r: 'sniper', k: 'snipeCd', label: '狙撃のクールダウン', min: 10, max: 60, step: 5, def: 30, unit: '秒' },
+    { g: 'abil', r: 'sniper', k: 'snipeRange', label: '狙撃の届く距離', min: 120, max: 450, step: 10, def: 220, unit: '' },
+    { g: 'abil', r: 'maskmaker', k: 'maskSec', label: '変装していられる時間', min: 10, max: 60, step: 5, def: 25, unit: '秒' },
+    { g: 'abil', r: 'maskmaker', k: 'maskCd', label: '変装のクールダウン(変装が終わってから)', min: 10, max: 90, step: 5, def: 40, unit: '秒' },
+    { g: 'abil', r: 'cleaner', k: 'cleanCd', label: '掃除のクールダウン', min: 5, max: 60, step: 5, def: 20, unit: '秒' },
     { g: 'abil', r: 'detective', k: 'detectiveUses', label: '探偵の鑑識回数', min: 1, max: 5, step: 1, def: 2, unit: '回' },
     { g: 'abil', r: 'watcher', k: 'watcherUses', label: '管制官の監視回数', min: 1, max: 6, step: 1, def: 3, unit: '回' },
     { g: 'abil', r: 'watcher', k: 'watchSec', label: '監視の長さ', min: 4, max: 20, step: 2, def: 8, unit: '秒' },
@@ -1446,6 +1468,8 @@ function grid(o) {
     { k: 'anonVotes', label: '誰が誰に投票したかを隠す', def: false },
     { k: 'sheriffNeutral', r: 'sheriff', label: 'シェリフ: 第三陣営も撃って倒せる(オフなら撃っても倒せず、シェリフが倒れる)', def: true },
     { k: 'sheriffMisBoth', r: 'sheriff', label: 'シェリフ: クルー陣営を撃ったとき、相手も一緒に倒れる(オフなら自分だけ)', def: false },
+    { k: 'snipeNeutral', r: 'sniper', label: '狙撃手: 第三陣営も撃って倒せる(オフなら撃っても倒せず、狙撃手が倒れる)', def: true },
+    { k: 'accompliceKnown', r: 'accomplice', label: '共犯者: インポスター陣営の側も共犯者の正体を知っている(オフなら共犯者だけが知っている)', def: false },
     { k: 'vampireThrall', r: 'vampire', label: 'ヴァンパイア: 眷属を作れる(オフなら噛みつくだけ)', def: true },
     { k: 'waveKill', r: ['wavecannon', 'wavejackal'], label: '波動砲: 通常の襲撃(近くの1人を倒す)もできる', def: false },
     { k: 'waveAlly', r: ['wavecannon', 'wavejackal'], label: '波動砲: 仲間(同じ陣営)にも当たる', def: true },
@@ -1609,9 +1633,24 @@ function grid(o) {
   function knowsAlly(v, q) {
     if (!v || !q || v.id === q.id || !v.role || !q.role) return false;
     if (ROLES[v.role].team !== 'impostor' || ROLES[q.role].team !== 'impostor') return false;
+    // 共犯者: インポスター陣営の正体を知っている(共犯者どうし・眷属は知らない)。逆に陣営の側は、ak(設定オン)のときだけ共犯者を知っている
+    if (v.role === 'accomplice') return q.role !== 'accomplice' && q.role !== 'thrall';
+    if (q.role === 'accomplice') return !!v.ak && v.role !== 'thrall';
     if (v.role === 'thrall') return q.id === v.tv;
     if (q.role === 'thrall') return q.tv === v.id;
     return true;
+  }
+  // 襲撃・噛みつきの対象にできるか。インポスター陣営は撃てないが、正体を知らない共犯者は、見た目で区別がつかないので対象にできる
+  function canTarget(p, T) {
+    var R = ROLES[p.role];
+    if (!R || !T || !T.role) return false;
+    if (R.anyKill || ROLES[T.role].team !== 'impostor') return true;
+    return T.role === 'accomplice' && !p.ak && p.role !== 'accomplice';
+  }
+  // 変装中なら、その見た目になっている相手を返す(色と名前を借りる)。そうでなければ本人
+  function shownAs(state, p, now) {
+    if (p && p.alive && p.dg && p.dg.until > now) { var q = state.players[p.dg.as]; if (q) return q; }
+    return p;
   }
   function hiddenFromCount(role) { return role === 'vampire' || role === 'thrall'; }
   // 人数モニター: 部屋ごとの人数。生きている人と、遺体(1つにつき1人)を数える。通路にいる人は数えない
@@ -1673,7 +1712,7 @@ function grid(o) {
   function isMelee(state) {
     var n = state.order.length, c = roleCounts(state.settings), imp = 0, jk = 0;
     Object.keys(c).forEach(function (r) {
-      if (ROLES[r].team === 'impostor') imp += c[r];
+      if (ROLES[r].team === 'impostor' && !ROLES[r].helper) imp += c[r];
       if (ROLES[r].jk) jk += c[r];
     });
     return imp * 2 >= n || jk * 2 >= n;
@@ -1688,7 +1727,7 @@ function grid(o) {
       if (ROLES[r].team === 'impostor') imp += c[r];
     });
     if (sum > n) return '役職の合計(' + sum + '人)が参加人数(' + n + '人)を超えています。';
-    if (threats < 1) return 'インポスター・イビルゲッサー・波動砲・ヴァンパイア・ジャッカル・波動砲ジャッカル・放火魔のどれかを1人以上入れてください。';
+    if (threats < 1) return 'インポスター・イビルゲッサー・仮面師・クリーナー・波動砲・ヴァンパイア・ジャッカル・波動砲ジャッカル・放火魔のどれかを1人以上入れてください。';
     return null;
   }
   function shuffle(a, rand) {
@@ -1722,7 +1761,7 @@ function grid(o) {
     state.order.forEach(function (id) {
       var p = state.players[id];
       p.alive = true; p.left = false; p.notes = []; p.msgs = []; p.tp = null; p.kd = null;
-      ['ck', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'tasks', 'wv', 'wf', 'wn', 'sh', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc'].forEach(function (k) { delete p[k]; });
+      ['ck', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'tasks', 'wv', 'wf', 'wn', 'sh', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc', 'dg', 'ak'].forEach(function (k) { delete p[k]; });
     });
     // タスクの割り当て: 全員共通 + 長いタスク(複数の場所) + 短いタスク。長いタスクは全体の半分まで
     var singles = [], longs = [];
@@ -1751,6 +1790,10 @@ function grid(o) {
       if (R.sab) { p.cs = now + 15000; p.cq = now + 20000; }
       if (p.role === 'assassin') p.gs = s.assassinShots;
       if (p.role === 'sheriff') { p.u = s.sheriffShots; p.ca = now + 15000; }
+      if (p.role === 'sniper') { p.u = s.snipeShots; p.ca = now + 15000; }
+      if (p.role === 'maskmaker') p.ca = now + 10000;
+      if (p.role === 'cleaner') p.ca = now;
+      if (R.team === 'impostor' && p.role !== 'accomplice' && s.accompliceKnown) p.ak = 1;
       if (p.role === 'detective') { p.u = s.detectiveUses; p.ca = now; }
       if (p.role === 'watcher') { p.u = s.watcherUses; p.ca = now; }
       if (p.role === 'engineer') p.u = s.engineerUses;
@@ -1784,9 +1827,9 @@ function grid(o) {
   function evalWin(state) {
     var al = alivePlayers(state);
     var total = al.length;
-    var I = 0, J = 0, A = 0;
+    var I = 0, J = 0, A = 0, AC = 0; // AC: 共犯者(インポスター陣営だが、勘定ではクルー側と同じ1人)
     al.forEach(function (p) {
-      if (ROLES[p.role].team === 'impostor') I++;
+      if (ROLES[p.role].team === 'impostor') { if (ROLES[p.role].helper) AC++; else I++; }
       if (ROLES[p.role].jk) J++;
       if (p.role === 'arsonist') A++;
     });
@@ -1795,7 +1838,7 @@ function grid(o) {
     var others = total - I;
     if (state.melee) {
       // 乱戦: 並んだだけでは決着せず、相手が全滅したときに勝つ
-      if (I > 0 && others === 0) return { team: 'impostor', reason: 'インポスター陣営だけが生き残った' };
+      if (I > 0 && others === AC) return { team: 'impostor', reason: 'インポスター陣営だけが生き残った' };
       if (J > 0 && I === 0 && J === total) return { team: 'jackal', reason: 'ジャッカルだけが生き残った' };
     } else {
       if (I > 0 && I >= others && !(J > 0 && I === J && others === J)) return { team: 'impostor', reason: 'インポスター陣営がクルー側に並んだ' };
@@ -1846,7 +1889,7 @@ function grid(o) {
   // by: 手を下した人のid(誤射なら null)、how: 'kill'(襲撃) / 'shot'(射撃) / 'misfire'(誤射)。倒された本人の画面で演出を出すために残す
   function killBody(state, ctx, victim, by, how) {
     var pos = ctx.pos(victim.id) || { x: TABLE.x, y: TABLE.y };
-    victim.alive = false; victim.wv = null; victim.sh = 0;
+    victim.alive = false; victim.wv = null; victim.sh = 0; victim.dg = null;
     victim.kd = { n: ((victim.kd && victim.kd.n) || 0) + 1, by: by || null, how: how || 'kill', at: ctx.now };
     var near = [];
     state.order.forEach(function (id) {
@@ -1854,7 +1897,10 @@ function grid(o) {
       var q = state.players[id];
       if (!q || !q.alive || q.left) return;
       var qp = ctx.pos(id);
-      if (qp && dist(qp, pos) <= 300) near.push(id);
+      if (qp && dist(qp, pos) <= 300) {
+        var ap = shownAs(state, q, ctx.now), aid = ap ? ap.id : id; // 変装中の人は、変装した姿で「付近にいた人」に残る
+        if (aid !== victim.id && near.indexOf(aid) < 0) near.push(aid);
+      }
     });
     state.bodies.push({ id: state.nextBody++, p: victim.id, x: Math.round(pos.x), y: Math.round(pos.y), t: ctx.now, near: near });
   }
@@ -1955,7 +2001,7 @@ function grid(o) {
     if (a.type === 'kill') {
       if (!R || !(R.kill || (R.wave && s.waveKill)) || now < (p.ck || 0)) return { ok: false };
       if (!T || !T.alive || T.left || T.id === pid) return { ok: false };
-      if (!R.anyKill && ROLES[T.role].team === 'impostor') return { ok: false };
+      if (!canTarget(p, T)) return { ok: false };
       if (!nearOk(ctx, pid, T.id, rng)) return { ok: false, err: 'far' };
       if (R.bite && T.bt) return { ok: false, err: 'bitten' };
       p.ck = now + s.killCd * 1000;
@@ -1995,21 +2041,45 @@ function grid(o) {
       return { ok: true };
     }
 
-    if (a.type === 'shoot') {
-      if (p.role !== 'sheriff' || !(p.u > 0) || now < (p.ca || 0)) return { ok: false };
+    if (a.type === 'shoot' || a.type === 'snipe') { // シェリフの射撃 / 狙撃手の狙撃(遠くまで届く。外した側が倒れるのは同じ)
+      var sn = a.type === 'snipe';
+      if (p.role !== (sn ? 'sniper' : 'sheriff') || !(p.u > 0) || now < (p.ca || 0)) return { ok: false };
       if (!T || !T.alive || T.left || T.id === pid) return { ok: false };
-      if (!nearOk(ctx, pid, T.id, rng)) return { ok: false, err: 'far' };
-      p.u--; p.ca = now + s.sheriffCd * 1000;
-      if ((T.sh || 0) > now) { pushMsg(T, 'シールドが射撃を防いだ。'); pushMsg(p, '弾は何かに阻まれた。'); return { ok: true, blocked: true }; }
+      if (!nearOk(ctx, pid, T.id, sn ? s.snipeRange : rng)) return { ok: false, err: 'far' };
+      p.u--; p.ca = now + (sn ? s.snipeCd : s.sheriffCd) * 1000;
+      if ((T.sh || 0) > now) { pushMsg(T, 'シールドが' + (sn ? '狙撃' : '射撃') + 'を防いだ。'); pushMsg(p, '弾は何かに阻まれた。'); return { ok: true, blocked: true }; }
       if (T.shield) { T.shield = false; pushMsg(p, '弾は何かに阻まれた。'); return { ok: true, blocked: true }; }
       var tt = ROLES[T.role].team;
-      if (tt === 'impostor' || (tt === 'neutral' && s.sheriffNeutral)) { killBody(state, ctx, T, pid, 'shot'); pushMsg(p, T.name + 'を倒した。'); }
+      if (tt === 'impostor' || (tt === 'neutral' && (sn ? s.snipeNeutral : s.sheriffNeutral))) { killBody(state, ctx, T, pid, 'shot'); pushMsg(p, T.name + 'を倒した。'); }
       else {
-        // 外れ: 撃った本人が倒れる。クルー陣営を撃ったとき、設定によっては相手も倒れる
-        if (tt === 'crew' && s.sheriffMisBoth) killBody(state, ctx, T, null, 'misfire');
+        // 外れ: 撃った本人が倒れる。シェリフがクルー陣営を撃ったとき、設定によっては相手も倒れる
+        if (!sn && tt === 'crew' && s.sheriffMisBoth) killBody(state, ctx, T, null, 'misfire');
         killBody(state, ctx, p, null, 'misfire');
       }
       checkWin(state, now);
+      return { ok: true };
+    }
+
+    if (a.type === 'disguise') { // 仮面師: 近くの1人の姿をまねる。変装中にもう一度使うと解ける
+      if (!R || !R.mask) return { ok: false };
+      if (p.dg && p.dg.until > now) { p.dg = null; p.ca = now + s.maskCd * 1000; return { ok: true, off: true }; }
+      if (now < (p.ca || 0)) return { ok: false };
+      if (!T || !T.alive || T.left || T.id === pid) return { ok: false };
+      if (!nearOk(ctx, pid, T.id, rng)) return { ok: false, err: 'far' };
+      p.dg = { as: T.id, until: now + s.maskSec * 1000, n: ((p.dg && p.dg.n) || 0) + 1 };
+      p.ca = p.dg.until + s.maskCd * 1000;
+      pushMsg(p, COLORS[T.color].name + 'の' + T.name + 'に変装した。');
+      return { ok: true };
+    }
+
+    if (a.type === 'clean') { // クリーナー: 近くの遺体を消す
+      if (!R || !R.clean || now < (p.ca || 0)) return { ok: false };
+      var cb = state.bodies.filter(function (b) { return b.id === a.b; })[0];
+      if (!cb || !nearOk(ctx, pid, cb, 190)) return { ok: false };
+      state.bodies = state.bodies.filter(function (b) { return b.id !== cb.id; });
+      p.ca = now + s.cleanCd * 1000;
+      var cv = state.players[cb.p];
+      pushMsg(p, (cv ? COLORS[cv.color].name + 'の' + cv.name : '') + 'の遺体を消した。');
       return { ok: true };
     }
 
@@ -2203,6 +2273,7 @@ function grid(o) {
     state.order.forEach(function (id) {
       var p = state.players[id];
       p.gm = 0; p.shield = false; p.ws = 0; p.wv = null; p.sh = 0;
+      if (p.dg) { p.dg = null; if (p.role === 'maskmaker') p.ca = now + s.maskCd * 1000; } // 会議が始まると、変装は解ける
       if (p.bt && p.bt.until) { p.bt.rem = Math.max(1000, p.bt.until - now); p.bt.until = 0; } // 噛まれた人の時間は、会議のあいだ止まる
       if (p.role === 'guardian') { p.gu = false; p.gt = null; }
     });
@@ -2243,7 +2314,7 @@ function grid(o) {
       if (R.wave) p.ck = now + Math.min(s.waveCd, 25) * 1000;
       if (R.sab) { p.cs = now + 15000; p.cq = now + 12000; }
       if (p.role === 'shielder') p.ca = Math.max(p.ca || 0, now);
-      if (p.role === 'sheriff') p.ca = now + 10000;
+      if (p.role === 'sheriff' || p.role === 'sniper') p.ca = now + 10000;
     });
     state.order.forEach(function (id) {
       var p = state.players[id];
@@ -2329,7 +2400,7 @@ function grid(o) {
     state.order.forEach(function (id) {
       var p = state.players[id];
       p.role = null; p.alive = true; p.left = false;
-      ['tasks', 'ck', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'notes', 'msgs', 'tp', 'kd', 'wv', 'wf', 'wn', 'sh', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc'].forEach(function (k) { delete p[k]; });
+      ['tasks', 'ck', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'notes', 'msgs', 'tp', 'kd', 'wv', 'wf', 'wn', 'sh', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc', 'dg', 'ak'].forEach(function (k) { delete p[k]; });
     });
   }
 
@@ -2342,7 +2413,7 @@ function grid(o) {
     newLobby: newLobby, addPlayer: addPlayer, removePlayer: removePlayer, validate: validate, isMelee: isMelee, kickPlayer: kickPlayer, startGame: startGame,
     act: act, tick: tick, markLeft: markLeft, backToLobby: backToLobby, recalcTasks: recalcTasks, evalWin: evalWin,
     alivePlayers: alivePlayers, cleanName: cleanName, roleCounts: roleCounts, sabActive: sabActive, crisisMs: crisisMs,
-    roomCounts: roomCounts, knowsAlly: knowsAlly, mapSabs: mapSabs, mapSabInfo: mapSabInfo, msOn: msOn, WAVE_LEN: WAVE_LEN, WAVE_HALF: WAVE_HALF
+    roomCounts: roomCounts, knowsAlly: knowsAlly, canTarget: canTarget, shownAs: shownAs, mapSabs: mapSabs, mapSabInfo: mapSabInfo, msOn: msOn, WAVE_LEN: WAVE_LEN, WAVE_HALF: WAVE_HALF
   });
   useMap(0);
   if (typeof module !== 'undefined' && module.exports) module.exports = Engine; else root.Engine = Engine;
@@ -2484,6 +2555,13 @@ function grid(o) {
       }
     } else b.reportAt = 0;
 
+    // クリーナー: 近くに遺体があれば消す
+    if (R2.clean && state.bodies.length && now >= (p.ca || 0)) {
+      for (var ci = 0; ci < state.bodies.length; ci++) {
+        var cbd = state.bodies[ci];
+        if (Math.hypot(cbd.x - b.x, cbd.y - b.y) < 160) { api.act(b.id, { type: 'clean', b: cbd.id }); break; }
+      }
+    }
     if (R2.kill || R2.wave) {
       // 狩り: 近い獲物へ向かい、目撃者が少なければ襲撃
       b.replan -= dt;
@@ -2492,7 +2570,8 @@ function grid(o) {
         state.order.forEach(function (id) {
           var q = state.players[id];
           if (!q || q.id === b.id || !q.alive || q.left) return;
-          if (!R2.anyKill && E.ROLES[q.role].team === 'impostor') return;
+          if (!R2.wave && !E.canTarget(p, q)) return;
+          if (R2.wave && !R2.anyKill && E.ROLES[q.role].team === 'impostor') return;
           if (R2.bite && q.bt) return;
           var qp = ctx.pos(id); if (!qp) return;
           var d = Math.hypot(qp.x - b.x, qp.y - b.y);
@@ -2504,6 +2583,9 @@ function grid(o) {
       if (b.tgt) {
         var tq = state.players[b.tgt], tpos = ctx.pos(b.tgt);
         if (!tq || !tq.alive || !tpos) { b.tgt = null; }
+        else if (R2.mask && !(p.dg && p.dg.until > now) && now >= (p.ca || 0) && Math.hypot(tpos.x - b.x, tpos.y - b.y) <= s.killRange * 0.9 && rand() < 0.03) {
+          api.act(b.id, { type: 'disguise', t: b.tgt }); // 仮面師: 獲物の姿をまねて、近づく
+        }
         else if (R2.wave) {
           var wd = Math.hypot(tpos.x - b.x, tpos.y - b.y);
           if (now >= (p.ck || 0) && wd > 1 && wd <= 520) { api.act(b.id, { type: 'wave', dx: (tpos.x - b.x) / wd, dy: (tpos.y - b.y) / wd }); b.tgt = null; b.replan = 0; }
@@ -2519,7 +2601,8 @@ function grid(o) {
             var qp = ctx.pos(id);
             if (qp && Math.hypot(qp.x - b.x, qp.y - b.y) < 300) witnesses++;
           });
-          if (witnesses <= 1) { api.act(b.id, { type: 'kill', t: b.tgt }); b.tgt = null; b.replan = 0; }
+          b.blocked = (b.blocked || 0) + dt; // 目撃者が多くて手を出せない時間。長く続いたら(45秒。仲間どうしで固まっているときなど)強行する
+          if (witnesses <= 1 || b.blocked > 45) { api.act(b.id, { type: 'kill', t: b.tgt }); b.tgt = null; b.replan = 0; b.blocked = 0; }
         }
       }
       // 妨害: 準備ができていて何も起きていなければ、ときどき仕掛ける
@@ -3415,7 +3498,7 @@ async function electionTick() {
 
 /* ---------- ホストの処理 ---------- */
 function cleanAct(x) {
-  var types = ['task', 'report', 'emergency', 'kill', 'shoot', 'guard', 'inspect', 'watch', 'vent', 'sab', 'douse', 'ignite', 'vote', 'assassinate', 'fortune', 'nicekill', 'shield', 'wave', 'seal', 'fixlights', 'portal', 'fixcrisis', 'thrall'];
+  var types = ['task', 'report', 'emergency', 'kill', 'shoot', 'guard', 'inspect', 'watch', 'vent', 'sab', 'douse', 'ignite', 'vote', 'assassinate', 'fortune', 'nicekill', 'shield', 'wave', 'seal', 'fixlights', 'portal', 'fixcrisis', 'thrall', 'snipe', 'disguise', 'clean'];
   if (!x || types.indexOf(x.type) < 0) return null;
   var a = { type: x.type };
   if (typeof x.t === 'string' && x.t.length <= 48) a.t = x.t;
@@ -5018,6 +5101,15 @@ function roleNotes(role, s) {
     n.push(s.sheriffNeutral ? '第三陣営も撃って倒せます。' : '第三陣営は撃っても倒せず、あなたが倒れます。');
     n.push(s.sheriffMisBoth ? 'クルー陣営を撃つと、相手とあなたの両方が倒れます。' : 'クルー陣営を撃つと、あなただけが倒れます。');
   }
+  if (role === 'sniper') {
+    n.push('弾は ' + s.snipeShots + ' 発。届く距離は ' + s.snipeRange + '(シェリフは ' + s.killRange + ' ほど)。撃ったあと ' + s.snipeCd + ' 秒は撃てません。');
+    n.push('視界の外にいる相手は狙えません。狙う相手には黄色い輪がつきます。');
+    n.push(s.snipeNeutral ? '第三陣営も撃って倒せます。' : '第三陣営は撃っても倒せず、あなたが倒れます。');
+    n.push('インポスター陣営と第三陣営以外(クルー陣営)を撃つと、あなただけが倒れます。');
+  }
+  if (role === 'maskmaker') n.push('変装は ' + s.maskSec + ' 秒つづき、会議が始まると解けます。解けたあと(または自分で解いたあと) ' + s.maskCd + ' 秒は変装できません。');
+  if (role === 'cleaner') n.push('掃除のクールダウンは ' + s.cleanCd + ' 秒です。遺体のそばで使うと、その遺体が消えます。');
+  if (role === 'accomplice') n.push(s.accompliceKnown ? 'インポスター陣営の側もあなたの正体を知っています。' : 'インポスター陣営の側は、あなたの正体を知りません(あなただけが知っています)。インポスターに襲撃されることもあります。');
   if (role === 'fortune') n.push('占いはゲーム中に ' + s.fortuneUses + ' 回まで(1回の会議で何回使ってもかまいません)。');
   if (role === 'niceguesser') n.push('看破はゲーム中に ' + s.niceShots + ' 回まで(1回の会議で何回使ってもかまいません)。');
   if (role === 'shielder') n.push('シールドは ' + s.shieldSec + ' 秒展開できます。終わってから ' + s.shieldCd + ' 秒はもう一度張れません。');
@@ -5412,7 +5504,7 @@ function showFx(id, ms) {
 function buzz(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
 // 倒された本人の画面: 赤くフラッシュして、倒した相手が飛び出す
 function playKillFx(st, me) {
-  var kd = me.kd, killer = kd.by ? st.players[kd.by] : null, cvs = $('fx-kc'), c = cvs.getContext('2d');
+  var kd = me.kd, killer0 = kd.by ? st.players[kd.by] : null, killer = killer0 ? E.shownAs(st, killer0, kd.at) : null, cvs = $('fx-kc'), c = cvs.getContext('2d');
   c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cvs.width, cvs.height);
   var mis = kd.how === 'misfire';
   if (killer) {
@@ -5608,8 +5700,8 @@ function bindSnd() {
 var KEY_GROUPS = [
   { id: 'use', n: 'タスク・使う(緊急会議・修復・人数確認)', def: 'KeyE', acts: ['use'] },
   { id: 'report', n: '通報', def: 'KeyR', acts: ['report'] },
-  { id: 'attack', n: '襲撃・噛む・波動砲・射撃', def: 'KeyQ', acts: ['kill', 'wave', 'shoot'] },
-  { id: 'skill', n: '役職の能力(シールド・守護・鑑識・監視・ガソリン・眷属化・隠し扉)', def: 'KeyF', acts: ['shield', 'guard', 'inspect', 'watch', 'douse', 'thrall', 'portal'] },
+  { id: 'attack', n: '襲撃・噛む・波動砲・射撃・狙撃', def: 'KeyQ', acts: ['kill', 'wave', 'shoot', 'snipe'] },
+  { id: 'skill', n: '役職の能力(シールド・守護・鑑識・監視・ガソリン・眷属化・変装・掃除・隠し扉)', def: 'KeyF', acts: ['shield', 'guard', 'inspect', 'watch', 'douse', 'thrall', 'disguise', 'clean', 'portal'] },
   { id: 'skill2', n: '点火', def: 'KeyG', acts: ['ignite'] },
   { id: 'vent', n: 'ベント', def: 'KeyV', acts: ['vent'] },
   { id: 'sab', n: '妨害(マップを開く)', def: 'KeyX', acts: ['sab'] },
@@ -6106,11 +6198,14 @@ function render(dt) {
   list.forEach(function (o) {
     var p = o.p, v = o.v, isGhost = !p.alive;
     var ally = E.knowsAlly(me, p);
+    // 変装中の人は、ほかの人からは変装した相手の色と名前に見える(本人と、正体を知っている仲間には本当の姿が見える)
+    var dgOn = !!(p.alive && p.dg && p.dg.until > tnow()), seeReal = o.id === S.pid || ally || !(me && me.alive), shown = (dgOn && !seeReal) ? E.shownAs(st, p, tnow()) : p; // 死んだ人(幽霊)にも、本当の姿が見える
     var bitTimer = (me && me.role === 'vampire' && p.alive && p.bt && p.bt.by === S.pid && p.bt.until) ? Math.max(0, Math.ceil((p.bt.until - tnow()) / 1000)) : -1;
     if (S.targetPid === o.id) { c.strokeStyle = '#ffd24d'; c.lineWidth = 3; ell(c, v.x, v.y + 18, 24, 10); c.stroke(); }
-    drawBlob(c, v.x, v.y, C[p.color].hex, v.f || 1, v.ph || 0, isGhost ? 0.45 : 1, isGhost, false);
+    drawBlob(c, v.x, v.y, C[shown.color].hex, v.f || 1, v.ph || 0, isGhost ? 0.45 : 1, isGhost, false);
     if (p.alive && (p.sh || 0) > tnow()) drawShieldBubble(c, v.x, v.y, now);
-    label(c, p.name, v.x, v.y - 34, ally ? '#ff8c9b' : (o.id === S.pid ? '#ffffff' : '#e9eef9'));
+    label(c, shown.name, v.x, v.y - 34, ally ? '#ff8c9b' : (o.id === S.pid ? '#ffffff' : '#e9eef9'));
+    if (dgOn && seeReal) { var dgt = E.shownAs(st, p, tnow()); label(c, '変装中: ' + dgt.name + ' ' + Math.max(0, Math.ceil((p.dg.until - tnow()) / 1000)) + '秒', v.x, v.y - 52, '#ffd24d'); }
     if (bitTimer >= 0) label(c, '噛 ' + bitTimer + '秒', v.x, v.y - 52, '#ff5d73');
     if (S.speaking[o.id]) drawSpeak(c, v.x, v.y - 52, now);
   });
@@ -6338,13 +6433,26 @@ function computeActions(st, me) {
   if (!alive) return list;
   var tgtRange = s.killRange, tgt = null;
   if (R.kill || (R.wave && s.waveKill)) {
-    tgt = nearestTarget(st, me, tgtRange, function (p) { return (R.anyKill || E.ROLES[p.role].team !== 'impostor') && !(R.bite && p.bt); });
+    tgt = nearestTarget(st, me, tgtRange, function (p) { return E.canTarget(me, p) && !(R.bite && p.bt); });
     var c1 = cd(me.ck || 0, s.killCd * 1000);
     list.push({ id: 'kill', label: R.bite ? '噛む' : '襲撃', color: 'var(--imp)', ready: !!tgt && c1.left === 0, cd: c1.ratio, sub: c1.left ? Math.ceil(c1.left / 1000) + '秒' : '', press: function () { sendAct({ type: 'kill', t: tgt }); } });
   }
   if (me.role === 'vampire' && s.vampireThrall) {
     var tt = nearestTarget(st, me, tgtRange + 40, function (p) { return E.ROLES[p.role].team !== 'impostor'; });
     list.push({ id: 'thrall', label: '眷属化', color: 'var(--imp)', sub: me.tu ? '使用済' : '', ready: !!tt && !me.tu, press: function () { sendAct({ type: 'thrall', t: tt }); } });
+  }
+  if (me.role === 'maskmaker') {
+    var mon = !!(me.dg && me.dg.until > now), cm = cd(me.ca || 0, (s.maskSec + s.maskCd) * 1000), mt = tgt;
+    list.push({ id: 'disguise', label: mon ? '変装を解く' : '変装', color: 'var(--imp)', sub: mon ? Math.ceil((me.dg.until - now) / 1000) + '秒' : cm.left ? Math.ceil(cm.left / 1000) + '秒' : '', ready: mon || (!!mt && cm.left === 0), cd: mon ? 0 : cm.ratio, press: function () { sendAct(mon ? { type: 'disguise' } : { type: 'disguise', t: mt }); } });
+  }
+  if (me.role === 'cleaner') {
+    var ccl = cd(me.ca || 0, s.cleanCd * 1000);
+    list.push({ id: 'clean', label: '掃除', color: 'var(--imp)', sub: ccl.left ? Math.ceil(ccl.left / 1000) + '秒' : '', ready: near.body != null && ccl.left === 0, cd: ccl.ratio, press: function () { sendAct({ type: 'clean', b: near.body }); } });
+  }
+  if (me.role === 'sniper') {
+    tgt = nearestTarget(st, me, s.snipeRange);
+    var cs2 = cd(me.ca || 0, s.snipeCd * 1000);
+    list.push({ id: 'snipe', label: '狙撃', color: 'var(--imp)', sub: '残り' + (me.u || 0), ready: !!tgt && (me.u || 0) > 0 && cs2.left === 0, cd: cs2.ratio, press: function () { sendAct({ type: 'snipe', t: tgt }); } });
   }
   if (me.role === 'sheriff') {
     tgt = nearestTarget(st, me, tgtRange);
@@ -6391,7 +6499,7 @@ function computeActions(st, me) {
     list.push({ id: 'douse', label: 'ガソリン', color: 'var(--neu)', sub: doused + '/' + others.length, ready: !!tgt && c6.left === 0, cd: c6.ratio, press: function () { sendAct({ type: 'douse', t: tgt }); } });
     list.push({ id: 'ignite', label: '点火', color: 'var(--imp)', ready: others.length > 0 && doused === others.length, press: function () { sendAct({ type: 'ignite' }); } });
   }
-  S.targetPid = (R.kill || (R.wave && s.waveKill) || me.role === 'sheriff' || me.role === 'guardian' || me.role === 'arsonist') ? tgt : null;
+  S.targetPid = (R.kill || (R.wave && s.waveKill) || me.role === 'sheriff' || me.role === 'sniper' || me.role === 'guardian' || me.role === 'arsonist') ? tgt : null;
   return list;
 }
 function syncActionButtons(list) {
