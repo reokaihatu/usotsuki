@@ -466,6 +466,9 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 .tasklist .t.sel b { color: #ffd24d; }
 .tasklist .thint { font-size: 10.5px; opacity: .7; }
 
+.btn.kick { padding: 2px 10px; font-size: 12px; min-height: 28px; }
+.btn.kick.ask { outline: 2px solid var(--imp); font-weight: 700; }
+
 </style>
 </head>
 <body>
@@ -536,6 +539,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
             <div id="bot-ctl" class="row" hidden>
               <button id="btn-addbot" class="btn small" type="button">ボットを追加</button>
               <button id="btn-fillbot" class="btn small" type="button">4人まで補充</button>
+              <button id="btn-lock" class="btn small" type="button" hidden>参加を締め切る</button>
             </div>
           </div>
           <div id="players" class="players"></div>
@@ -1275,9 +1279,11 @@ function grid(o) {
     { name: '赤', hex: '#e5484d' }, { name: '青', hex: '#3e63dd' }, { name: '緑', hex: '#30a46c' },
     { name: '桃', hex: '#e93d82' }, { name: '橙', hex: '#f76b15' }, { name: '黄', hex: '#e5c100' },
     { name: '黒', hex: '#3b3f4a' }, { name: '白', hex: '#e8eaf0' }, { name: '紫', hex: '#8e4ec6' },
-    { name: '水', hex: '#00a2c7' }, { name: '茶', hex: '#a16207' }, { name: '灰', hex: '#889096' }
+    { name: '水', hex: '#00a2c7' }, { name: '茶', hex: '#a16207' }, { name: '灰', hex: '#889096' },
+    { name: '黄緑', hex: '#9acd32' }, { name: '空', hex: '#8fd3ff' }, { name: '藤', hex: '#c9a7f0' }, { name: '肌', hex: '#f4c7a1' },
+    { name: '臙脂', hex: '#9b2c46' }, { name: '翡翠', hex: '#1fbf9a' }, { name: '珊瑚', hex: '#ff8f8f' }, { name: '金', hex: '#b8860b' }
   ];
-  var MAX_PLAYERS = COLORS.length;
+  var MAX_PLAYERS = 20;
 
   var TEAMS = {
     crew: { name: 'クルー陣営', hex: '#4fb8a6' },
@@ -1346,22 +1352,22 @@ function grid(o) {
   // ---------- 設定 ----------
   var SETTING_DEFS = [
     { g: 'map', k: 'map', label: 'マップ', min: 0, max: Maps.list.length - 1, step: 1, def: 0, unit: '' },
-    { g: 'role', k: 'r_impostor', role: 'impostor', label: 'インポスター', min: 0, max: 4, step: 1, def: 1, unit: '人' },
-    { g: 'role', k: 'r_assassin', role: 'assassin', label: 'イビルゲッサー', min: 0, max: 3, step: 1, def: 0, unit: '人' },
-    { g: 'role', k: 'r_wavecannon', role: 'wavecannon', label: '波動砲', min: 0, max: 3, step: 1, def: 0, unit: '人' },
-    { g: 'role', k: 'r_vampire', role: 'vampire', label: 'ヴァンパイア', min: 0, max: 2, step: 1, def: 0, unit: '人' },
-    { g: 'role', k: 'r_jackal', role: 'jackal', label: 'ジャッカル', min: 0, max: 2, step: 1, def: 0, unit: '人' },
-    { g: 'role', k: 'r_wavejackal', role: 'wavejackal', label: '波動砲ジャッカル', min: 0, max: 2, step: 1, def: 0, unit: '人' },
-    { g: 'role', k: 'r_arsonist', role: 'arsonist', label: '放火魔', min: 0, max: 2, step: 1, def: 0, unit: '人' },
-    { g: 'role', k: 'r_jester', role: 'jester', label: 'ピエロ', min: 0, max: 2, step: 1, def: 0, unit: '人' },
-    { g: 'role', k: 'r_detective', role: 'detective', label: '探偵', min: 0, max: 2, step: 1, def: 1, unit: '人' },
-    { g: 'role', k: 'r_sheriff', role: 'sheriff', label: 'シェリフ', min: 0, max: 2, step: 1, def: 0, unit: '人' },
-    { g: 'role', k: 'r_guardian', role: 'guardian', label: '守護者', min: 0, max: 2, step: 1, def: 0, unit: '人' },
-    { g: 'role', k: 'r_watcher', role: 'watcher', label: '管制官', min: 0, max: 2, step: 1, def: 0, unit: '人' },
-    { g: 'role', k: 'r_engineer', role: 'engineer', label: '技師', min: 0, max: 2, step: 1, def: 0, unit: '人' },
-    { g: 'role', k: 'r_fortune', role: 'fortune', label: '占い師', min: 0, max: 2, step: 1, def: 0, unit: '人' },
-    { g: 'role', k: 'r_niceguesser', role: 'niceguesser', label: 'ナイスゲッサー', min: 0, max: 2, step: 1, def: 0, unit: '人' },
-    { g: 'role', k: 'r_shielder', role: 'shielder', label: 'シールダー', min: 0, max: 2, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_impostor', role: 'impostor', label: 'インポスター', min: 0, max: MAX_PLAYERS, step: 1, def: 1, unit: '人' },
+    { g: 'role', k: 'r_assassin', role: 'assassin', label: 'イビルゲッサー', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_wavecannon', role: 'wavecannon', label: '波動砲', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_vampire', role: 'vampire', label: 'ヴァンパイア', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_jackal', role: 'jackal', label: 'ジャッカル', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_wavejackal', role: 'wavejackal', label: '波動砲ジャッカル', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_arsonist', role: 'arsonist', label: '放火魔', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_jester', role: 'jester', label: 'ピエロ', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_detective', role: 'detective', label: '探偵', min: 0, max: MAX_PLAYERS, step: 1, def: 1, unit: '人' },
+    { g: 'role', k: 'r_sheriff', role: 'sheriff', label: 'シェリフ', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_guardian', role: 'guardian', label: '守護者', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_watcher', role: 'watcher', label: '管制官', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_engineer', role: 'engineer', label: '技師', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_fortune', role: 'fortune', label: '占い師', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_niceguesser', role: 'niceguesser', label: 'ナイスゲッサー', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_shielder', role: 'shielder', label: 'シールダー', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
 
     { g: 'task', k: 'tasksPer', label: 'タスクの数(1人あたり)', min: 1, max: 12, step: 1, def: 4, unit: '個' },
     { g: 'task', k: 'longTasks', label: 'うち長いタスク(複数の場所をまわる)', min: 0, max: 5, step: 1, def: 1, unit: '個' },
@@ -1488,9 +1494,13 @@ function grid(o) {
     return null;
   }
   function spawnPoint(i, n) {
-    var a = (Math.PI * 2 * i) / Math.max(1, n) - Math.PI / 2;
     var sp = (M && M.spawn) || { rx: 110, ry: 70 };
-    return { x: Math.round(TABLE.x + Math.cos(a) * sp.rx), y: Math.round(TABLE.y + 40 + Math.sin(a) * sp.ry) };
+    var k = 1, m = Math.max(1, n), j = i, off = 0;
+    if (n > 12) { // 13人以上は、内側にもう1周ならべる
+      if (i >= 12) { k = 0.5; m = n - 12; j = i - 12; off = Math.PI / m; } else m = 12;
+    }
+    var a = (Math.PI * 2 * j) / m - Math.PI / 2 + off;
+    return { x: Math.round(TABLE.x + Math.cos(a) * sp.rx * k), y: Math.round(TABLE.y + 40 + Math.sin(a) * sp.ry * k) };
   }
 
   // ---- マップ固有のしかけ ----
@@ -1591,7 +1601,7 @@ function grid(o) {
     return {
       v: 1, rev: 0, now: 0, epoch: epoch || 1, hostId: hostId, phase: 'lobby',
       settings: settings ? Object.assign(defaultSettings(), settings) : defaultSettings(),
-      players: {}, order: [], ack: {}, bodies: [], meeting: null, winner: null,
+      players: {}, order: [], ack: {}, kicked: {}, locked: false, melee: false, bodies: [], meeting: null, winner: null,
       tasksTotal: 0, tasksDone: 0, blackoutUntil: 0, jamUntil: 0, mapSab: null, crisis: null, doors: [], trails: [], roundStart: 0, meetingCount: 0, nextBody: 1, round: 0
     };
   }
@@ -1626,6 +1636,15 @@ function grid(o) {
     return c;
   }
   // 開始前の検証。問題があれば文字列、なければ null
+  // 危険な陣営が最初から半数以上いる「乱戦」か(波動砲を大量に入れた銃撃戦など)
+  function isMelee(state) {
+    var n = state.order.length, c = roleCounts(state.settings), imp = 0, jk = 0;
+    Object.keys(c).forEach(function (r) {
+      if (ROLES[r].team === 'impostor') imp += c[r];
+      if (ROLES[r].jk) jk += c[r];
+    });
+    return imp * 2 >= n || jk * 2 >= n;
+  }
   function validate(state) {
     var n = state.order.length;
     if (n < 4) return '4人以上で開始できます(ボットも人数に数えます)。';
@@ -1637,7 +1656,6 @@ function grid(o) {
     });
     if (sum > n) return '役職の合計(' + sum + '人)が参加人数(' + n + '人)を超えています。';
     if (threats < 1) return 'インポスター・イビルゲッサー・波動砲・ヴァンパイア・ジャッカル・波動砲ジャッカル・放火魔のどれかを1人以上入れてください。';
-    if (imp * 2 >= n) return 'インポスター陣営が多すぎます(参加人数の半分未満にしてください)。';
     return null;
   }
   function shuffle(a, rand) {
@@ -1663,6 +1681,7 @@ function grid(o) {
     useMap(state.settings.map);
     var err = validate(state);
     if (err) return err;
+    state.melee = isMelee(state);
     var now = ctx.now, rand = ctx.rand || Math.random, s = state.settings;
     var ids = shuffle(state.order.slice(), rand);
     var c = roleCounts(s), list = [];
@@ -1741,8 +1760,14 @@ function grid(o) {
     if (state.tasksTotal > 0 && state.tasksDone >= state.tasksTotal) return { team: 'crew', reason: 'タスクがすべて完了した' };
     if (I === 0 && J === 0 && A === 0) return { team: 'crew', reason: '危険人物がいなくなった' };
     var others = total - I;
-    if (I > 0 && I >= others && !(J > 0 && I === J && others === J)) return { team: 'impostor', reason: 'インポスター陣営がクルー側に並んだ' };
-    if (J > 0 && I === 0 && J >= total - J) return { team: 'jackal', reason: 'ジャッカルが生き残りの半数に達した' };
+    if (state.melee) {
+      // 乱戦: 並んだだけでは決着せず、相手が全滅したときに勝つ
+      if (I > 0 && others === 0) return { team: 'impostor', reason: 'インポスター陣営だけが生き残った' };
+      if (J > 0 && I === 0 && J === total) return { team: 'jackal', reason: 'ジャッカルだけが生き残った' };
+    } else {
+      if (I > 0 && I >= others && !(J > 0 && I === J && others === J)) return { team: 'impostor', reason: 'インポスター陣営がクルー側に並んだ' };
+      if (J > 0 && I === 0 && J >= total - J) return { team: 'jackal', reason: 'ジャッカルが生き残りの半数に達した' };
+    }
     if (A > 0 && total === A) return { team: 'arsonist', reason: '放火魔だけが生き残った' };
     return null;
   }
@@ -2243,6 +2268,14 @@ function grid(o) {
   }
 
   // ---------- 退出・リセット ----------
+  // ホストが参加者を退室させる。退室した人は state.kicked に残り、同じ端末は入り直せない
+  function kickPlayer(state, pid, ctx) {
+    var p = state.players[pid];
+    if (!p || p.bot || pid === state.hostId) return false;
+    if (!state.kicked) state.kicked = {};
+    state.kicked[pid] = 1;
+    return markLeft(state, pid, ctx || { now: 0 });
+  }
   function markLeft(state, pid, ctx) {
     var p = state.players[pid];
     if (!p) return false;
@@ -2257,7 +2290,7 @@ function grid(o) {
     return true;
   }
   function backToLobby(state) {
-    state.phase = 'lobby'; state.meeting = null; state.winner = null; state.bodies = []; state.blackoutUntil = 0; state.jamUntil = 0; state.mapSab = null; state.crisis = null; state.doors = []; state.trails = [];
+    state.phase = 'lobby'; state.melee = false; state.meeting = null; state.winner = null; state.bodies = []; state.blackoutUntil = 0; state.jamUntil = 0; state.mapSab = null; state.crisis = null; state.doors = []; state.trails = [];
     state.tasksTotal = 0; state.tasksDone = 0; state.progSnap = null;
     state.order = state.order.filter(function (id) { return !state.players[id].left || (delete state.players[id], false); });
     state.order.forEach(function (id) {
@@ -2273,7 +2306,7 @@ function grid(o) {
     MAPS: MAPS, BELT_SPEED: Maps.BELT_SPEED, useMap: useMap, setDyn: setDyn, canMove: canMove, canStand: canStand, walkable: walkable,
     closedRects: closedRects, gateClosed: gateClosed, gateWarn: gateWarn, fogAt: fogAt, beltAt: beltAt, portalNear: portalNear, hallNear: hallNear,
     roomAt: roomAt, spawnPoint: spawnPoint, dist: dist,
-    newLobby: newLobby, addPlayer: addPlayer, removePlayer: removePlayer, validate: validate, startGame: startGame,
+    newLobby: newLobby, addPlayer: addPlayer, removePlayer: removePlayer, validate: validate, isMelee: isMelee, kickPlayer: kickPlayer, startGame: startGame,
     act: act, tick: tick, markLeft: markLeft, backToLobby: backToLobby, recalcTasks: recalcTasks, evalWin: evalWin,
     alivePlayers: alivePlayers, cleanName: cleanName, roleCounts: roleCounts, sabActive: sabActive, crisisMs: crisisMs,
     roomCounts: roomCounts, knowsAlly: knowsAlly, mapSabs: mapSabs, mapSabInfo: mapSabInfo, msOn: msOn, WAVE_LEN: WAVE_LEN, WAVE_HALF: WAVE_HALF
@@ -2547,7 +2580,55 @@ var NET = (function () {
     if (q.peerhost) { o = { host: q.peerhost, port: +q.peerport || 9000, path: q.peerpath || '/', secure: q.peersecure === '1' }; }
     return o;
   }
-  function makePeer(id) { var o = peerOpts(); return id ? new Peer(id, o) : new Peer(o); }
+  // ---- 中継(TURN)の設定 ----
+  // 同じ場所に turn.json を置くと、そのとき初めて有効になる(置かなければ今までどおり)。
+  //   { "enabled": true, "endpoint": "https://….workers.dev/", "relayOnly": false }   ← 認証情報をそのつど発行するサーバー(Cloudflare 向け)
+  //   { "enabled": true, "iceServers": [ { "urls": "turn:…", "username": "…", "credential": "…" } ] }   ← 固定の認証情報(Metered など)
+  // URL に ?relay=1 を付けると、すべて中継経由にして動作を確かめられる。?turn=off で無効にして比べられる。
+  var ICE = { p: null, cfg: null, state: 'off', at: 0, note: '' };
+  var STUN = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun.cloudflare.com:3478' }];
+  var PEERJS_TURN = { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp' };
+  function timedJson(url, ms, init) {
+    return new Promise(function (resolve, reject) {
+      var done = false, ac = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      var t = setTimeout(function () { if (!done) { done = true; try { ac && ac.abort(); } catch (e) {} reject(new Error('timeout')); } }, ms);
+      var o = Object.assign({ cache: 'no-store' }, init || {}); if (ac) o.signal = ac.signal;
+      fetch(url, o).then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
+        .then(function (j) { if (!done) { done = true; clearTimeout(t); resolve(j); } }, function (e) { if (!done) { done = true; clearTimeout(t); reject(e); } });
+    });
+  }
+  function asList(x) { return !x ? [] : Array.isArray(x) ? x : [x]; }
+  function cleanIce(list) {
+    return asList(list).filter(function (e) { return e && (typeof e.urls === 'string' || Array.isArray(e.urls)); })
+      .map(function (e) { var o = { urls: e.urls }; if (e.username) o.username = String(e.username); if (e.credential) o.credential = String(e.credential); return o; });
+  }
+  function turnLoad() {
+    if (ICE.p && Date.now() - ICE.at < 30 * 60 * 1000) return ICE.p;
+    ICE.at = Date.now();
+    ICE.p = (function () {
+      var q = {}; try { new URLSearchParams(location.search).forEach(function (v, k) { q[k] = v; }); } catch (e) {}
+      ICE.cfg = null; ICE.state = 'off'; ICE.note = '';
+      if (q.turn === 'off' || typeof fetch === 'undefined') return Promise.resolve();
+      return timedJson('turn.json', 3000).then(function (j) {
+        if (!j || j.enabled !== true) return;
+        var relay = q.relay === '1' || j.relayOnly === true;
+        var src = j.endpoint ? timedJson(String(j.endpoint), 5000).then(function (r) { return r && r.iceServers; }) : Promise.resolve(j.iceServers);
+        return src.then(function (list) {
+          var turn = cleanIce(list);
+          if (!turn.length) { ICE.note = '中継サーバーの情報が空でした'; return; }
+          var ice = STUN.concat(turn); if (j.keepPeerjs !== false && !relay) ice.push(PEERJS_TURN);
+          ICE.cfg = { iceServers: ice, iceTransportPolicy: relay ? 'relay' : 'all', sdpSemantics: 'unified-plan' };
+          ICE.state = relay ? 'relay' : 'on';
+        });
+      }).catch(function (e) { ICE.note = String(e && e.message || e); });
+    })();
+    return ICE.p;
+  }
+  function makePeer(id) {
+    var o = Object.assign({}, peerOpts());
+    if (ICE.cfg) o.config = ICE.cfg;
+    return id ? new Peer(id, o) : new Peer(o);
+  }
   function send(c, m) { try { if (c && c.open) c.send(m); } catch (e) {} }
 
   /* ---- ホスト側: みんなの状態と部屋の状態を持ち、配る ---- */
@@ -2687,7 +2768,7 @@ var NET = (function () {
     peerId: function () { return st.peer ? st.peer.id : ''; },
     create: function (onLost) {
       destroy(); st.closed = false; st.onLost = onLost; st.hub = true;
-      return new Promise(function (resolve, reject) {
+      return turnLoad().then(function () { return new Promise(function (resolve, reject) {
         var tries = 0;
         (function attempt() {
           var code = newCode(), peer = makePeer(PREFIX + code), done = false;
@@ -2699,12 +2780,12 @@ var NET = (function () {
           });
           peer.on('disconnected', function () { if (done && !st.closed) { try { peer.reconnect(); } catch (e) {} } });
         })();
-      });
+      }); });
     },
     join: function (code, onLost) {
       destroy(); st.closed = false; st.onLost = onLost; st.hub = false; st.tries = 0;
       code = cleanCode(code);
-      return new Promise(function (resolve, reject) {
+      return turnLoad().then(function () { return new Promise(function (resolve, reject) {
         var peer = makePeer(null), finished = false, to;
         function fail(e) { if (finished) return; finished = true; clearTimeout(to); try { peer.destroy(); } catch (x) {} reject(e); }
         peer.on('error', function (e) { if (!finished) fail(e); else if (e && e.type === 'peer-unavailable' && String(e.message || '').indexOf(PREFIX + code) >= 0 && st.onLost) st.onLost('部屋が見つかりません。'); });  // 音声通話の相手が見つからないだけ、のエラーは無視する
@@ -2715,8 +2796,10 @@ var NET = (function () {
           cl.first.on('open', function () { if (finished) return; finished = true; clearTimeout(to); resolve({ room: cl.room, db: cl.db, code: code }); });
         });
         to = setTimeout(function () { fail({ type: 'timeout' }); }, 15000);
-      });
+      }); });
     },
+    turnState: function () { return ICE.state; },
+    turnNote: function () { return ICE.note; },
     leave: destroy
   };
 })();
@@ -3242,6 +3325,9 @@ function onSnap(snap) {
     } else return;
   }
   if (!d) { S.state = null; S.uiRev = -1; return; }
+  if (d.kicked && d.kicked[S.pid] && S.mode === 'online') {
+    S.snapData = null; leaveRoom(); toast('ホストに退室させられました。'); renderUI(); return;
+  }
   S.skew = (d.now || Date.now()) - Date.now();
   S.state = d; S.uiRev = -1;
   var ack = (d.ack && d.ack[S.pid]) || 0;
@@ -3312,7 +3398,8 @@ function hostPoll() {
     Object.keys(present).forEach(function (pid) {
       var d = present[pid];
       if (d.j !== 1) return;
-      if (!st.players[pid]) { if (E.addPlayer(st, pid, d.n || '', false)) changed = true; }
+      if (st.kicked && st.kicked[pid]) return;
+      if (!st.players[pid]) { if (!st.locked && E.addPlayer(st, pid, d.n || '', false)) changed = true; }
       else if (!st.players[pid].bot && d.n && E.cleanName(d.n) !== st.players[pid].name) { st.players[pid].name = E.cleanName(d.n); changed = true; }
     });
   }
@@ -3425,6 +3512,17 @@ function startLocal() {
   E.addPlayer(st, S.pid, S.name, false);
   S.hostState = st; S.state = st; S.snapLoaded = true;
   touch();
+}
+// ホスト専用: 参加者を退室させる(ロビーでも試合中でも使える)
+function kickPlayer(pid) {
+  var st = S.hostState;
+  if (!S.isHost || !st || !st.players[pid]) return false;
+  var name = st.players[pid].name;
+  if (!E.kickPlayer(st, pid, hostCtx())) return false;
+  delete S.lastSeen[pid];
+  toast(name + ' を退室させました。');
+  touch();
+  return true;
 }
 function leaveRoom() {
   S.joined = false;
@@ -4760,10 +4858,21 @@ function roomLink() { return location.origin + location.pathname + '#' + S.roomC
 function codeChip() {
   if (!S.standalone || !S.roomCode) return null;
   return h('span', { class: 'code-chip' }, [h('span', { class: 'mute', text: '部屋コード' }), h('b', { text: S.roomCode }),
+    NET.turnState() !== 'off' ? h('span', { class: 'tag', text: NET.turnState() === 'relay' ? '中継テスト(全通信を中継)' : '中継あり' }) : null,
     h('button', { class: 'btn small', type: 'button', text: '招待リンクをコピー', onclick: function () {
       var url = roomLink(), done = function () { toast('招待リンクをコピーしました'); };
       try { navigator.clipboard.writeText(url).then(done, function () { toast(url); }); } catch (e) { toast(url); }
     } })]);
+}
+// ホスト専用の「退室」ボタン。1回目で確認、2回目で実行(誤タップ防止)
+function kickBtn(id, name) {
+  var ask = S.kickAsk === id;
+  return h('button', { class: 'btn small danger kick' + (ask ? ' ask' : ''), type: 'button', 'aria-label': name + 'を退室させる', text: ask ? '本当に退室?' : '退室',
+    onclick: function () {
+      if (S.kickAsk === id) { S.kickAsk = null; kickPlayer(id); S.uiRev = -1; return; }
+      S.kickAsk = id; S.uiRev = -1;
+      setTimeout(function () { if (S.kickAsk === id) { S.kickAsk = null; S.uiRev = -1; } }, 4000);
+    } });
 }
 function renderLobby(st) {
   var isH = S.isHost && S.mode;
@@ -4780,7 +4889,8 @@ function renderLobby(st) {
   syncMap(st);
   var host = st.players[st.hostId];
   stat.appendChild(h('span', { class: 'dot ok' }));
-  stat.appendChild(h('span', { text: S.mode === 'local' ? '練習モード(あなたがホスト)' : isH ? 'あなたがホストです。設定を決めて開始してください。' : 'ホスト: ' + (host ? host.name : '(不在)') + ' が開始するのを待っています。' }));
+  var shut = S.mode === 'online' && st.locked && !st.players[S.pid];
+  stat.appendChild(h('span', { text: shut ? 'ホストが参加を締め切っています。ホストが開けるまでお待ちください。' : S.mode === 'local' ? '練習モード(あなたがホスト)' : isH ? 'あなたがホストです。設定を決めて開始してください。' : 'ホスト: ' + (host ? host.name : '(不在)') + ' が開始するのを待っています。' }));
   var box = $('players'); clear(box);
   st.order.forEach(function (id) {
     var p = st.players[id];
@@ -4789,11 +4899,15 @@ function renderLobby(st) {
       h('span', { class: 'nm', text: p.name }),
       id === st.hostId ? h('span', { class: 'tag host', text: 'HOST' }) : null,
       id === S.pid ? h('span', { class: 'tag', text: 'あなた' }) : null,
-      (isH && p.bot) ? h('button', { class: 'x', type: 'button', 'aria-label': p.name + 'を外す', text: '×', onclick: function () { E.removePlayer(S.hostState, id); touch(); } }) : null
+      (isH && p.bot) ? h('button', { class: 'x', type: 'button', 'aria-label': p.name + 'を外す', text: '×', onclick: function () { E.removePlayer(S.hostState, id); touch(); } }) : null,
+      (isH && !p.bot && id !== S.pid && S.mode === 'online') ? h('span', { style: 'margin-left:auto' }, [kickBtn(id, p.name)]) : null
     ]));
   });
   $('pl-count').textContent = st.order.length + ' / ' + E.MAX_PLAYERS + '人';
   $('bot-ctl').hidden = !isH;
+  var lk = $('btn-lock');
+  lk.hidden = S.mode !== 'online';
+  lk.textContent = st.locked ? '参加を開ける' : '参加を締め切る';
   $('set-note').textContent = isH ? '' : 'ホストだけが変更できます';
   renderSettings(st, !!isH);
   renderMapPick(st, !!isH);
@@ -4810,6 +4924,7 @@ function renderLobby(st) {
   var rm = E.MAPS[st.settings.map | 0], rr = rm && rm.rec, hint = '';
   if (!err && rr && n < rr[0]) hint = 'このマップは ' + rr[0] + '〜' + rr[1] + '人向けです。いまの ' + n + '人だと広すぎるかも。';
   else if (!err && rr && n > rr[1]) hint = 'このマップは ' + rr[0] + '〜' + rr[1] + '人向けです。いまの ' + n + '人だと狭いかも。大人数向けのマップがおすすめです。';
+  if (!err && E.isMelee(st)) hint = '乱戦ルール: 危険な陣営が半数以上います。人数が並んでも終わらず、相手を全滅させた陣営が勝ちます。' + (hint ? ' ' + hint : '');
   $('start-msg').textContent = err || hint;
   $('start-msg').className = err ? 'msg-bad' : 'msg-hint';
   var btn = $('btn-start');
@@ -5087,6 +5202,7 @@ function renderMeeting() {
     if (fort && p.alive && id !== S.pid) btns.push(h('button', { class: 'btn small', type: 'button', text: '占う', onclick: function () { S.skill = { k: 'fortune', t: id }; renderMeeting(); } }));
     if (nice && p.alive && id !== S.pid) btns.push(h('button', { class: 'btn small danger', type: 'button', text: '看破', onclick: function () { S.skill = { k: 'nicekill', t: id }; renderMeeting(); } }));
     if (asn && p.alive && id !== S.pid) btns.push(h('button', { class: 'btn small danger', type: 'button', text: '役職当て', onclick: function () { S.asn = { t: id, r: S.asn && S.asn.r || 'crew' }; renderMeeting(); } }));
+    if (S.isHost && S.mode === 'online' && !p.bot && id !== S.pid) btns.push(kickBtn(id, p.name));
     cards.appendChild(h('div', { class: 'card' + (p.alive ? '' : ' dead') + (res && res.ejected === id ? ' eject' : '') }, [
       h('div', { class: 'top' }, [swatch(p), h('span', { class: 'nm', text: p.name })]),
       h('div', { class: 'tags' }, tags),
@@ -6306,6 +6422,7 @@ function bindUi() {
   $('btn-local').addEventListener('click', function () { readName(); startLocal(); });
   $('btn-leave').addEventListener('click', function () { leaveRoom(); renderUI(); });
   $('btn-addbot').addEventListener('click', addBot);
+  $('btn-lock').addEventListener('click', function () { var st = S.hostState; if (!st || !S.isHost) return; st.locked = !st.locked; toast(st.locked ? '参加を締め切りました。' : '参加を開けました。'); touch(); });
   $('btn-fillbot').addEventListener('click', function () { var st = S.hostState; if (!st) return; while (st.order.length < 4) { var before = st.order.length; addBot(); if (st.order.length === before) break; } });
   $('btn-start').addEventListener('click', function () {
     var st = S.hostState;
