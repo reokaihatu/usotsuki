@@ -460,6 +460,12 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 .act .kb:empty { display: none; }
 @media (hover: none), (pointer: coarse) { .act .kb { display: none; } }
 
+/* タスク一覧: タップで方向を示す */
+.tasklist .t:not(.done) { pointer-events: auto; cursor: pointer; border-radius: 6px; margin: 0 -4px; padding: 1px 4px; }
+.tasklist .t.sel { background: rgba(255, 210, 77, .22); outline: 1px solid rgba(255, 210, 77, .7); }
+.tasklist .t.sel b { color: #ffd24d; }
+.tasklist .thint { font-size: 10.5px; opacity: .7; }
+
 </style>
 </head>
 <body>
@@ -3090,7 +3096,7 @@ var S = {
   acts: [], actSeq: 0, chat: [], chatSeen: {}, chatMsg: null, chatSeq: 0, lastChatSent: 0,
   writing: false, dirty: false, writeErr: null, lastSig: '', lastPresenceAt: 0,
   uiRev: -1, cardRound: 0, lastTpKey: '', seenMsg: 0, msgRound: 0,
-  kc: {}, joy: { x: 0, y: 0, id: null }, tab: 'crew', overlay: null, task: null, targetPid: null, nearInfo: null,
+  track: null, kc: {}, joy: { x: 0, y: 0, id: null }, tab: 'crew', overlay: null, task: null, targetPid: null, nearInfo: null,
   online: false, capsReady: false, lastFrame: 0, lastHostTick: 0
 };
 // 現在の状態に合わせてマップ(エンジン内部)を切り替え、隔壁やゲートの状態を最新にする
@@ -4845,6 +4851,7 @@ function showRoleCard() {
   var st = S.state, me = myPlayer();
   if (!st || !me || !me.role) return;
   var R = E.ROLES[me.role], T = E.TEAMS[R.team], box = $('rolecard');
+  S.track = null; // 新しい試合では、タスクの印をリセット
   SND.play('reveal', { team: R.team });
   clear(box); box.style.setProperty('--c', T.hex);
   box.appendChild(h('div', { class: 'team', text: T.name }));
@@ -5875,8 +5882,43 @@ function render(dt) {
     c.fillStyle = 'rgba(40,50,120,.14)'; c.fillRect(0, 0, VW, VH);
   }
   drawBeacons(c, st, now);
+  drawTrack(c, st, now);
 }
 // 画面の外にある修理地点(緊急事態・通信妨害・停電の配電盤)を、縁の矢印で知らせる
+// タスク一覧で選んだタスクの方向を示す。画面の外なら縁に矢印、画面の中ならそのタスクの上に▼
+function trackTarget(st, me) {
+  if (S.track == null || !me || !me.tasks || !me.alive || st.phase !== 'play') return null;
+  if (st.jamUntil > tnow() && teamOf(me) !== 'impostor') return null;
+  var t = null; me.tasks.forEach(function (x) { if (x.s === S.track && !x.done) t = x; });
+  if (!t) return null;
+  var T = E.TASKS[t.s], stp = T.steps[Math.min(t.p || 0, T.steps.length - 1)];
+  return stp ? { x: stp.x, y: stp.y, n: T.n, room: (E.roomAt(stp.x, stp.y) || {}).n || '' } : null;
+}
+function drawTrack(c, st, now) {
+  var tg = trackTarget(st, myPlayer());
+  if (!tg) return;
+  var sx = VW / 2 + (tg.x - S.me.x) * SCALE, sy = VH / 2 + (tg.y - S.me.y) * SCALE, mg = 56;
+  var col = '#ffd24d', bob = 4 * Math.sin(now / 160);
+  c.save(); c.lineJoin = 'round'; c.font = '700 12px "Zen Maru Gothic", sans-serif'; c.textAlign = 'center';
+  if (sx > 20 && sx < VW - 20 && sy > mg && sy < VH - 20) {
+    var ty = sy - 44 + bob;
+    c.fillStyle = col; c.strokeStyle = 'rgba(6,9,20,.95)'; c.lineWidth = 3;
+    c.beginPath(); c.moveTo(sx, ty + 16); c.lineTo(sx - 13, ty - 6); c.lineTo(sx + 13, ty - 6); c.closePath(); c.stroke(); c.fill();
+    c.strokeText(tg.n, sx, ty - 14); c.fillStyle = '#fff0b3'; c.fillText(tg.n, sx, ty - 14);
+  } else {
+    var ang = Math.atan2(sy - VH / 2, sx - VW / 2), ex = VW / 2 - 34, ey = VH / 2 - 56;
+    var k = Math.min(Math.abs(ex / (Math.cos(ang) || 1e-6)), Math.abs(ey / (Math.sin(ang) || 1e-6)));
+    var ax = VW / 2 + Math.cos(ang) * k, ay = VH / 2 + Math.sin(ang) * k + 8;
+    c.save(); c.translate(ax, ay); c.rotate(ang);
+    c.fillStyle = col; c.strokeStyle = 'rgba(6,9,20,.95)'; c.lineWidth = 3;
+    c.beginPath(); c.moveTo(20 + bob, 0); c.lineTo(-10 + bob, -15); c.lineTo(-10 + bob, 15); c.closePath(); c.stroke(); c.fill();
+    c.restore();
+    var tx = ax - Math.cos(ang) * 40, ty2 = ay - Math.sin(ang) * 40 + 4;
+    c.strokeStyle = 'rgba(6,9,20,.95)'; c.lineWidth = 3.5;
+    c.strokeText(tg.n, tx, ty2); c.fillStyle = '#fff0b3'; c.fillText(tg.n, tx, ty2);
+  }
+  c.restore();
+}
 function drawBeacons(c, st, now) {
   if (st.phase !== 'play') return;
   var tn = tnow(), pts = [], me0 = myPlayer();
@@ -6154,9 +6196,10 @@ function updateHud(st, me) {
   if (jamCrew && S.overlay === 'task' && !S.taskRepair) { closeTask(); toast('通信妨害でタスクが中断された'); }
   $('s-game').classList.toggle('crisis', !!st.crisis && st.phase === 'play');
   // 自分のタスク一覧(手順の進み具合と、控えた番号つき)
+  if (S.track != null && !trackTarget(st, me) && !(me && me.tasks && me.tasks.some(function (x) { return x.s === S.track && !x.done; }))) S.track = null;
   var tl = $('tasklist'), sig = '';
   if (jamCrew) sig = 'jam';
-  else if (me && me.tasks) sig = me.tasks.map(function (t) { return t.s + ':' + (t.p || 0) + (t.done ? 'd' : 'p') + (t.c || ''); }).join(',') + '|' + st.settings.map;
+  else if (me && me.tasks) sig = me.tasks.map(function (t) { return t.s + ':' + (t.p || 0) + (t.done ? 'd' : 'p') + (t.c || ''); }).join(',') + '|' + st.settings.map + '|' + (S.track == null ? '' : S.track);
   else if (me && me.role) sig = 'obj:' + me.role;
   if (tl.getAttribute('data-sig') !== sig) {
     tl.setAttribute('data-sig', sig); clear(tl);
@@ -6164,10 +6207,14 @@ function updateHud(st, me) {
     else if (me && me.tasks) me.tasks.forEach(function (t) {
       var T = E.TASKS[t.s], k = Math.min(t.p || 0, T.steps.length - 1), stp = T.steps[k]; // 場所はマップを開いたときだけ分かる
       var txt = t.done ? T.n : T.n + (T.steps.length > 1 ? '(' + (k + 1) + '/' + T.steps.length + ')' : '');
-      var kids = [h('b', { text: t.done ? '✓' : '・' }), h('span', { text: txt })];
+      var sel = !t.done && S.track === t.s;
+      var kids = [h('b', { text: t.done ? '✓' : sel ? '▶' : '・' }), h('span', { text: txt })];
       if (!t.done && t.c && stp.k === 'codeEnter') kids.push(h('em', { class: 'memo', text: 'コード ' + t.c }));
-      tl.appendChild(h('div', { class: 't' + (t.done ? ' done' : '') }, kids));
+      var row = h('div', { class: 't' + (t.done ? ' done' : '') + (sel ? ' sel' : ''), title: t.done ? '' : 'タップすると、このタスクの方向を示します' }, kids);
+      if (!t.done) row.addEventListener('pointerdown', function (e) { e.preventDefault(); S.track = S.track === t.s ? null : t.s; tl.removeAttribute('data-sig'); });
+      tl.appendChild(row);
     });
+    if (me && me.tasks && me.tasks.some(function (x) { return !x.done; })) tl.appendChild(h('div', { class: 'thint', text: S.track == null ? 'タスクをタップすると方向を示します' : 'もう一度タップで矢印を消す' }));
     else if (me && me.role) tl.appendChild(h('div', { class: 't' }, [h('span', { text: '目的: ' + E.ROLES[me.role].goal })]));
   }
   var bn = $('banner'), txt = '', alert = false;
