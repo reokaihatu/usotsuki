@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="robots" content="noindex">
-<title>ウソツキ号</title>
+<title>マスカレード</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Maru+Gothic:wght@400;500;700&display=swap">
 <style>
 /* 船内の制御盤。ゲームなので単一のダークな見た目に固定する(色はすべてトークン経由) */
@@ -63,7 +63,7 @@ h2, h3 { text-wrap: balance; font-family: var(--font-d); font-weight: 400; lette
 .btn.block { width: 100%; }
 
 /* ---------- 入室画面 ---------- */
-.logo { font-family: var(--font-d); font-size: clamp(44px, 13vw, 72px); line-height: 1.05; letter-spacing: .05em; }
+.logo { font-family: var(--font-d); font-size: clamp(38px, 10.5vw, 58px); line-height: 1.05; letter-spacing: .05em; }
 .logo-bar { height: 6px; width: 96px; background: var(--accent); margin-top: 10px; }
 .lead { color: var(--mute); max-width: 36em; }
 .field { display: grid; gap: 6px; }
@@ -469,6 +469,30 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 .btn.kick { padding: 2px 10px; font-size: 12px; min-height: 28px; }
 .btn.kick.ask { outline: 2px solid var(--imp); font-weight: 700; }
 
+/* 人ごとの音量 */
+.vol-list { display: grid; gap: 4px; margin: 10px 0; }
+.vol-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.vol-row .vl { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; min-width: 0; }
+.vol-row .vl span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vol-row .vr { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.vol-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); height: 28px; }
+.vol-row .btn { min-width: 68px; justify-content: center; }
+.vol-pct { width: 42px; text-align: right; font: 700 12px var(--font-d); flex: none; }
+@media (max-width: 520px) { .vol-row { grid-template-columns: 1fr; gap: 4px; } }
+
+/* ロゴ */
+.logo-row { display: flex; align-items: center; gap: 8px; }
+.logo-art { width: 76px; height: 76px; flex: none; }
+.logo-en { margin: 8px 0 0; font-family: var(--font-d); font-size: 13px; letter-spacing: .5em; color: var(--accent); opacity: .85; }
+
+/* 通報できるとき、通報ボタンが赤く光る */
+@keyframes alarm { 0%, 100% { box-shadow: 0 0 6px 1px rgba(255, 60, 80, .55); } 50% { box-shadow: 0 0 22px 7px rgba(255, 60, 80, .95); } }
+.act.alarm { border-color: #ff4660; background: rgba(120, 18, 36, .92); color: #fff; animation: alarm .8s ease-in-out infinite; }
+
+.seg.lv { flex-wrap: nowrap; }
+.seg.lv button { flex: 1 1 0; min-width: 0; padding: 4px 2px; }
+.lob-l > *, .lob-r > *, .entry-l > *, .entry-r > * { min-width: 0; }
+
 </style>
 </head>
 <body>
@@ -479,10 +503,11 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     <div class="wrap entry">
       <div class="entry-l">
         <header>
-          <h1 class="logo">ウソツキ号</h1>
+          <div class="logo-row"><h1 class="logo">マスカレード</h1><canvas id="logo-art" class="logo-art" width="168" height="168" aria-hidden="true"></canvas></div>
           <div class="logo-bar"></div>
+          <p class="logo-en">MASQUERADE</p>
         </header>
-        <p class="lead">宇宙船や洋館の乗員の中に、うそつきが紛れている。タスクをこなし、怪しい相手を見抜き、会議で追放するか、逆に欺いて乗っ取る。役職もマップも自由に選べます。</p>
+        <p class="lead">仮面をかぶった乗員たちの中に、うそつきが紛れている。タスクをこなし、怪しい相手を見抜き、会議で追放するか、逆に欺いて乗っ取る。役職もマップも自由に選べます。</p>
         <div class="stack">
           <div class="field">
             <label for="inp-name">ニックネーム(8文字まで)</label>
@@ -532,7 +557,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
         </div>
         <div id="lobby-status" class="status-line"></div>
         <div id="vc-box" class="vc-box" hidden>
-          <div class="row"><button id="btn-vc" class="btn small" type="button">ボイスチャットに参加</button><span id="vc-text" class="small mute"></span></div>
+          <div class="row"><button id="btn-vc" class="btn small" type="button">ボイスチャットに参加</button><button id="btn-vol-l" class="btn small" type="button" hidden>相手の音量</button><span id="vc-text" class="small mute"></span></div>
         </div>
         <div>
           <div class="row between" style="margin-bottom:8px"><h3 style="font-size:18px">参加者 <span id="pl-count" class="mute"></span></h3>
@@ -570,7 +595,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     <div class="hud top">
       <button id="btn-role" class="rolechip" type="button"><small id="rc-team"></small><span id="rc-name"></span></button>
       <div class="prog" id="prog"><div class="bar"><i id="prog-fill"></i></div><span id="prog-text"></span></div>
-      <div class="hgroup"><button id="btn-snd-g" class="hbtn snd-btn" type="button">音</button><button id="btn-keys-g" class="hbtn" type="button" hidden>キー</button><button id="btn-mic" class="hbtn" type="button" hidden>マイクON</button><button id="btn-roles" class="hbtn" type="button">役職一覧</button><button id="btn-map" class="hbtn" type="button">マップ</button></div>
+      <div class="hgroup"><button id="btn-snd-g" class="hbtn snd-btn" type="button">音</button><button id="btn-keys-g" class="hbtn" type="button" hidden>キー</button><button id="btn-mic" class="hbtn" type="button" hidden>マイクON</button><button id="btn-vol" class="hbtn" type="button" hidden>音量</button><button id="btn-roles" class="hbtn" type="button">役職一覧</button><button id="btn-map" class="hbtn" type="button">マップ</button></div>
     </div>
     <div id="tasklist" class="tasklist"></div>
     <div id="banner" class="banner" hidden></div>
@@ -592,6 +617,14 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
   </div>
 
   <!-- キー設定(PC) -->
+  <div id="ov-vol" class="ov solid" hidden>
+    <div class="box">
+      <div class="game-head"><h2 style="font-size:24px">みんなの音量</h2><button id="btn-vol-x" class="btn small" type="button">閉じる</button></div>
+      <p class="small mute">聞こえる大きさを、相手ごとに変えられます(0〜200%)。大きすぎる人を下げたり、小さい人を上げたりできます。この設定は、この端末にだけ保存されます。</p>
+      <div id="vol-list" class="vol-list"></div>
+    </div>
+  </div>
+
   <div id="ov-keys" class="ov solid" hidden>
     <div class="box">
       <div class="game-head"><h2 style="font-size:24px">キー設定(PC)</h2><button id="btn-keys-x" class="btn small" type="button">閉じる</button></div>
@@ -681,7 +714,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     <div class="box meet">
       <div class="game-head mt-head">
         <div><h2 id="mt-title" style="font-size:28px"></h2><p id="mt-sub" class="small mute"></p></div>
-        <div class="mt-right"><button id="btn-snd-m" class="btn small snd-btn" type="button">音</button><button id="btn-mt-mic" class="btn small" type="button" hidden>マイクON</button><button id="btn-mt-roles" class="btn small" type="button">役職一覧</button><button id="btn-mt-map" class="btn small" type="button">マップ</button><div style="text-align:right"><div id="mt-stage" class="small mute"></div><div id="mt-timer" class="timer"></div></div></div>
+        <div class="mt-right"><button id="btn-snd-m" class="btn small snd-btn" type="button">音</button><button id="btn-mt-mic" class="btn small" type="button" hidden>マイクON</button><button id="btn-mt-vol" class="btn small" type="button" hidden>音量</button><button id="btn-mt-roles" class="btn small" type="button">役職一覧</button><button id="btn-mt-map" class="btn small" type="button">マップ</button><div style="text-align:right"><div id="mt-stage" class="small mute"></div><div id="mt-timer" class="timer"></div></div></div>
       </div>
       <div class="mt-main">
         <div id="mt-me" class="small mute"></div>
@@ -711,7 +744,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 </div>
 
 <script>
-/* ウソツキ号 マップ定義(データのみ)。ブラウザと Node の両方で読める。
+/* マスカレード マップ定義(データのみ)。ブラウザと Node の両方で読める。
  *
  * rooms : 部屋(長方形)  halls: 通路(長方形。部屋どうしをつなぐ)
  * tasks : [{ n, steps:[{ x, y, k, n }] }]  k はミニゲームの種類、steps が複数なら別の場所をめぐる
@@ -732,7 +765,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 
   /* ================= 1. 宇宙船 ================= */
   var ship = {
-    id: 'ship', n: '宇宙船ウソツキ号', short: '宇宙船', rec: [4, 8],
+    id: 'ship', n: '宇宙船マスカレード号', short: '宇宙船', rec: [4, 8],
     d: '3×3の部屋が通路でつながる、いちばん標準的な船内。',
     gim: ['隔壁閉鎖: インポスター陣営は、近くの通路を一定時間ふさげる', '配電盤: 停電は、電気室の配電盤でクルーが復旧できる'],
     world: { w: 1600, h: 1240 }, table: { x: 800, y: 200, n: '緊急ボタン' },
@@ -1006,7 +1039,7 @@ function grid(o) {
   });
   var aq = atOf(gq.byId ? gq : gq), vq = ventOf(gq), tq = taskOf(aq);
   var queen = {
-    id: 'queen', n: '大型客船クイーン号', short: '大型客船', rec: [9, 12],
+    id: 'queen', n: '大型客船クイーン号', short: '大型客船', rec: [9, 20],
     d: '19の部屋が入り組む大きな客船。中央の大広間から四方へ道が分かれ、遠回りや行き止まりも多い。',
     gim: ['隔壁閉鎖: インポスター陣営は、近くの通路を一定時間ふさげる', '配電盤: 停電は、発電室の配電盤でクルーが復旧できる', '大広間を通らないと行けない区画がある'],
     world: gq.world, table: { x: 1400, y: 770, n: '緊急ボタン' }, spawn: { rx: 200, ry: 150 },
@@ -1066,7 +1099,7 @@ function grid(o) {
   });
   var ac = atOf(gc), vc = ventOf(gc), tc = taskOf(ac);
   var castle = {
-    id: 'castle', n: '白亜の古城', short: '古城', rec: [9, 12],
+    id: 'castle', n: '白亜の古城', short: '古城', rec: [9, 20],
     d: '白い石の塔と回廊と中庭が入り組む、明るい古城。秘密の本棚が3組あり、霧の中庭や地下牢は視界が悪い。',
     gim: ['秘密の本棚: 離れた部屋どうしを一瞬で行き来できる(全員が使える)', '霧の中庭・地下牢・裏庭: 中にいると視界が狭くなる', '東西の塔は、本棚か武器庫・回廊からしか行けない'],
     world: gc.world, table: { x: 1400, y: 1350, n: '晩餐のベル' }, spawn: { rx: 200, ry: 70 },
@@ -1135,7 +1168,7 @@ function grid(o) {
   });
   var al = atOf(gl), vl = ventOf(gl), tl = taskOf(al);
   var city = {
-    id: 'city', n: '深層研究都市', short: '研究都市', rec: [9, 12],
+    id: 'city', n: '深層研究都市', short: '研究都市', rec: [9, 20],
     d: '2本の長い廊下が走る巨大な地下施設。廊下は周期的に閉じ、動く歩道が流れる。部屋どうしは廊下を通らず行ける近道もある。',
     gim: ['高圧ゲート: 北廊下と南廊下に2か所ずつ、周期的に閉じる(予告の点滅あり)', '動く歩道: 流れに乗ると速く、逆らうと遅くなる', '廊下を通らない近道が部屋の間にある'],
     world: gl.world, table: { x: 1400, y: 160, n: '緊急ボタン' }, spawn: { rx: 200, ry: 70 },
@@ -1268,7 +1301,7 @@ function grid(o) {
 
 </script>
 <script>
-/* ウソツキ号 ゲームエンジン(ホスト側ロジック)。ブラウザと Node の両方で動く純粋ロジック。 */
+/* マスカレード ゲームエンジン(ホスト側ロジック)。ブラウザと Node の両方で動く純粋ロジック。 */
 (function (root) {
   'use strict';
   var Maps = root.Maps || (typeof require !== 'undefined' ? require('./maps.js') : null);
@@ -1378,10 +1411,10 @@ function grid(o) {
     { g: 'rule', k: 'killCd', label: '襲撃のクールダウン', min: 10, max: 60, step: 5, def: 25, unit: '秒' },
     { g: 'rule', k: 'killRange', label: '襲撃・射撃の距離', min: 60, max: 140, step: 10, def: 90, unit: '' },
     { g: 'rule', m: 'voice', k: 'voiceRange', label: '声の届く距離(近くだけのとき)', min: 200, max: 700, step: 50, def: 400, unit: '' },
-    { g: 'rule', k: 'speed', label: 'クルー・第三陣営の移動速度', min: 120, max: 260, step: 10, def: 190, unit: '' },
-    { g: 'rule', k: 'speedImp', label: 'インポスター陣営の移動速度', min: 120, max: 260, step: 10, def: 190, unit: '' },
-    { g: 'rule', k: 'vision', label: 'クルー・第三陣営の視界', min: 150, max: 450, step: 10, def: 270, unit: '' },
-    { g: 'rule', k: 'visionImp', label: 'インポスター陣営の視界', min: 150, max: 550, step: 10, def: 310, unit: '' },
+    // lv: 5段階のかんたん設定(ラベルと、そのときの値)。数字でこまかく決めることもできる
+    { g: 'rule', k: 'speed', label: '移動速度(全員共通)', min: 120, max: 260, step: 10, def: 190, unit: '', lv: { l: ['最小', '遅い', '普通', '速い', '最大'], v: [120, 155, 190, 225, 260] } },
+    { g: 'rule', k: 'vision', label: 'クルー・第三陣営の視界', min: 150, max: 450, step: 10, def: 270, unit: '', lv: { l: ['最小', '狭い', '普通', '広い', '最大'], v: [150, 210, 270, 360, 450] } },
+    { g: 'rule', k: 'visionImp', label: 'インポスター陣営の視界', min: 150, max: 550, step: 10, def: 310, unit: '', lv: { l: ['最小', '狭い', '普通', '広い', '最大'], v: [150, 230, 310, 430, 550] } },
     { g: 'rule', k: 'emergencyN', label: '緊急会議の回数(1人あたり)', min: 0, max: 3, step: 1, def: 1, unit: '回' },
     { g: 'rule', k: 'sabCd', label: '妨害のクールダウン', min: 20, max: 90, step: 5, def: 45, unit: '秒' },
     { g: 'rule', k: 'jamSec', label: '通信妨害の長さ', min: 10, max: 40, step: 5, def: 25, unit: '秒' },
@@ -2435,7 +2468,7 @@ function grid(o) {
     }
     if (state.phase !== 'play' || !p.alive) { b.w = 0; return; }
 
-    var R2 = E.ROLES[p.role], speed = (R2.team === 'impostor' ? (s.speedImp || s.speed) : s.speed) * 0.8;
+    var R2 = E.ROLES[p.role], speed = s.speed * 0.8;
     if (p.wv || (p.sh || 0) > now) { b.w = 0; return; } // 波動砲のため中・シールド展開中は動けない
     b.think -= dt;
 
@@ -2829,7 +2862,12 @@ var VOICE = (function () {
     var t = (range - d) / (range - near);
     return t * t * (3 - 2 * t);                    // なめらかに小さくなる
   }
-  return { gain: gain };
+  // 距離などで決まる音量 v に、聞く人が決めた「その人の音量」と「全体の音量」(どちらも 0〜2 倍)を掛ける
+  function mix(v, per, all) {
+    function c(x) { return typeof x === 'number' && isFinite(x) ? Math.max(0, Math.min(2, x)) : 1; }
+    return Math.max(0, v) * c(per) * c(all);
+  }
+  return { gain: gain, mix: mix };
 })();
 if (typeof module !== 'undefined' && module.exports && typeof window === 'undefined') module.exports = VOICE;
 
@@ -4216,7 +4254,7 @@ function vcTick() {
       if (phase === 'play' && !pos && prox) v = 0;
     }
     p.vol = v;
-    p.gain.gain.setTargetAtTime(v, t, 0.07);
+    p.gain.gain.setTargetAtTime(VOICE.mix(v, pid ? VOL.m[pid] : 1, VOL.all), t, 0.07);
     if (pid && v > 0.04 && vcRms(p.an, p.buf) > 0.02) hold[pid] = now + 350; // 声の合間にちらつかないよう、少し残す
     if (pid && v <= 0.04) delete hold[pid];
   });
@@ -4233,6 +4271,35 @@ function vcApplySpeaking() {
   var els = document.querySelectorAll('[data-pid]');
   for (var i = 0; i < els.length; i++) els[i].classList.toggle('speaking', !!S.speaking[els[i].getAttribute('data-pid')]);
 }
+/* ---------- 人ごとの音量(この端末にだけ保存) ---------- */
+var VOL = { m: {}, all: 1, prev: {} };
+function volLoad() {
+  try { var o = JSON.parse(store('uso.vol') || '{}'); if (o.m && typeof o.m === 'object') VOL.m = o.m; if (typeof o.all === 'number') VOL.all = o.all; } catch (e) {}
+}
+function volSave() { store('uso.vol', JSON.stringify({ m: VOL.m, all: VOL.all })); }
+function volRender() {
+  var box = $('vol-list'); if (!box) return;
+  clear(box);
+  var st = S.state;
+  function row(name, sw, get, set, mutable) {
+    var pct = h('span', { class: 'vol-pct', text: Math.round(get() * 100) + '%' });
+    var rg = h('input', { type: 'range', min: 0, max: 200, step: 5, value: Math.round(get() * 100), 'aria-label': name + 'の音量',
+      oninput: function () { var v = (+rg.value) / 100; set(v); pct.textContent = Math.round(v * 100) + '%'; mute.classList.toggle('off', v === 0); mute.textContent = v === 0 ? '解除' : 'ミュート'; volSave(); } });
+    var mute = h('button', { class: 'btn small' + (get() === 0 ? ' off' : ''), type: 'button', text: get() === 0 ? '解除' : 'ミュート', onclick: function () {
+      var v = get(); if (v === 0) { v = mutable.back || 1; } else { mutable.back = v; v = 0; }
+      set(v); rg.value = Math.round(v * 100); pct.textContent = Math.round(v * 100) + '%'; mute.classList.toggle('off', v === 0); mute.textContent = v === 0 ? '解除' : 'ミュート'; volSave();
+    } });
+    box.appendChild(h('div', { class: 'vol-row' }, [h('div', { class: 'vl' }, [sw, h('span', { text: name })]), h('div', { class: 'vr' }, [rg, pct, mute])]));
+  }
+  row('全員まとめて', null, function () { return VOL.all; }, function (v) { VOL.all = v; }, VOL.prev);
+  if (st && st.order) st.order.forEach(function (id) {
+    var p = st.players[id];
+    if (!p || p.left || p.bot || id === S.pid) return;
+    row(p.name, swatch(p), function () { return VOL.m[id] === undefined ? 1 : VOL.m[id]; }, function (v) { VOL.m[id] = v; }, (VOL.prev[id] = VOL.prev[id] || {}));
+  });
+  if (box.children.length < 2) box.appendChild(h('p', { class: 'small mute', text: '音量を変えられる相手が、まだいません。' }));
+}
+function volOpen() { volRender(); $('ov-vol').hidden = false; }
 // ボタンの見た目(待機室・ゲーム中・会議中)
 function vcRender() {
   var box = $('vc-box'); if (!box) return;
@@ -4244,6 +4311,7 @@ function vcRender() {
     bj.disabled = VC.busy;
     tx.textContent = VC.on ? (VC.noMic ? '聞くだけで参加中(マイクは使えません)。' : VC.muted ? '参加中。マイクはミュートです。' : '参加中。マイクがオンです。') : 'マイクを使って、近くの人と話せます。イヤホンをおすすめします。';
   }
+  ['btn-vol', 'btn-mt-vol', 'btn-vol-l'].forEach(function (id) { var b = $(id); if (b) b.hidden = !(VC.on && sup); });
   ['btn-mic', 'btn-mt-mic'].forEach(function (id) {
     var b = $(id); if (!b) return;
     b.hidden = !(VC.on && sup);
@@ -4765,6 +4833,14 @@ function stepper(def, val, canEdit) {
   var inc = h('button', { type: 'button', 'aria-label': def.label + 'を増やす', text: '+', disabled: !canEdit || val >= def.max, onclick: function () { setSetting(def.k, val + def.step); } });
   return h('div', { class: 'step' }, [dec, h('output', { text: val + def.unit }), inc]);
 }
+// 5段階のかんたん設定(最小〜最大)。下の数字でこまかく調整もできる
+function levelRow(d, val, canEdit) {
+  var seg = h('div', { class: 'seg lv', role: 'group', 'aria-label': d.label });
+  d.lv.l.forEach(function (name, i) {
+    seg.appendChild(h('button', { type: 'button', 'aria-pressed': val === d.lv.v[i] ? 'true' : 'false', disabled: !canEdit, text: name, onclick: function () { setSetting(d.k, d.lv.v[i]); } }));
+  });
+  return h('div', { class: 'set-row col' }, [h('div', { class: 'row between' }, [h('div', { class: 'lb', text: d.label }), stepper(d, val, canEdit)]), seg]);
+}
 function toggleRow(d, s, canEdit) {
   return h('div', { class: 'set-row' }, [h('div', { class: 'lb', text: d.label }),
     h('button', { class: 'switch', type: 'button', role: 'switch', 'aria-checked': s[d.k] ? 'true' : 'false', 'aria-label': d.label, disabled: !canEdit, onclick: function () { setSetting(d.k, !s[d.k]); } })]);
@@ -4820,6 +4896,7 @@ function renderSettings(st, canEdit) {
     body.appendChild(h('p', { class: 'small mute', text: '1人あたり: 共通 ' + nc + '個 + 長いタスク ' + nl + '個 + 短いタスク ' + Math.max(0, s.tasksPer - nc - nl) + '個(長いタスクは全体の半分まで)。「長いタスク」は2〜3か所をまわる手順のタスクです。' }));
   } else if (S.tab === 'rule') {
     E.SETTING_DEFS.filter(function (d) { return d.g === 'rule' && (!d.m || (d.m === 'doors' ? !!(E.GIM && E.GIM.doors) : d.m === 'voice' ? !!S.standalone : d.m === 'mapsab' ? E.mapSabs().length > 0 : d.m === E.M.id)); }).forEach(function (d) {
+      if (d.lv) { body.appendChild(levelRow(d, s[d.k], canEdit)); return; }
       body.appendChild(h('div', { class: 'set-row' }, [h('div', { class: 'lb', text: d.label }), stepper(d, s[d.k], canEdit)]));
     });
     E.TOGGLES.filter(function (d) { return !d.r && (d.m !== 'voice' || S.standalone); }).forEach(function (d) { body.appendChild(toggleRow(d, s, canEdit)); });
@@ -5342,9 +5419,9 @@ function playKillFx(st, me) {
     c.save(); c.translate(96, 118); c.scale(3.3, 3.3); drawBlob(c, 0, 0, C[killer.color].hex, 1, 0, 1, false, false); c.restore();
     c.strokeStyle = '#ff2f4a'; c.lineWidth = 7; c.lineCap = 'round';
     [[150, 40, 236, 96], [160, 28, 246, 84], [170, 16, 252, 72]].forEach(function (l) { c.beginPath(); c.moveTo(l[0], l[1]); c.lineTo(l[2], l[3]); c.stroke(); });
-    c.save(); c.translate(206, 150); c.scale(1.5, 1.5); drawBlob(c, 0, 0, C[me.color].hex, 1, 0, 1, false, true); c.restore();
+    c.save(); c.translate(188, 156); c.scale(1.25, 1.25); drawBlob(c, 0, 0, C[me.color].hex, 1, 0, 1, false, true); c.restore();
   } else {
-    c.save(); c.translate(130, 120); c.scale(3.2, 3.2); drawBlob(c, 0, 0, C[me.color].hex, 1, 0, 1, false, true); c.restore();
+    c.save(); c.translate(122, 128); c.scale(2.5, 2.5); drawBlob(c, 0, 0, C[me.color].hex, 1, 0, 1, false, true); c.restore();
   }
   $('fx-kt').textContent = mis ? '誤射…' : 'やられた…';
   if (kd.how === 'bite') $('fx-kt').textContent = '毒が回った…';
@@ -5362,7 +5439,7 @@ function playMeetFx(st, m) {
   c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cvs.width, cvs.height);
   var box = $('fx-meet'); box.classList.toggle('body', body); box.classList.toggle('btn', !body);
   if (body && vic) {
-    c.save(); c.translate(130, 84); c.scale(3, 3); drawBlob(c, 0, 0, C[vic.color].hex, 1, 0, 1, false, true); c.restore();
+    c.save(); c.translate(124, 92); c.scale(2.3, 2.3); drawBlob(c, 0, 0, C[vic.color].hex, 1, 0, 1, false, true); c.restore();
   } else {
     c.fillStyle = '#4a3f6e'; c.beginPath(); c.ellipse(130, 96, 100, 46, 0, 0, 6.2832); c.fill();
     c.strokeStyle = '#0b1020'; c.lineWidth = 5; c.stroke();
@@ -5581,6 +5658,7 @@ function kbPress(g) {
   return !!list.length;
 }
 function kbEscape() {
+  if (!$('ov-vol').hidden) { $('ov-vol').hidden = true; return true; }
   if (!$('ov-keys').hidden) { $('ov-keys').hidden = true; return true; }
   if (!$('ov-sound').hidden) { $('ov-sound').hidden = true; return true; }
   var o = S.overlay;
@@ -5673,24 +5751,70 @@ function shade(hex, amt) {
   return 'rgb(' + r + ',' + g + ',' + b + ')';
 }
 function ell(c, x, y, rx, ry) { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 6.2832); }
+// キャラクター「かめん狐(めんこ)」: 仮面をつけた、まるいキツネ風の生き物。体の色がプレイヤーの色。
+//   f: 向き(1=右 -1=左)、ph: 歩きの位相、ghost: 幽霊(浮かぶ)、dead: 倒れた姿
 function drawBlob(c, x, y, hex, f, ph, alpha, ghost, dead) {
   c.save(); c.globalAlpha = alpha; c.translate(x, y);
-  if (!dead) { c.fillStyle = 'rgba(0,0,0,.3)'; ell(c, 0, ghost ? 26 : 18, ghost ? 11 : 15, 5); c.fill(); }
+  var OUT = 'rgba(8,12,24,.9)', light = shade(hex, 0.3), dark = shade(hex, -0.3), CREAM = '#fbf6ea';
+  if (!dead) { c.fillStyle = 'rgba(0,0,0,.3)'; ell(c, 0, ghost ? 29 : 24, ghost ? 11 : 15, 5); c.fill(); }
   if (ghost) c.translate(0, -8 + Math.sin(ph * 0.4) * 3);
-  if (dead) { c.translate(0, 8); c.scale(1.25, 0.55); }
-  var sw = Math.sin(ph) * 4;
-  if (!ghost && !dead) { c.fillStyle = shade(hex, -0.3); ell(c, -7 + sw, 15, 6.5, 4.5); c.fill(); ell(c, 7 - sw, 15, 6.5, 4.5); c.fill(); }
-  c.fillStyle = hex; ell(c, 0, 0, 17, 19); c.fill();
-  c.fillStyle = shade(hex, 0.25); ell(c, -6 * f, -7, 6, 8); c.fill();
-  c.lineWidth = 2.5; c.strokeStyle = 'rgba(8,12,24,.9)'; ell(c, 0, 0, 17, 19); c.stroke();
-  c.fillStyle = shade(hex, -0.35); c.beginPath(); c.moveTo(-3, -18); c.lineTo(0, -27 + (ghost ? 2 : 0)); c.lineTo(5, -18); c.closePath(); c.fill();
-  if (dead) {
-    c.strokeStyle = '#0b1020'; c.lineWidth = 2.5;
-    [-6, 6].forEach(function (ex) { c.beginPath(); c.moveTo(ex - 3, -7); c.lineTo(ex + 3, -1); c.moveTo(ex + 3, -7); c.lineTo(ex - 3, -1); c.stroke(); });
-  } else {
-    c.fillStyle = '#fff'; ell(c, -6 + f * 3, -4, 5.4, 7); c.fill(); ell(c, 6 + f * 3, -4, 5.4, 7); c.fill();
-    c.fillStyle = '#0b1020'; c.beginPath(); c.arc(-6 + f * 5, -3, 2.6, 0, 6.2832); c.fill(); c.beginPath(); c.arc(6 + f * 5, -3, 2.6, 0, 6.2832); c.fill();
+  if (dead) { // 倒れた姿: 横たわって、天使の輪が浮かぶ
+    c.fillStyle = 'rgba(0,0,0,.3)'; ell(c, 0, 12, 27, 6); c.fill();
+    c.translate(0, 4); c.rotate(f * 1.48);
+    c.strokeStyle = '#ffe27a'; c.lineWidth = 2.6; ell(c, 0, -37, 8.5, 3); c.stroke();
   }
+  var sw = Math.sin(ph), walking = !ghost && !dead;
+  // しっぽ(進む向きと反対側。歩くとゆれる)
+  c.save(); c.translate(-f * 14, 10); c.rotate(-f * (0.75 + (dead ? 0 : Math.sin(ph * 0.5) * 0.18)));
+  c.fillStyle = hex; ell(c, 0, -11, 6.2, 12.5); c.fill(); c.lineWidth = 2.2; c.strokeStyle = OUT; ell(c, 0, -11, 6.2, 12.5); c.stroke();
+  c.fillStyle = CREAM; c.beginPath(); c.ellipse(0, -20.5, 4.6, 4.4, 0, 0, 6.2832); c.fill();
+  c.restore();
+  // 耳(体のうしろに描く)
+  [-1, 1].forEach(function (sd) {
+    c.fillStyle = hex; c.beginPath(); c.moveTo(sd * 14, -10); c.quadraticCurveTo(sd * 16, -22, sd * 10.5, -30); c.quadraticCurveTo(sd * 5, -25, sd * 2, -17); c.closePath(); c.fill();
+    c.lineWidth = 2.2; c.strokeStyle = OUT; c.stroke();
+    c.fillStyle = '#ffc9d3'; c.beginPath(); c.moveTo(sd * 12, -14.5); c.quadraticCurveTo(sd * 13, -21, sd * 10, -25); c.quadraticCurveTo(sd * 7, -21, sd * 6, -16.5); c.closePath(); c.fill();
+  });
+  // あし(歩くと、かわりばんこに前後にゆれる)
+  if (walking) {
+    [-1, 1].forEach(function (sd) {
+      var lift = Math.max(0, sw * sd) * 3, off = sw * sd * 2.5;
+      c.save(); c.translate(sd * 6.5 + off * 0.4, 14 - lift);
+      c.fillStyle = dark; c.beginPath(); c.moveTo(-3.2, 0); c.lineTo(3.2, 0); c.lineTo(3.4, 7); c.quadraticCurveTo(3.6, 10.2, 0.4, 10.2); c.lineTo(-4.2 * 1, 10.2); c.quadraticCurveTo(-3.6, 8, -3.2, 0); c.closePath(); c.fill();
+      c.lineWidth = 2; c.strokeStyle = OUT; c.stroke();
+      c.fillStyle = CREAM; ell(c, f * 0.8, 9.4, 4.4, 2.4); c.fill();   // 足先の白
+      c.restore();
+    });
+  }
+  // 体
+  c.fillStyle = hex; ell(c, 0, 0, 17, 19); c.fill();
+  c.fillStyle = CREAM; ell(c, 0, 9.5, 9, 8.5); c.fill();                          // おなかの白
+  c.fillStyle = light; ell(c, -7 * f, -11, 4.5, 5); c.fill();                      // つや
+  c.lineWidth = 2.5; c.strokeStyle = OUT; ell(c, 0, 0, 17, 19); c.stroke();
+  // うで(あしと逆に振る)。体の前、よこに出す
+  [-1, 1].forEach(function (sd) {
+    var swing = walking ? sw * sd * -0.55 : ghost ? Math.sin(ph * 0.4 + sd) * 0.3 : 0;
+    c.save(); c.translate(sd * 15.5, -3); c.rotate(sd * -0.3 + swing * -sd * 0 + swing);
+    c.fillStyle = hex; ell(c, 0, 6.5, 4.4, 8.8); c.fill(); c.lineWidth = 2.1; c.strokeStyle = OUT; ell(c, 0, 6.5, 4.4, 8.8); c.stroke();
+    c.fillStyle = CREAM; c.beginPath(); c.arc(0, 13.2, 3.3, 0, 6.2832); c.fill(); c.lineWidth = 1.7; c.stroke();   // 手の白
+    c.restore();
+  });
+  // 顔(小さめ)。仮面・目・口は、向きに合わせて少しずれる
+  c.save(); c.translate(f * 1.2, -5.5); c.scale(0.68, 0.68);
+  c.beginPath(); c.moveTo(-15, -3); c.bezierCurveTo(-13, -11, -4, -11, 0, -6); c.bezierCurveTo(4, -11, 13, -11, 15, -3);
+  c.bezierCurveTo(14, 5, 6, 7, 0, 2); c.bezierCurveTo(-6, 7, -14, 5, -15, -3); c.closePath();
+  c.fillStyle = CREAM; c.fill(); c.lineWidth = 2.2; c.strokeStyle = OUT; c.stroke();
+  c.fillStyle = '#e0b341'; c.beginPath(); c.moveTo(0, -11.5); c.lineTo(3, -8.5); c.lineTo(0, -5.5); c.lineTo(-3, -8.5); c.closePath(); c.fill();   // かざりの宝石
+  if (dead) {
+    c.strokeStyle = '#0b1020'; c.lineWidth = 2.8;
+    [-6, 6].forEach(function (ex) { c.beginPath(); c.moveTo(ex - 3, -4); c.lineTo(ex + 3, 2); c.moveTo(ex + 3, -4); c.lineTo(ex - 3, 2); c.stroke(); });
+  } else {
+    c.fillStyle = '#0b1020'; ell(c, -6 + f * 1.5, -1, 3.6, 4.6); c.fill(); ell(c, 6 + f * 1.5, -1, 3.6, 4.6); c.fill();
+    c.fillStyle = '#fff'; c.beginPath(); c.arc(-7 + f * 2.2, -2.8, 1.4, 0, 6.2832); c.fill(); c.beginPath(); c.arc(5 + f * 2.2, -2.8, 1.4, 0, 6.2832); c.fill();
+    c.strokeStyle = '#0b1020'; c.lineWidth = 1.8; c.lineCap = 'round';
+    c.beginPath(); c.arc(-2.4 + f * 1.5, 9.5, 2.4, 0.1, 3.0); c.stroke(); c.beginPath(); c.arc(2.4 + f * 1.5, 9.5, 2.4, 0.1, 3.0); c.stroke(); c.lineCap = 'butt';  // 口(ちいさな ω)
+  }
+  c.restore();
   c.restore();
 }
 function label(c, text, x, y, color) {
@@ -5953,7 +6077,17 @@ function render(dt) {
   function visible(x, y) { return seeAll || Math.hypot(x - S.me.x, y - S.me.y) <= vr + 12; }
   // 遺体
   drawTrails(c, st, visible, now);
-  st.bodies.forEach(function (b) { if (visible(b.x, b.y)) { var p = st.players[b.p]; if (p) drawBlob(c, b.x, b.y, C[p.color].hex, 1, 0, 1, false, true); } });
+  st.bodies.forEach(function (b) {
+    if (!visible(b.x, b.y)) return;
+    var p = st.players[b.p]; if (!p) return;
+    var pulse = 0.5 + 0.5 * Math.sin(now / 200), ready = !!(S.nearInfo && S.nearInfo.body === b.id && me && me.alive);
+    if (ready) { // 通報できる距離にいる遺体だけ、赤く光る
+      var gl = c.createRadialGradient(b.x, b.y + 8, 4, b.x, b.y + 8, 66); gl.addColorStop(0, 'rgba(255,60,80,' + (0.5 + 0.25 * pulse) + ')'); gl.addColorStop(1, 'rgba(255,60,80,0)');
+      c.fillStyle = gl; c.fillRect(b.x - 70, b.y - 58, 140, 136);
+      c.strokeStyle = 'rgba(255,90,110,' + (0.5 + 0.45 * pulse) + ')'; c.lineWidth = 3.5; c.beginPath(); c.ellipse(b.x, b.y + 12, 31 + 6 * pulse, 12.5 + 2.5 * pulse, 0, 0, 6.2832); c.stroke();
+    }
+    drawBlob(c, b.x, b.y, C[p.color].hex, 1, 0, 1, false, true);
+  });
   // プレイヤー(奥から手前の順)
   var list = [];
   st.order.forEach(function (id) {
@@ -6103,7 +6237,7 @@ function moveMe(dt) {
   if (!ghost && me && (me.wv || (me.sh || 0) > tnow())) { S.me.w = 0; return; }
   if (len >= 0.12) {
     if (len > 1) { v[0] /= len; v[1] /= len; }
-    var sp = (teamOf(me) === 'impostor' ? (st.settings.speedImp || st.settings.speed) : st.settings.speed) * (ghost ? 1.15 : 1);
+    var sp = st.settings.speed * (ghost ? 1.15 : 1);
     var nx = S.me.x + v[0] * sp * dt, ny = S.me.y + v[1] * sp * dt;
     if (ghost) { S.me.x = Math.max(20, Math.min(E.WORLD.w - 20, nx)); S.me.y = Math.max(20, Math.min(E.WORLD.h - 20, ny)); }
     else { if (E.canMove(S.me.x, S.me.y, nx, S.me.y, 14)) S.me.x = nx; if (E.canMove(S.me.x, S.me.y, S.me.x, ny, 14)) S.me.y = ny; }
@@ -6284,6 +6418,7 @@ function syncActionButtons(list) {
     if (sm.textContent !== sub) sm.textContent = sub;
     if (S.pc) { var kb = b.querySelector('.kb'), kt = kbHint(a.id); if (kb && kb.textContent !== kt) kb.textContent = kt; }
     b.classList.toggle('off', !a.ready);
+    b.classList.toggle('alarm', a.id === 'report' && !!a.ready);
     b.style.setProperty('--cd', String(a.cd || 0));
   });
 }
@@ -6422,6 +6557,15 @@ function bindUi() {
   $('btn-local').addEventListener('click', function () { readName(); startLocal(); });
   $('btn-leave').addEventListener('click', function () { leaveRoom(); renderUI(); });
   $('btn-addbot').addEventListener('click', addBot);
+  // ロゴのキャラクターと、タブのアイコン
+  (function () {
+    function art(cv, hex, sc) { var c = cv.getContext('2d'); c.clearRect(0, 0, cv.width, cv.height); c.save(); c.translate(cv.width * 0.58, cv.height * 0.56); c.scale(sc, sc); drawBlob(c, 0, 0, hex, 1, 0, 1, false, false); c.restore(); }
+    try {
+      art($('logo-art'), C[0].hex, 2.7);
+      var ic = document.createElement('canvas'); ic.width = ic.height = 64; art(ic, C[0].hex, 1.3);
+      var lk = document.createElement('link'); lk.rel = 'icon'; lk.href = ic.toDataURL('image/png'); document.head.appendChild(lk);
+    } catch (e) {}
+  })();
   $('btn-lock').addEventListener('click', function () { var st = S.hostState; if (!st || !S.isHost) return; st.locked = !st.locked; toast(st.locked ? '参加を締め切りました。' : '参加を開けました。'); touch(); });
   $('btn-fillbot').addEventListener('click', function () { var st = S.hostState; if (!st) return; while (st.order.length < 4) { var before = st.order.length; addBot(); if (st.order.length === before) break; } });
   $('btn-start').addEventListener('click', function () {
@@ -6447,6 +6591,9 @@ function bindUi() {
   $('btn-mt-map').addEventListener('click', openMeetingMap);
   $('btn-vc').addEventListener('click', function () { if (VC.on) vcStop(); else vcStart(); });
   ['btn-mic', 'btn-mt-mic'].forEach(function (id) { $(id).addEventListener('click', function () { vcSetMuted(!VC.muted); }); });
+  volLoad();
+  ['btn-vol', 'btn-mt-vol', 'btn-vol-l'].forEach(function (id) { $(id).addEventListener('click', volOpen); });
+  $('btn-vol-x').addEventListener('click', function () { $('ov-vol').hidden = true; });
   $('btn-skip').addEventListener('click', function () { sendAct({ type: 'vote', t: 'skip' }); renderMeeting(); });
   $('btn-chat').addEventListener('click', function () { var i = $('chat-inp'); sendChat(i.value); i.value = ''; renderChat(); });
   $('chat-inp').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('btn-chat').click(); } });
