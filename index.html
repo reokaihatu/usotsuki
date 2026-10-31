@@ -397,6 +397,12 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 #app.short.land .map-box .mapbox { grid-row: 2 / span 2; margin: 0; }
 #app.short.land .map-tasks { grid-column: 2; grid-row: 2; grid-template-columns: 1fr; margin-top: 0; }
 #app.short.land #map-legend { grid-column: 2; grid-row: 3; }
+#app.short.land #sab-info { grid-column: 2; grid-row: 2; grid-template-columns: 1fr; margin-top: 0; }
+#app.short.land #sab-status { grid-column: 2; grid-row: 3; }
+.sabmap { cursor: pointer; touch-action: manipulation; }
+#app.short .mapbox.sabmap { max-height: 310px; }
+#sab-info .mt-row b { color: var(--imp); }
+#sab-info .mt-row small { opacity: .7; }
 
 .code-chip { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-right: 12px; }
 .code-chip b { font-family: var(--font-d); font-size: 24px; letter-spacing: .18em; color: var(--accent); }
@@ -602,9 +608,11 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 
   <!-- 妨害の選択 -->
   <div id="ov-sab" class="ov" hidden>
-    <div class="box">
+    <div class="box map-box">
       <div class="game-head"><h2 style="font-size:24px">妨害を選ぶ</h2><button id="btn-sab-x" class="btn small" type="button">やめる</button></div>
-      <div id="sab-list" class="stack"></div>
+      <canvas id="cv-sab" class="mapbox sabmap" width="800" height="500"></canvas>
+      <div id="sab-info" class="small map-tasks"></div>
+      <div id="sab-status" class="small mute"></div>
     </div>
   </div>
 
@@ -1275,6 +1283,12 @@ function grid(o) {
     assassin: { n: 'イビルゲッサー', team: 'impostor', tasks: false, threat: true, kill: true, vent: true, sab: true, guess: true,
       d: 'インポスター陣営。会議中に相手の役職を言い当てて撃てる。外すと自分が倒れる。', goal: 'インポスターと同じ。',
       abil: ['襲撃・ベント・妨害(インポスターと同じ)', '役職当て: 会議中に相手と役職を指定して撃つ。当たれば相手が、外れば自分が倒れる(回数制限あり)'] },
+    vampire: { n: 'ヴァンパイア', team: 'impostor', tasks: false, threat: true, kill: true, bite: true, vent: true, sab: true,
+      d: 'インポスター陣営。噛みついた相手は、時間がたってから倒れる。非インポスターを1人だけ「眷属」にできる。', goal: '生き残りの数で、クルー側と並ぶか上回る。',
+      abil: ['噛みつき: 近くの1人に噛みつく。相手は設定の秒数のあと、その場で倒れる(遺体が現れる)', '眷属化: 非インポスターの1人を眷属にする(ゲーム中1回)', 'ベント・妨害(インポスターと同じ)', '人数モニターに映らず、緊急事態の修理もできない'] },
+    thrall: { n: '眷属', team: 'impostor', tasks: false, threat: true, kill: true,
+      d: 'ヴァンパイアに眷属にされた。襲撃できるようになったが、視界は停電のときと同じに狭くなる。', goal: 'インポスター陣営と同じ。生き残りの数で、クルー側と並ぶか上回る。',
+      abil: ['襲撃: 近くの1人を倒す', 'わかる仲間はヴァンパイアだけ(ほかのインポスターは見分けられない)', '人数モニターに映らず、緊急事態の修理もできない'] },
     jackal: { n: 'ジャッカル', team: 'neutral', tasks: false, threat: true, kill: true, anyKill: true, jk: true,
       d: '誰とも組まない単独の殺し屋。', goal: 'インポスターがいない状態で、生き残りの半数以上を自分たちにする。',
       abil: ['襲撃: 近くの1人を倒す(インポスター陣営も対象)'] },
@@ -1300,7 +1314,7 @@ function grid(o) {
       d: '誰とも組まない単独の殺し屋。壁を貫通するビームで倒していく。', goal: 'インポスターがいない状態で、生き残りの半数以上を自分たちにする。',
       abil: ['波動砲: 向いている方向に、壁を貫通するビームを放つ。ためているあいだは動けない。触れた人は(インポスター陣営も)倒れる'] }
   };
-  var ROLE_ORDER = ['impostor', 'assassin', 'wavecannon', 'jackal', 'wavejackal', 'arsonist', 'jester', 'detective', 'sheriff', 'guardian', 'watcher', 'engineer', 'fortune', 'niceguesser', 'shielder'];
+  var ROLE_ORDER = ['impostor', 'assassin', 'wavecannon', 'vampire', 'jackal', 'wavejackal', 'arsonist', 'jester', 'detective', 'sheriff', 'guardian', 'watcher', 'engineer', 'fortune', 'niceguesser', 'shielder'];
 
   // ---------- 設定 ----------
   var SETTING_DEFS = [
@@ -1308,6 +1322,7 @@ function grid(o) {
     { g: 'role', k: 'r_impostor', role: 'impostor', label: 'インポスター', min: 0, max: 4, step: 1, def: 1, unit: '人' },
     { g: 'role', k: 'r_assassin', role: 'assassin', label: 'イビルゲッサー', min: 0, max: 3, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_wavecannon', role: 'wavecannon', label: '波動砲', min: 0, max: 3, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_vampire', role: 'vampire', label: 'ヴァンパイア', min: 0, max: 2, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_jackal', role: 'jackal', label: 'ジャッカル', min: 0, max: 2, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_wavejackal', role: 'wavejackal', label: '波動砲ジャッカル', min: 0, max: 2, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_arsonist', role: 'arsonist', label: '放火魔', min: 0, max: 2, step: 1, def: 0, unit: '人' },
@@ -1358,6 +1373,7 @@ function grid(o) {
     { g: 'abil', r: 'niceguesser', k: 'nicePerMeeting', label: '看破できる回数(1回の会議)', min: 1, max: 3, step: 1, def: 1, unit: '回' },
     { g: 'abil', r: ['wavecannon', 'wavejackal'], k: 'waveCharge', label: '波動砲を放つまでの時間(ため)', min: 1, max: 8, step: 1, def: 3, unit: '秒' },
     { g: 'abil', r: ['wavecannon', 'wavejackal'], k: 'waveCd', label: '波動砲のクールタイム', min: 10, max: 90, step: 5, def: 35, unit: '秒' },
+    { g: 'abil', r: 'vampire', k: 'vampireDelay', label: '噛んでから倒れる(遺体が出る)までの時間', min: 5, max: 60, step: 5, def: 20, unit: '秒' },
     { g: 'abil', r: 'shielder', k: 'shieldSec', label: 'シールドの展開時間', min: 2, max: 15, step: 1, def: 8, unit: '秒' },
     { g: 'abil', r: 'shielder', k: 'shieldCd', label: 'シールドのクールタイム', min: 10, max: 60, step: 5, def: 25, unit: '秒' }
   ];
@@ -1366,6 +1382,7 @@ function grid(o) {
     { k: 'anonVotes', label: '誰が誰に投票したかを隠す', def: false },
     { k: 'sheriffNeutral', r: 'sheriff', label: 'シェリフ: 第三陣営も撃って倒せる(オフなら撃っても倒せず、シェリフが倒れる)', def: true },
     { k: 'sheriffMisBoth', r: 'sheriff', label: 'シェリフ: クルー陣営を撃ったとき、相手も一緒に倒れる(オフなら自分だけ)', def: false },
+    { k: 'vampireThrall', r: 'vampire', label: 'ヴァンパイア: 眷属を作れる(オフなら噛みつくだけ)', def: true },
     { k: 'waveAlly', r: ['wavecannon', 'wavejackal'], label: '波動砲: 仲間(同じ陣営)にも当たる', def: true },
     { k: 'voiceProx', m: 'voice', label: 'ボイスチャット: ゲーム中は近くの人の声だけ聞こえる(オフなら常に全員)', def: true }
   ];
@@ -1518,6 +1535,15 @@ function grid(o) {
     return best;
   }
   function dist(a, b) { var dx = a.x - b.x, dy = a.y - b.y; return Math.sqrt(dx * dx + dy * dy); }
+  // 仲間の正体がわかるか。眷属は自分のヴァンパイアしかわからず、ほかのインポスターには眷属がわからない(ヴァンパイア本人にはわかる)
+  function knowsAlly(v, q) {
+    if (!v || !q || v.id === q.id || !v.role || !q.role) return false;
+    if (ROLES[v.role].team !== 'impostor' || ROLES[q.role].team !== 'impostor') return false;
+    if (v.role === 'thrall') return q.id === v.tv;
+    if (q.role === 'thrall') return q.tv === v.id;
+    return true;
+  }
+  function hiddenFromCount(role) { return role === 'vampire' || role === 'thrall'; }
   // 人数モニター: 部屋ごとの人数。生きている人と、遺体(1つにつき1人)を数える。通路にいる人は数えない
   function roomCounts(state, posOf) {
     useMap(state.settings.map);
@@ -1525,11 +1551,11 @@ function grid(o) {
     ROOMS.forEach(function (r) { out[r.id] = 0; });
     state.order.forEach(function (id) {
       var p = state.players[id];
-      if (!p || !p.alive || p.left || !p.role) return;
+      if (!p || !p.alive || p.left || !p.role || hiddenFromCount(p.role)) return;
       var pos = posOf(id); if (!pos) return;
       var r = roomAt(pos.x, pos.y); if (r) out[r.id]++;
     });
-    (state.bodies || []).forEach(function (b) { var r = roomAt(b.x, b.y); if (r) out[r.id]++; });
+    (state.bodies || []).forEach(function (b) { var bp = state.players[b.p]; if (bp && hiddenFromCount(bp.role)) return; var r = roomAt(b.x, b.y); if (r) out[r.id]++; });
     return out;
   }
 
@@ -1539,7 +1565,7 @@ function grid(o) {
       v: 1, rev: 0, now: 0, epoch: epoch || 1, hostId: hostId, phase: 'lobby',
       settings: settings ? Object.assign(defaultSettings(), settings) : defaultSettings(),
       players: {}, order: [], ack: {}, bodies: [], meeting: null, winner: null,
-      tasksTotal: 0, tasksDone: 0, blackoutUntil: 0, jamUntil: 0, mapSab: null, crisis: null, doors: [], roundStart: 0, meetingCount: 0, nextBody: 1, round: 0
+      tasksTotal: 0, tasksDone: 0, blackoutUntil: 0, jamUntil: 0, mapSab: null, crisis: null, doors: [], trails: [], roundStart: 0, meetingCount: 0, nextBody: 1, round: 0
     };
   }
   function freeColor(state) {
@@ -1583,7 +1609,7 @@ function grid(o) {
       if (ROLES[r].team === 'impostor') imp += c[r];
     });
     if (sum > n) return '役職の合計(' + sum + '人)が参加人数(' + n + '人)を超えています。';
-    if (threats < 1) return 'インポスター・イビルゲッサー・波動砲・ジャッカル・波動砲ジャッカル・放火魔のどれかを1人以上入れてください。';
+    if (threats < 1) return 'インポスター・イビルゲッサー・波動砲・ヴァンパイア・ジャッカル・波動砲ジャッカル・放火魔のどれかを1人以上入れてください。';
     if (imp * 2 >= n) return 'インポスター陣営が多すぎます(参加人数の半分未満にしてください)。';
     return null;
   }
@@ -1617,7 +1643,7 @@ function grid(o) {
     state.order.forEach(function (id) {
       var p = state.players[id];
       p.alive = true; p.left = false; p.notes = []; p.msgs = []; p.tp = null; p.kd = null;
-      ['ck', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'tasks', 'wv', 'wf', 'wn', 'sh', 'fr'].forEach(function (k) { delete p[k]; });
+      ['ck', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'tasks', 'wv', 'wf', 'wn', 'sh', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc'].forEach(function (k) { delete p[k]; });
     });
     // タスクの割り当て: 全員共通 + 長いタスク(複数の場所) + 短いタスク。長いタスクは全体の半分まで
     var singles = [], longs = [];
@@ -1660,7 +1686,7 @@ function grid(o) {
       tp(state.players[id], sp.x, sp.y);
     });
     state.phase = 'play'; state.round++; state.bodies = []; state.meeting = null; state.winner = null;
-    state.blackoutUntil = 0; state.jamUntil = 0; state.mapSab = null; state.crisis = null; state.doors = []; state.roundStart = now; state.meetingCount = 0; state.nextBody = 1;
+    state.blackoutUntil = 0; state.jamUntil = 0; state.mapSab = null; state.crisis = null; state.doors = []; state.trails = []; state.roundStart = now; state.meetingCount = 0; state.nextBody = 1;
     recalcTasks(state);
     return null;
   }
@@ -1846,6 +1872,7 @@ function grid(o) {
       if (!T || !T.alive || T.left || T.id === pid) return { ok: false };
       if (!R.anyKill && ROLES[T.role].team === 'impostor') return { ok: false };
       if (!nearOk(ctx, pid, T.id, rng)) return { ok: false, err: 'far' };
+      if (R.bite && T.bt) return { ok: false, err: 'bitten' };
       p.ck = now + s.killCd * 1000;
       if ((T.sh || 0) > now) {
         pushMsg(T, 'シールドが襲撃を防いだ。');
@@ -1858,7 +1885,27 @@ function grid(o) {
         pushMsg(p, '襲撃は何かに阻まれた。');
         return { ok: true, blocked: true };
       }
+      if (R.bite) { // ヴァンパイア: 噛みつき。倒れるのは、設定の時間がたってから
+        var bp0 = ctx.pos(T.id) || { x: TABLE.x, y: TABLE.y }, bx = Math.round(bp0.x), by0 = Math.round(bp0.y);
+        T.bt = { by: pid, at: now, until: now + s.vampireDelay * 1000, x: bx, y: by0, tr: [[bx, by0]] };
+        pushMsg(p, COLORS[T.color].name + 'の' + T.name + 'に噛みついた。' + s.vampireDelay + '秒後に倒れる。');
+        return { ok: true, bite: true };
+      }
       killBody(state, ctx, T, pid, 'kill');
+      checkWin(state, now);
+      return { ok: true };
+    }
+
+    if (a.type === 'thrall') { // 眷属化: 非インポスターを1人だけ
+      if (p.role !== 'vampire' || p.tu || !s.vampireThrall) return { ok: false };
+      if (!T || !T.alive || T.left || T.id === pid || !T.role || ROLES[T.role].team === 'impostor') return { ok: false };
+      if (!nearOk(ctx, pid, T.id, rng)) return { ok: false, err: 'far' };
+      ['u', 'gs', 'gm', 'dz', 'gt', 'gu', 'fr', 'ws', 'sh', 'wv', 'tasks', 'ca', 'cs', 'cq', 'cp', 'bt'].forEach(function (k) { delete T[k]; });
+      p.tu = 1; p.tt = T.id;
+      T.role = 'thrall'; T.tv = pid; T.rc = (T.rc || 0) + 1; T.ck = now + s.killCd * 1000;
+      pushMsg(T, 'あなたは ' + COLORS[p.color].name + 'の' + p.name + '(ヴァンパイア)の眷属になった。');
+      pushMsg(p, COLORS[T.color].name + 'の' + T.name + 'を眷属にした。');
+      recalcTasks(state);
       checkWin(state, now);
       return { ok: true };
     }
@@ -2065,11 +2112,13 @@ function grid(o) {
     state.progSnap = [state.tasksDone, state.tasksTotal]; // 「会議のあとに表示」用: 会議のたびに最新の進み具合を記録する
     state.meeting = { n: state.meetingCount, caller: caller, bodyOf: bodyOf, stage: 'discuss', end: now + s.discussSec * 1000, votes: {}, log: [], res: null };
     state.bodies = []; state.jamUntil = 0; state.mapSab = null; state.doors = []; // 停電は会議をまたいで続く
+    state.trails = (state.trails || []).filter(function (e) { return !e.sh; }); // 足跡は、次の会議で消える
     // 緊急事態は会議のあいだ止まり、会議が終わると残り時間から再開する
     if (state.crisis && !state.crisis.pause) state.crisis.pause = Math.max(1000, state.crisis.until - now);
     state.order.forEach(function (id) {
       var p = state.players[id];
       p.gm = 0; p.shield = false; p.ws = 0; p.wv = null; p.sh = 0;
+      if (p.bt && p.bt.until) { p.bt.rem = Math.max(1000, p.bt.until - now); p.bt.until = 0; } // 噛まれた人の時間は、会議のあいだ止まる
       if (p.role === 'guardian') { p.gu = false; p.gt = null; }
     });
   }
@@ -2097,6 +2146,8 @@ function grid(o) {
   function endMeeting(state, ctx) {
     var now = ctx.now, s = state.settings;
     state.phase = 'play'; state.roundStart = now; state.meeting.stage = 'closed';
+    (state.trails || []).forEach(function (e) { e.sh = true; }); // 会議のあと、足跡が見えるようになる
+    state.order.forEach(function (id) { var q = state.players[id]; if (q && q.bt && !q.bt.until) { q.bt.until = now + (q.bt.rem || 5000); q.bt.tr.push(null); } });
     if (state.crisis && state.crisis.pause) { state.crisis.until = now + state.crisis.pause; state.crisis.pause = 0; }
     var al = alivePlayers(state);
     al.forEach(function (p, i) {
@@ -2129,6 +2180,31 @@ function grid(o) {
         if (q && q.wv && now >= q.wv.fire) { if (q.alive && !q.left) fireWave(state, ctx, q); else q.wv = null; changed = true; }
       });
       if (state.mapSab && state.mapSab.until <= now) { state.mapSab = null; changed = true; }
+      // ヴァンパイアに噛まれた人: 時間がくると倒れる。それまでの足取りを、あとの会議のために記録する
+      state.order.forEach(function (id) {
+        var q = state.players[id];
+        if (!q || !q.bt) return;
+        if (!q.alive || q.left) { delete q.bt; return; }
+        if (!q.bt.until) return; // 会議のあいだは止まっている
+        var bt = q.bt, pp = ctx.pos(id);
+        if (now >= bt.until) {
+          var dp = pp || { x: bt.x, y: bt.y }, trd = bt.tr.slice();
+          if (trd.length && trd[trd.length - 1] && dist({ x: trd[trd.length - 1][0], y: trd[trd.length - 1][1] }, dp) > 350) trd.push(null);
+          trd.push([Math.round(dp.x), Math.round(dp.y)]);
+          killBody(state, ctx, q, null, 'bite');
+          (state.trails = state.trails || []).push({ v: id, c: q.color, tr: trd, sh: false });
+          delete q.bt; changed = true;
+          checkWin(state, now);
+        } else if (pp && bt.tr.length < 150) {
+          var lp = bt.tr[bt.tr.length - 1];
+          if (!lp) { bt.tr.push([Math.round(pp.x), Math.round(pp.y)]); }
+          else {
+            var dd = dist({ x: lp[0], y: lp[1] }, pp);
+            if (dd > 350) { bt.tr.push(null); bt.tr.push([Math.round(pp.x), Math.round(pp.y)]); }
+            else if (dd >= 45) bt.tr.push([Math.round(pp.x), Math.round(pp.y)]);
+          }
+        }
+      });
     }
     // 緊急事態を直せないまま時間切れ → インポスターの勝ち
     if (state.phase === 'play' && state.crisis && !state.crisis.pause && now >= state.crisis.until) {
@@ -2154,13 +2230,13 @@ function grid(o) {
     return true;
   }
   function backToLobby(state) {
-    state.phase = 'lobby'; state.meeting = null; state.winner = null; state.bodies = []; state.blackoutUntil = 0; state.jamUntil = 0; state.mapSab = null; state.crisis = null; state.doors = [];
+    state.phase = 'lobby'; state.meeting = null; state.winner = null; state.bodies = []; state.blackoutUntil = 0; state.jamUntil = 0; state.mapSab = null; state.crisis = null; state.doors = []; state.trails = [];
     state.tasksTotal = 0; state.tasksDone = 0; state.progSnap = null;
     state.order = state.order.filter(function (id) { return !state.players[id].left || (delete state.players[id], false); });
     state.order.forEach(function (id) {
       var p = state.players[id];
       p.role = null; p.alive = true; p.left = false;
-      ['tasks', 'ck', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'notes', 'msgs', 'tp', 'kd', 'wv', 'wf', 'wn', 'sh', 'fr'].forEach(function (k) { delete p[k]; });
+      ['tasks', 'ck', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'notes', 'msgs', 'tp', 'kd', 'wv', 'wf', 'wn', 'sh', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc'].forEach(function (k) { delete p[k]; });
     });
   }
 
@@ -2173,7 +2249,7 @@ function grid(o) {
     newLobby: newLobby, addPlayer: addPlayer, removePlayer: removePlayer, validate: validate, startGame: startGame,
     act: act, tick: tick, markLeft: markLeft, backToLobby: backToLobby, recalcTasks: recalcTasks, evalWin: evalWin,
     alivePlayers: alivePlayers, cleanName: cleanName, roleCounts: roleCounts, sabActive: sabActive, crisisMs: crisisMs,
-    roomCounts: roomCounts, mapSabs: mapSabs, mapSabInfo: mapSabInfo, msOn: msOn, WAVE_LEN: WAVE_LEN, WAVE_HALF: WAVE_HALF
+    roomCounts: roomCounts, knowsAlly: knowsAlly, mapSabs: mapSabs, mapSabInfo: mapSabInfo, msOn: msOn, WAVE_LEN: WAVE_LEN, WAVE_HALF: WAVE_HALF
   });
   useMap(0);
   if (typeof module !== 'undefined' && module.exports) module.exports = Engine; else root.Engine = Engine;
@@ -2288,7 +2364,7 @@ function grid(o) {
           var R = E.ROLES[p.role];
           var cand = E.alivePlayers(state).filter(function (q) {
             if (q.id === b.id) return false;
-            if (R.team === 'impostor' && E.ROLES[q.role].team === 'impostor') return false;
+            if (E.knowsAlly(p, q)) return false;
             return true;
           });
           var pick = (rand() < 0.45 || !cand.length) ? 'skip' : cand[Math.floor(rand() * cand.length)].id;
@@ -2324,6 +2400,7 @@ function grid(o) {
           var q = state.players[id];
           if (!q || q.id === b.id || !q.alive || q.left) return;
           if (!R2.anyKill && E.ROLES[q.role].team === 'impostor') return;
+          if (R2.bite && q.bt) return;
           var qp = ctx.pos(id); if (!qp) return;
           var d = Math.hypot(qp.x - b.x, qp.y - b.y);
           if (d < bd2) { bd2 = d; best = id; }
@@ -2337,6 +2414,9 @@ function grid(o) {
         else if (R2.wave) {
           var wd = Math.hypot(tpos.x - b.x, tpos.y - b.y);
           if (now >= (p.ck || 0) && wd > 1 && wd <= 520) { api.act(b.id, { type: 'wave', dx: (tpos.x - b.x) / wd, dy: (tpos.y - b.y) / wd }); b.tgt = null; b.replan = 0; }
+        }
+        else if (p.role === 'vampire' && !p.tu && s.vampireThrall && Math.hypot(tpos.x - b.x, tpos.y - b.y) <= s.killRange * 0.9 && rand() < 0.02) {
+          api.act(b.id, { type: 'thrall', t: b.tgt }); b.tgt = null; b.replan = 0; // 眷属にする
         }
         else if (R2.kill && now >= (p.ck || 0) && Math.hypot(tpos.x - b.x, tpos.y - b.y) <= s.killRange * 0.9) {
           var witnesses = 0;
@@ -2764,6 +2844,19 @@ var SND = (function () {
       noise(c, d, { t: t, d: 0.3, v: 0.3, ft: 'lowpass', f: 2500, f2: 250 });
       tone(c, d, { type: 'sawtooth', f: 200, f2: 50, t: t, d: 0.4, v: 0.2, lp: 900 });
     },
+    bite: function (c, d, t) { // ヴァンパイアの噛みつき: 鋭い2つの音と、低いうなり
+      tone(c, d, { type: 'square', f: 1900, f2: 900, t: t, d: 0.06, v: 0.2, lp: 4200 });
+      tone(c, d, { type: 'square', f: 1750, f2: 800, t: t + 0.09, d: 0.07, v: 0.2, lp: 4200 });
+      noise(c, d, { t: t + 0.04, d: 0.28, v: 0.2, ft: 'bandpass', f: 1400, f2: 300, q: 1.5 });
+      tone(c, d, { type: 'sawtooth', f: 90, f2: 52, t: t, d: 0.5, v: 0.22, lp: 600 });
+    },
+    thrall: function (c, d, t) { // 眷属化: 不吉な和音が広がる
+      [0, 3, 7].forEach(function (x, i) { tone(c, d, { type: 'sawtooth', f: 110 * Math.pow(2, x / 12), t: t + i * 0.06, d: 1.3, v: 0.12, lp: 700, a: 0.1 }); });
+      arp(c, d, t + 0.35, [69, 66, 62, 57], 0.16, { type: 'sine', d: 0.7, v: 0.12 });
+    },
+    trail: function (c, d, t) { // 足跡があらわれる: ひたひたと
+      [0, 0.18, 0.36, 0.54].forEach(function (x, i) { noise(c, d, { t: t + x, d: 0.1, v: 0.16, ft: 'lowpass', f: 700 + (i % 2) * 300, f2: 200 }); tone(c, d, { f: 80, f2: 60, t: t + x, d: 0.1, v: 0.18 }); });
+    },
     meetbtn: function (c, d, t) { // 緊急ボタン
       tone(c, d, { f: 110, f2: 70, t: t, d: 0.7, v: 0.5 });
       [0, 0.32, 0.64].forEach(function (x) { tone(c, d, { type: 'square', f: 880, t: t + x, d: 0.2, v: 0.14, lp: 3000 }); });
@@ -2919,7 +3012,7 @@ var SND = (function () {
   function setMute(m) { cfg.mute = !!m; applyVol(); save(); }
 
   /* ---- 書き出しテスト(耳で聞けない環境でも、無音や音割れを調べられる) ---- */
-  function render(name, sec, o) {
+  function render(name, sec, o, raw) {
     var OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     if (!OC) return Promise.resolve(null);
     var c = new OC(1, Math.ceil(44100 * sec), 44100), gr = graph(c);
@@ -2929,7 +3022,9 @@ var SND = (function () {
     return c.startRendering().then(function (buf) {
       var d = buf.getChannelData(0), pk = 0, sum = 0, nan = 0;
       for (var i = 0; i < d.length; i++) { var a = Math.abs(d[i]); if (a !== a) nan++; if (a > pk) pk = a; sum += d[i] * d[i]; }
-      return { name: name, peak: +pk.toFixed(3), rms: +Math.sqrt(sum / d.length).toFixed(4), nan: nan };
+      var r = { name: name, peak: +pk.toFixed(3), rms: +Math.sqrt(sum / d.length).toFixed(4), nan: nan };
+      if (raw) r.data = Array.from(d);
+      return r;
     });
   }
 
@@ -3167,7 +3262,7 @@ async function electionTick() {
 
 /* ---------- ホストの処理 ---------- */
 function cleanAct(x) {
-  var types = ['task', 'report', 'emergency', 'kill', 'shoot', 'guard', 'inspect', 'watch', 'vent', 'sab', 'douse', 'ignite', 'vote', 'assassinate', 'fortune', 'nicekill', 'shield', 'wave', 'seal', 'fixlights', 'portal', 'fixcrisis'];
+  var types = ['task', 'report', 'emergency', 'kill', 'shoot', 'guard', 'inspect', 'watch', 'vent', 'sab', 'douse', 'ignite', 'vote', 'assassinate', 'fortune', 'nicekill', 'shield', 'wave', 'seal', 'fixlights', 'portal', 'fixcrisis', 'thrall'];
   if (!x || types.indexOf(x.type) < 0) return null;
   var a = { type: x.type };
   if (typeof x.t === 'string' && x.t.length <= 48) a.t = x.t;
@@ -4712,7 +4807,13 @@ function roleNotes(role, s) {
   if (role === 'watcher') n.push('監視は ' + s.watcherUses + ' 回まで。1回 ' + s.watchSec + ' 秒、クールダウン ' + s.watcherCd + ' 秒。');
   if (role === 'engineer') n.push('ベントはゲーム中に ' + s.engineerUses + ' 回まで。');
   if (role === 'arsonist') n.push('ガソリンのクールダウンは ' + s.douseCd + ' 秒。');
-  if (E.ROLES[role].kill) n.push('襲撃のクールダウンは ' + s.killCd + ' 秒です。');
+  if (role === 'vampire') {
+    n.push('噛んだ相手は ' + s.vampireDelay + ' 秒後に、その場所で倒れます。会議のあいだは時間が止まります。');
+    n.push('倒れたあと、次の会議が終わると、噛まれた地点からの足跡がみんなに見えます。次の会議で消えます。');
+    n.push(s.vampireThrall ? '眷属化は、非インポスターの1人にだけ、ゲーム中1回できます。' : '眷属化はできません(噛みつくだけ)。');
+  }
+  if (role === 'thrall') n.push('視界は、停電のときと同じに狭くなります。仲間のうちわかるのはヴァンパイアだけです。');
+  if (E.ROLES[role].kill) n.push((E.ROLES[role].bite ? '噛みつき' : '襲撃') + 'のクールダウンは ' + s.killCd + ' 秒です。');
   return n;
 }
 function showRoleCard() {
@@ -4730,7 +4831,7 @@ function showRoleCard() {
   if (notes.length) box.appendChild(h('div', {}, [h('div', { class: 'lbl', text: 'このゲームの設定' }), h('ul', {}, notes.map(function (t) { return h('li', { text: t }); }))]));
   if (!R.tasks) box.appendChild(h('p', { class: 'small mute', text: 'あなたにタスクはありません。' }));
   if (R.team === 'impostor') {
-    var mates = st.order.filter(function (id) { return id !== S.pid && E.ROLES[st.players[id].role].team === 'impostor'; });
+    var mates = st.order.filter(function (id) { return E.knowsAlly(me, st.players[id]); });
     box.appendChild(h('div', {}, [h('div', { class: 'lbl', text: '仲間' }),
       mates.length ? h('div', { class: 'mates' }, mates.map(function (id) { var p = st.players[id]; return h('span', { class: 'mini' }, [h('span', { class: 'swatch', style: 'background:' + C[p.color].hex }), p.name + '(' + E.ROLES[p.role].n + ')']); })) : h('p', { text: 'いません。あなた一人です。' })]));
   }
@@ -4787,19 +4888,54 @@ function applyOverlays() {
   if (S.overlay === 'count' && st && st.phase !== 'play') S.overlay = null;
 }
 /* ---------- 妨害の選択(インポスター側) ---------- */
-function openSab() {
-  var s = S.state.settings, CR = E.M.crisis, box = $('sab-list'); clear(box);
-  var opts = [
-    ['blackout', '停電', 'クルーの視界がずっと狭いまま。配電盤で直されるまで続く(会議をはさんでも続く)'],
-    ['jam', '通信妨害', s.jamSec + '秒間、クルーのタスクとマップが使えなくなる(修理地点で復旧される)']
-  ];
-  if (CR) opts.push(['crisis', '緊急事態: ' + CR.n, Math.round(E.crisisMs(s) / 1000) + '秒以内に2か所とも直されなければ、インポスターの勝ち']);
-  E.mapSabs().forEach(function (k) { var i = E.mapSabInfo(k); opts.push([k, 'このマップ固有: ' + i.n, s.mapSabSec + '秒間、' + i.d]); });
-  opts.forEach(function (o) {
-    box.appendChild(h('button', { class: 'btn block sab-opt', type: 'button', onclick: function () { sendAct({ type: 'sab', t: o[0] }); setOverlay(null); } },
-      [h('span', { text: o[1] }), h('small', { text: o[2] })]));
+// 妨害の発動地点: 修理する場所(配電盤・修理地点)に、発動ボタンを置く。2か所を直す緊急事態は、片方(1番目)だけに置き、もう片方は通信妨害にあてる
+function sabSpots() {
+  var G = E.GIM || {}, CR = E.M.crisis, s = S.state.settings, o = [], mid = function (r) { return { x: r.x + r.w / 2, y: r.y + r.h / 2 }; };
+  if (G.panel) o.push({ k: 'blackout', t: '停電', c: '停', x: G.panel.x, y: G.panel.y, d: 'クルーの視界がずっと狭いまま。配電盤で直されるまで続く(会議をはさんでも続く)' });
+  if (CR) o.push({ k: 'crisis', t: '緊急事態', c: '緊', x: CR.points[0].x, y: CR.points[0].y, d: CR.n + ': ' + Math.round(E.crisisMs(s) / 1000) + '秒以内に2か所とも直されなければ、インポスターの勝ち' });
+  o.push({ k: 'jam', t: '通信妨害', c: '通', x: CR ? CR.points[1].x : E.TABLE.x, y: CR ? CR.points[1].y : E.TABLE.y + 90, d: s.jamSec + '秒間、クルーのタスクとマップが使えなくなる(修理地点で復旧される)' });
+  E.mapSabs().forEach(function (k) {
+    var i = E.mapSabInfo(k), p = k === 'portals' && G.portals ? G.portals[0] : k === 'fog' && G.fog ? mid(G.fog[0]) : k === 'gates' && G.gates ? mid(G.gates[0]) : k === 'belts' && G.belts ? mid(G.belts[0]) : mid(E.HALLS[0]);
+    o.push({ k: k, t: i.n, c: '固', x: p.x, y: p.y, d: s.mapSabSec + '秒間、' + i.d, map: true });
   });
+  return o;
+}
+function sabState() {
+  var st = S.state, me = myPlayer(), now = tnow(), left = me ? Math.max(0, (me.cs || 0) - now) : 0;
+  if (E.sabActive(st, now)) return { ok: false, msg: 'いま別の妨害が発動中です。終わるまで次は起こせません。' };
+  if (left > 0) return { ok: false, msg: '次の妨害まで あと ' + Math.ceil(left / 1000) + ' 秒' };
+  return { ok: true, msg: '赤い印をタップすると、その妨害を起こします。' };
+}
+function openSab() {
+  var box = $('sab-info'); clear(box);
+  sabSpots().forEach(function (o) { box.appendChild(h('div', { class: 'mt-row' }, [h('b', { text: o.c }), h('span', {}, [o.t + (o.map ? '(このマップ固有)' : ''), h('small', { text: ' ' + o.d })])])); });
   setOverlay('sab');
+}
+function drawSabOverlay() {
+  var cv = $('cv-sab'), st = S.state, u = E.M.scale || 1, ss = sabState(), spots = sabSpots(), pu = 0.7 + 0.3 * Math.sin(performance.now() / 260);
+  drawMapThumb(cv, E.M, { names: true, table: true, after: function (c) {
+    spots.forEach(function (o) {
+      var r = 62 * u;
+      c.save(); c.globalAlpha = ss.ok ? pu : 0.55;
+      c.fillStyle = ss.ok ? '#ff4d5a' : '#6b7694'; c.beginPath(); c.arc(o.x, o.y, r, 0, 6.2832); c.fill();
+      c.globalAlpha = 1; c.strokeStyle = '#fff'; c.lineWidth = 5 * u; c.stroke();
+      c.fillStyle = '#fff'; c.font = '700 ' + 70 * u + 'px "Zen Maru Gothic", sans-serif'; c.textAlign = 'center'; c.fillText(o.c, o.x, o.y + 24 * u);
+      c.font = '700 ' + 40 * u + 'px "Zen Maru Gothic", sans-serif'; c.lineWidth = 8 * u; c.strokeStyle = 'rgba(6,9,20,.95)'; c.lineJoin = 'round';
+      c.strokeText(o.t, o.x, o.y + r + 42 * u); c.fillText(o.t, o.x, o.y + r + 42 * u);
+      c.restore();
+    });
+  } });
+  var stt = $('sab-status'); if (stt.textContent !== ss.msg) stt.textContent = ss.msg;
+}
+function sabTap(ev) {
+  var cv = $('cv-sab'), rc = cv.getBoundingClientRect(), M = E.M, u = M.scale || 1;
+  var px = (ev.clientX - rc.left) * cv.width / rc.width, py = (ev.clientY - rc.top) * cv.height / rc.height;
+  var k = Math.min(cv.width / M.world.w, cv.height / M.world.h), wx = (px - (cv.width - M.world.w * k) / 2) / k, wy = (py - (cv.height - M.world.h * k) / 2) / k;
+  var best = null, bd = 1e9;
+  sabSpots().forEach(function (o) { var d = Math.hypot(o.x - wx, o.y - wy); if (d < bd) { bd = d; best = o; } });
+  if (!best || bd > 100 * u) return;
+  if (!sabState().ok) { toast(sabState().msg); return; }
+  sendAct({ type: 'sab', t: best.k }); setOverlay(null);
 }
 function openMeetingMap() { S.mapFromMeeting = true; setOverlay('map'); }
 
@@ -4905,7 +5041,7 @@ function renderMeeting() {
     var tags = [];
     if (id === S.pid) tags.push(h('span', { class: 'tag', text: 'あなた' }));
     if (!p.alive) tags.push(h('span', { class: 'tag', text: '死亡' }));
-    if (me && R && R.team === 'impostor' && id !== S.pid && E.ROLES[p.role].team === 'impostor') tags.push(h('span', { class: 'tag ally', text: '仲間' }));
+    if (me && R && E.knowsAlly(me, p)) tags.push(h('span', { class: 'tag ally', text: '仲間' }));
     if (m.stage === 'vote' && p.alive && m.votes[id] !== undefined) tags.push(h('span', { class: 'tag voted', text: '投票済' }));
     var vs = [];
     if (res) {
@@ -5029,7 +5165,7 @@ function renderUI() {
   if (scr === 'entry') updateEntryStatus();
   if (scr === 'lobby') renderLobby(st);
   if (scr === 'game') {
-    if (me && me.role && S.cardRound !== st.round && st.phase === 'play') { S.cardRound = st.round; showRoleCard(); }
+    if (me && me.role && (S.cardRound !== st.round || S.cardRc !== (me.rc || 0)) && st.phase === 'play') { S.cardRound = st.round; S.cardRc = me.rc || 0; showRoleCard(); }
     if (!S.hintShown && VH > VW * 1.1) { S.hintShown = true; toast('横向きにすると広く見渡せて遊びやすくなります。縦のまま固定されるときは、入室画面の「画面の向き」で横向き表示にできます。'); }
     if (meetingShown(st)) renderMeeting();
     if (st.phase === 'over') renderOver();
@@ -5063,7 +5199,8 @@ function playKillFx(st, me) {
     c.save(); c.translate(130, 120); c.scale(3.2, 3.2); drawBlob(c, 0, 0, C[me.color].hex, 1, 0, 1, false, true); c.restore();
   }
   $('fx-kt').textContent = mis ? '誤射…' : 'やられた…';
-  $('fx-ks').textContent = mis ? '撃つべきでない相手を撃ってしまった(または撃たれた)' : kd.how === 'wave' && killer ? cname(killer) + 'の ' + killer.name + ' の波動砲に貫かれた' : kd.how === 'reflect' && killer ? cname(killer) + 'の ' + killer.name + ' のシールドに波動砲を跳ね返された' : killer ? cname(killer) + 'の ' + killer.name + (kd.how === 'shot' ? ' に撃たれた' : ' に倒された') : '倒された';
+  if (kd.how === 'bite') $('fx-kt').textContent = '毒が回った…';
+  $('fx-ks').textContent = kd.how === 'bite' ? 'ヴァンパイアに噛まれていた。倒れてしまった' : mis ? '撃つべきでない相手を撃ってしまった(または撃たれた)' : kd.how === 'wave' && killer ? cname(killer) + 'の ' + killer.name + ' の波動砲に貫かれた' : kd.how === 'reflect' && killer ? cname(killer) + 'の ' + killer.name + ' のシールドに波動砲を跳ね返された' : killer ? cname(killer) + 'の ' + killer.name + (kd.how === 'shot' ? ' に撃たれた' : ' に倒された') : '倒された';
   showFx('fx-kill', 2800);
   SND.play('kill');
   if (kd.how === 'wave') SND.play('wavehit', { vol: 0.9 });
@@ -5120,10 +5257,11 @@ function sndSnap(st, me, now) {
     bl: st.blackoutUntil > now, jam: st.jamUntil > now, crisis: st.crisis ? 1 : 0,
     cfix: st.crisis ? st.crisis.fixed.filter(Boolean).length : 0,
     ms: !!(st.mapSab && st.mapSab.until > now), n: st.order.length, alive: {}, wv: {}, wf: {}, sh: {},
-    steps: 0, done: 0, fr: me && me.fr ? me.fr.length : 0, wvh: SP && SP.wvh || {}, tick: SP ? SP.tick : 0
+    steps: 0, done: 0, fr: me && me.fr ? me.fr.length : 0, bites: 0, tu: me && me.tu ? 1 : 0, rc: me && me.rc || 0, tr: (st.trails || []).filter(function (e) { return e.sh; }).length, wvh: SP && SP.wvh || {}, tick: SP ? SP.tick : 0
   };
   st.order.forEach(function (id) {
     var p = st.players[id]; if (!p || p.left) return;
+    if (p.bt && me && p.bt.by === me.id) o.bites++;
     o.alive[id] = !!p.alive; o.wv[id] = !!p.wv; o.wf[id] = p.wf ? p.wf.n : 0; o.sh[id] = (p.sh || 0) > now;
   });
   if (me && me.tasks) me.tasks.forEach(function (t) { if (t.done) o.done++; o.steps += t.p || 0; });
@@ -5184,6 +5322,9 @@ function sndSync() {
     else if (cur.steps > pv.steps) SND.play('taskstep');
   }
   if (cur.fr > pv.fr) SND.play('fortune');
+  if (cur.bites > pv.bites) SND.play('bite');
+  if (cur.tu > pv.tu) SND.play('thrall');
+  if (cur.tr > pv.tr && cur.phase === 'play') SND.play('trail', { vol: 0.8 });
   // 妨害と復旧
   if (cur.phase === 'play' || cur.phase === 'meeting') {
     if (cur.bl && !pv.bl) SND.play('blackout');
@@ -5299,9 +5440,39 @@ function visionOf(st, me) {
   var s = st.settings, v = s.vision;
   if (!me || !me.alive) return 99999;
   var tm = teamOf(me);
-  if (tm === 'impostor') v = s.visionImp || v * 1.15;
+  if (me.role === 'thrall') v = v * 0.35; // 眷属: いつも、停電のときと同じ狭い視界
+  else if (tm === 'impostor') v = s.visionImp || v * 1.15;
   else if (tm === 'crew' && st.blackoutUntil > tnow()) v = v * 0.35; // 停電で狭くなるのはクルー陣営だけ
   return v * E.fogAt(S.me.x, S.me.y);
+}
+// 足跡: ヴァンパイアに噛まれた人が、噛まれた場所から倒れた場所まで歩いた道すじ(会議のあとに現れ、次の会議で消える)
+function drawTrails(c, st, visible, now) {
+  (st.trails || []).forEach(function (e) {
+    if (!e.sh || !e.tr) return;
+    var col = C[e.c] ? C[e.c].hex : '#ffffff', side = 1, prev = null;
+    c.save(); c.fillStyle = col; c.strokeStyle = 'rgba(6,9,20,.55)'; c.lineWidth = 1.5;
+    e.tr.forEach(function (pt, i) {
+      if (!pt) { prev = null; return; }
+      if (i === 0 || !prev) { prev = pt; return; }
+      var dx = pt[0] - prev[0], dy = pt[1] - prev[1], len = Math.hypot(dx, dy);
+      if (len < 1) { return; }
+      var ux = dx / len, uy = dy / len, ang = Math.atan2(dy, dx);
+      for (var d = 18; d < len; d += 34) {
+        var x = prev[0] + ux * d - uy * 7 * side, y = prev[1] + uy * d + ux * 7 * side;
+        side = -side;
+        if (!visible(x, y)) continue;
+        c.globalAlpha = 0.72 + 0.14 * Math.sin(now / 420 + d);
+        c.beginPath(); c.ellipse(x, y, 10, 5.5, ang, 0, 6.2832); c.fill(); c.stroke();
+      }
+      prev = pt;
+    });
+    var s0 = e.tr[0];
+    if (s0 && visible(s0[0], s0[1])) {
+      c.globalAlpha = 0.85; c.strokeStyle = col; c.lineWidth = 3; c.beginPath(); c.arc(s0[0], s0[1], 15, 0, 6.2832); c.stroke();
+      c.globalAlpha = 1; label(c, '噛まれた地点', s0[0], s0[1] - 22, '#ff9aa8');
+    }
+    c.restore();
+  });
 }
 function hazard(c, o, a) {
   c.save(); c.beginPath(); c.rect(o.x, o.y, o.w, o.h); c.clip();
@@ -5520,6 +5691,7 @@ function render(dt) {
   var seeAll = ghost || watching;
   function visible(x, y) { return seeAll || Math.hypot(x - S.me.x, y - S.me.y) <= vr + 12; }
   // 遺体
+  drawTrails(c, st, visible, now);
   st.bodies.forEach(function (b) { if (visible(b.x, b.y)) { var p = st.players[b.p]; if (p) drawBlob(c, b.x, b.y, C[p.color].hex, 1, 0, 1, false, true); } });
   // プレイヤー(奥から手前の順)
   var list = [];
@@ -5538,11 +5710,13 @@ function render(dt) {
   list.sort(function (a, b) { return a.v.y - b.v.y; });
   list.forEach(function (o) {
     var p = o.p, v = o.v, isGhost = !p.alive;
-    var ally = me && teamOf(me) === 'impostor' && teamOf(p) === 'impostor' && o.id !== S.pid;
+    var ally = E.knowsAlly(me, p);
+    var bitTimer = (me && me.role === 'vampire' && p.alive && p.bt && p.bt.by === S.pid && p.bt.until) ? Math.max(0, Math.ceil((p.bt.until - tnow()) / 1000)) : -1;
     if (S.targetPid === o.id) { c.strokeStyle = '#ffd24d'; c.lineWidth = 3; ell(c, v.x, v.y + 18, 24, 10); c.stroke(); }
     drawBlob(c, v.x, v.y, C[p.color].hex, v.f || 1, v.ph || 0, isGhost ? 0.45 : 1, isGhost, false);
     if (p.alive && (p.sh || 0) > tnow()) drawShieldBubble(c, v.x, v.y, now);
     label(c, p.name, v.x, v.y - 34, ally ? '#ff8c9b' : (o.id === S.pid ? '#ffffff' : '#e9eef9'));
+    if (bitTimer >= 0) label(c, '噛 ' + bitTimer + '秒', v.x, v.y - 52, '#ff5d73');
     if (S.speaking[o.id]) drawSpeak(c, v.x, v.y - 52, now);
   });
   drawBeams(c, st, now);
@@ -5746,9 +5920,13 @@ function computeActions(st, me) {
   if (!alive) return list;
   var tgtRange = s.killRange, tgt = null;
   if (R.kill) {
-    tgt = nearestTarget(st, me, tgtRange, function (p) { return R.anyKill || E.ROLES[p.role].team !== 'impostor'; });
+    tgt = nearestTarget(st, me, tgtRange, function (p) { return (R.anyKill || E.ROLES[p.role].team !== 'impostor') && !(R.bite && p.bt); });
     var c1 = cd(me.ck || 0, s.killCd * 1000);
-    list.push({ id: 'kill', label: '襲撃', color: 'var(--imp)', ready: !!tgt && c1.left === 0, cd: c1.ratio, sub: c1.left ? Math.ceil(c1.left / 1000) + '秒' : '', press: function () { sendAct({ type: 'kill', t: tgt }); } });
+    list.push({ id: 'kill', label: R.bite ? '噛む' : '襲撃', color: 'var(--imp)', ready: !!tgt && c1.left === 0, cd: c1.ratio, sub: c1.left ? Math.ceil(c1.left / 1000) + '秒' : '', press: function () { sendAct({ type: 'kill', t: tgt }); } });
+  }
+  if (me.role === 'vampire' && s.vampireThrall) {
+    var tt = nearestTarget(st, me, tgtRange + 40, function (p) { return E.ROLES[p.role].team !== 'impostor'; });
+    list.push({ id: 'thrall', label: '眷属化', color: 'var(--imp)', sub: me.tu ? '使用済' : '', ready: !!tt && !me.tu, press: function () { sendAct({ type: 'thrall', t: tt }); } });
   }
   if (me.role === 'sheriff') {
     tgt = nearestTarget(st, me, tgtRange);
@@ -5906,6 +6084,7 @@ function frame(ts) {
     updateHud(st, me);
     render(dt);
     if (S.overlay === 'map') drawMapOverlay();
+    if (S.overlay === 'sab') drawSabOverlay();
     if (S.overlay === 'count') drawCountOverlay();
     if (!$('ov-meeting').hidden) { updateMeetingTimer(); if (S.chatDirty) renderChat(); }
     if (!S.lastPresence || ts - S.lastPresence > 80) { S.lastPresence = ts; sendPresence(false); }
@@ -5969,6 +6148,7 @@ function bindUi() {
   $('btn-vent-x').addEventListener('click', function () { setOverlay(null); });
   $('btn-map').addEventListener('click', function () { setOverlay('map'); });
   $('btn-sab-x').addEventListener('click', function () { setOverlay(null); });
+  $('cv-sab').addEventListener('pointerdown', function (e) { e.preventDefault(); sabTap(e); });
   $('btn-map-x').addEventListener('click', function () { S.mapFromMeeting = false; setOverlay(null); });
   $('btn-count-x').addEventListener('click', function () { setOverlay(null); });
   ['btn-roles', 'btn-mt-roles'].forEach(function (id) { $(id).addEventListener('click', showRoleList); });
