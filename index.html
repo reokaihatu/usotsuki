@@ -2024,7 +2024,7 @@ function grid(o) {
   }
 
   // ---------- 波動砲 ----------
-  var WAVE_LEN = 3200, WAVE_HALF = 38;
+  var WAVE_LEN = 3200, WAVE_HALF = 100; // ビームの太さ(全幅200)は、中央通路など細めの部屋の縦幅と同じ
   function waveHits(state, ctx, p, w) {
     var s = state.settings, hits = [], myTeam = ROLES[p.role].team;
     state.order.forEach(function (id) {
@@ -5351,7 +5351,11 @@ function drawBeams(c, st, now) {
     var L = E.WAVE_LEN;
     if (p.wv && p.alive) {
       var w = p.wv, left = Math.max(0, w.fire - tn), pul = 0.35 + 0.35 * Math.sin(now / 70), k = Math.min(1, 1 - left / Math.max(1, (st.settings.waveCharge || 3) * 1000));
-      c.save(); c.lineCap = 'round';
+      c.save(); c.lineCap = 'butt';
+      // 当たる範囲(ビームの太さ)を、うす赤い帯で予告する
+      c.strokeStyle = 'rgba(255,70,90,' + (0.05 + 0.1 * k + pul * 0.05) + ')'; c.lineWidth = E.WAVE_HALF * 2;
+      c.beginPath(); c.moveTo(w.x, w.y); c.lineTo(w.x + w.dx * L, w.y + w.dy * L); c.stroke();
+      c.lineCap = 'round';
       c.strokeStyle = 'rgba(255,70,90,' + (0.25 + 0.3 * k + pul * 0.3) + ')'; c.lineWidth = 6 + k * 10; c.setLineDash([22, 14]);
       c.beginPath(); c.moveTo(w.x, w.y); c.lineTo(w.x + w.dx * L, w.y + w.dy * L); c.stroke(); c.setLineDash([]);
       c.fillStyle = 'rgba(255,90,100,' + (0.35 + 0.4 * k) + ')'; c.beginPath(); c.arc(w.x, w.y, 18 + 22 * k, 0, 6.2832); c.fill();
@@ -5359,12 +5363,13 @@ function drawBeams(c, st, now) {
     }
     if (p.wf && tn - p.wf.at < 750) {
       var f = p.wf, a = Math.max(0, 1 - (tn - f.at) / 750);
-      c.save(); c.lineCap = 'round';
-      c.strokeStyle = 'rgba(255,120,140,' + (0.5 * a) + ')'; c.lineWidth = 62 * (0.4 + 0.6 * a);
+      c.save(); c.lineCap = 'butt';
+      var BW = E.WAVE_HALF * 2;
+      c.strokeStyle = 'rgba(255,120,140,' + (0.5 * a) + ')'; c.lineWidth = BW * (0.4 + 0.6 * a);
       c.beginPath(); c.moveTo(f.x, f.y); c.lineTo(f.x + f.dx * f.len, f.y + f.dy * f.len); c.stroke();
-      c.strokeStyle = 'rgba(255,255,255,' + (0.95 * a) + ')'; c.lineWidth = 22 * (0.4 + 0.6 * a);
+      c.strokeStyle = 'rgba(255,255,255,' + (0.95 * a) + ')'; c.lineWidth = BW * 0.36 * (0.4 + 0.6 * a);
       c.beginPath(); c.moveTo(f.x, f.y); c.lineTo(f.x + f.dx * f.len, f.y + f.dy * f.len); c.stroke();
-      if (f.rf) { c.strokeStyle = 'rgba(140,220,255,' + a + ')'; c.lineWidth = 14; c.beginPath(); c.moveTo(f.x + f.dx * f.len, f.y + f.dy * f.len); c.lineTo(f.x, f.y); c.stroke(); }
+      if (f.rf) { c.strokeStyle = 'rgba(140,220,255,' + a + ')'; c.lineWidth = BW * 0.22; c.beginPath(); c.moveTo(f.x + f.dx * f.len, f.y + f.dy * f.len); c.lineTo(f.x, f.y); c.stroke(); }
       c.restore();
     }
   });
