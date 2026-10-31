@@ -430,6 +430,20 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 .roles-item ul { margin: 0; padding-left: 18px; font-size: 12px; color: var(--mute); }
 .hgroup .hbtn { white-space: nowrap; }
 
+/* 役職ごとの固有設定(人数の行のすぐ下) */
+.set-row.role-main.on { border-bottom-color: transparent; }
+.role-opts { margin: 0 0 10px 10px; padding: 2px 0 2px 12px; border-left: 3px solid var(--line, #3a4a80); background: rgba(255, 255, 255, .03); border-radius: 0 10px 10px 0; }
+.role-opts .set-row:last-of-type { border-bottom: 0; }
+.role-opts .set-row .lb { font-weight: 600; font-size: 13.5px; }
+.role-hint { margin: -4px 0 8px 14px; }
+
+/* 音の設定 */
+#ov-sound { z-index: 90; }
+.snd-row { display: grid; grid-template-columns: 5em 1fr 3.2em; align-items: center; gap: 12px; padding: 6px 0; }
+.snd-row label { font-weight: 700; }
+.snd-row input[type=range] { width: 100%; min-height: 32px; accent-color: var(--accent, #7aa2ff); }
+.snd-row output { font-family: var(--font-d); text-align: right; }
+
 </style>
 </head>
 <body>
@@ -457,6 +471,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
             <label for="inp-code">部屋コード(4文字)</label>
             <div class="row"><input id="inp-code" class="input" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="例: K7QM" style="max-width:9em;letter-spacing:.15em;text-transform:uppercase"><button id="btn-join" class="btn" type="button">コードで入る</button></div>
           </div>
+          <div class="row"><button id="btn-snd-e" class="btn small snd-btn" type="button">音の設定(BGM・効果音)</button></div>
           <div class="status-line"><span id="net-dot" class="dot"></span><span id="net-text">接続を確認しています…</span></div>
           <div class="field">
             <label>画面の向き</label>
@@ -473,7 +488,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
             <li>左下のスティックで移動(PCはWASDか矢印キー)。右下のボタンでタスク・役職の能力・通報を行います。</li>
             <li>タスクはパズルや記憶ゲームです。2か所をまわる手順のタスクもあります。</li>
             <li>遺体を見つけて通報するか、テーブルで緊急会議を開くと、全員で話し合って投票します。</li>
-            <li>視界は丸く狭い範囲だけです。インポスター側は「妨害」で、停電・通信妨害・緊急事態を起こせます。クルーは修理地点や配電盤で直します。</li>
+            <li>視界は丸く狭い範囲だけです。インポスター側は「妨害」で、停電・通信妨害・緊急事態を起こせます。クルーは修理地点や配電盤で直します(停電は、配電盤で直されるまでずっと続きます)。</li>
             <li>マップごとにしかけがあります(隔壁、秘密の本棚、高圧ゲートなど)。ロビーで確認できます。</li>
             <li>話し合いは通話しながらが前提です。会議中のテキストチャットもあります。</li>
           </ul>
@@ -488,7 +503,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
       <div class="lob-l">
         <div class="row between">
           <h2 style="font-size:26px">待機室</h2>
-          <div class="row"><button id="btn-rot" class="btn small" type="button">向き</button><button id="btn-leave" class="btn small" type="button">退出</button></div>
+          <div class="row"><button id="btn-snd-l" class="btn small snd-btn" type="button">音</button><button id="btn-rot" class="btn small" type="button">向き</button><button id="btn-leave" class="btn small" type="button">退出</button></div>
         </div>
         <div id="lobby-status" class="status-line"></div>
         <div id="vc-box" class="vc-box" hidden>
@@ -529,7 +544,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     <div class="hud top">
       <button id="btn-role" class="rolechip" type="button"><small id="rc-team"></small><span id="rc-name"></span></button>
       <div class="prog" id="prog"><div class="bar"><i id="prog-fill"></i></div><span id="prog-text"></span></div>
-      <div class="hgroup"><button id="btn-mic" class="hbtn" type="button" hidden>マイクON</button><button id="btn-roles" class="hbtn" type="button">役職一覧</button><button id="btn-map" class="hbtn" type="button">マップ</button></div>
+      <div class="hgroup"><button id="btn-snd-g" class="hbtn snd-btn" type="button">音</button><button id="btn-mic" class="hbtn" type="button" hidden>マイクON</button><button id="btn-roles" class="hbtn" type="button">役職一覧</button><button id="btn-map" class="hbtn" type="button">マップ</button></div>
     </div>
     <div id="tasklist" class="tasklist"></div>
     <div id="banner" class="banner" hidden></div>
@@ -538,6 +553,17 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
       <div id="acts" class="acts"></div>
     </div>
   </section>
+
+  <!-- 音の設定(どの画面でも開ける) -->
+  <div id="ov-sound" class="ov solid" hidden>
+    <div class="box">
+      <div class="game-head"><h2 style="font-size:24px">音の設定</h2><button id="btn-snd-x" class="btn small" type="button">閉じる</button></div>
+      <div class="snd-row"><label for="snd-bgm">BGM</label><input id="snd-bgm" type="range" min="0" max="100" step="5"><output id="snd-bgm-v"></output></div>
+      <div class="snd-row"><label for="snd-se">効果音</label><input id="snd-se" type="range" min="0" max="100" step="5"><output id="snd-se-v"></output></div>
+      <div class="row"><button id="snd-mute" class="btn" type="button">すべて消す</button><button id="snd-test" class="btn" type="button">効果音を試す</button></div>
+      <p class="small mute">音は端末の中で作っています(音声ファイルは使いません)。この設定は、この端末にだけ保存されます。ボイスチャットの音量とは別です。</p>
+    </div>
+  </div>
 
   <div id="toasts" class="toasts"></div>
 
@@ -616,7 +642,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     <div class="box meet">
       <div class="game-head mt-head">
         <div><h2 id="mt-title" style="font-size:28px"></h2><p id="mt-sub" class="small mute"></p></div>
-        <div class="mt-right"><button id="btn-mt-mic" class="btn small" type="button" hidden>マイクON</button><button id="btn-mt-roles" class="btn small" type="button">役職一覧</button><button id="btn-mt-map" class="btn small" type="button">マップ</button><div style="text-align:right"><div id="mt-stage" class="small mute"></div><div id="mt-timer" class="timer"></div></div></div>
+        <div class="mt-right"><button id="btn-snd-m" class="btn small snd-btn" type="button">音</button><button id="btn-mt-mic" class="btn small" type="button" hidden>マイクON</button><button id="btn-mt-roles" class="btn small" type="button">役職一覧</button><button id="btn-mt-map" class="btn small" type="button">マップ</button><div style="text-align:right"><div id="mt-stage" class="small mute"></div><div id="mt-timer" class="timer"></div></div></div>
       </div>
       <div class="mt-main">
         <div id="mt-me" class="small mute"></div>
@@ -1181,6 +1207,12 @@ function grid(o) {
     castle: { portals: '隠し扉の封鎖', fog: '古城に濃霧が立ちこめる' },
     city: { gates: '地下ゲートの全閉鎖', belts: '搬送路の逆流' }
   };
+  /* 配電盤: 停電を直せる場所。全マップに必ず1つ置く(宇宙船・クイーン号は元の位置のまま) */
+  var PANEL_ROOM = { mansion: 'cel', lab: 'sto', castle: 'arm', city: 'gen' };
+  [ship, mansion, lab, queen, castle, city].forEach(function (m) {
+    m.gimmicks = m.gimmicks || {};
+    if (!m.gimmicks.panel) { var ps = counterSpot(m, PANEL_ROOM[m.id]); m.gimmicks.panel = { x: ps.x, y: ps.y }; }
+  });
   [ship, mansion, lab, queen, castle, city].forEach(function (m) {
     m.counter = counterSpot(m, COUNTER_ROOM[m.id]);
     m.sabn = SABN[m.id];
@@ -1303,7 +1335,6 @@ function grid(o) {
     { g: 'rule', k: 'emergencyN', label: '緊急会議の回数(1人あたり)', min: 0, max: 3, step: 1, def: 1, unit: '回' },
     { g: 'rule', k: 'discussSec', label: '話し合いの時間', min: 10, max: 120, step: 10, def: 40, unit: '秒' },
     { g: 'rule', k: 'voteSec', label: '投票の時間', min: 10, max: 90, step: 5, def: 30, unit: '秒' },
-    { g: 'rule', k: 'blackoutSec', label: '停電の長さ', min: 10, max: 40, step: 5, def: 20, unit: '秒' },
     { g: 'rule', k: 'sabCd', label: '妨害のクールダウン', min: 20, max: 90, step: 5, def: 45, unit: '秒' },
     { g: 'rule', k: 'jamSec', label: '通信妨害の長さ', min: 10, max: 40, step: 5, def: 25, unit: '秒' },
     { g: 'rule', m: 'mapsab', k: 'mapSabSec', label: 'このマップ固有の妨害の長さ', min: 10, max: 40, step: 5, def: 20, unit: '秒' },
@@ -1692,6 +1723,7 @@ function grid(o) {
   // ---------- 行動 ----------
   // 緊急事態の制限時間(大きなマップほど長い)
   function crisisMs(s) { return Math.round(s.crisisSec * ((M.crisis && M.crisis.t) || 1)) * 1000; }
+  var BLACKOUT_FOREVER = 1e13; // 時間切れのない停電(復旧されるまで)
   function sabActive(state, now) {
     return (state.blackoutUntil || 0) > now || (state.jamUntil || 0) > now || !!state.crisis || !!(state.mapSab && state.mapSab.until > now);
   }
@@ -1942,7 +1974,7 @@ function grid(o) {
       // 妨害は同時に1つだけ(停電・通信妨害・緊急事態のどれか)
       if (sabActive(state, now)) return { ok: false, err: 'busy' };
       var kind = a.t || 'blackout';
-      if (kind === 'blackout') state.blackoutUntil = now + s.blackoutSec * 1000;
+      if (kind === 'blackout') { if (!GIM.panel) return { ok: false }; state.blackoutUntil = BLACKOUT_FOREVER; } // 停電は、配電盤で直されるまで続く
       else if (kind === 'jam') state.jamUntil = now + s.jamSec * 1000;
       else if (kind === 'crisis' && M.crisis) state.crisis = { at: now, until: now + crisisMs(s), fixed: [false, false], pause: 0 };
       else if (mapSabs().indexOf(kind) >= 0) state.mapSab = { k: kind, at: now, until: now + s.mapSabSec * 1000 };
@@ -2032,7 +2064,7 @@ function grid(o) {
     state.phase = 'meeting'; state.meetingCount++;
     state.progSnap = [state.tasksDone, state.tasksTotal]; // 「会議のあとに表示」用: 会議のたびに最新の進み具合を記録する
     state.meeting = { n: state.meetingCount, caller: caller, bodyOf: bodyOf, stage: 'discuss', end: now + s.discussSec * 1000, votes: {}, log: [], res: null };
-    state.bodies = []; state.blackoutUntil = 0; state.jamUntil = 0; state.mapSab = null; state.doors = [];
+    state.bodies = []; state.jamUntil = 0; state.mapSab = null; state.doors = []; // 停電は会議をまたいで続く
     // 緊急事態は会議のあいだ止まり、会議が終わると残り時間から再開する
     if (state.crisis && !state.crisis.pause) state.crisis.pause = Math.max(1000, state.crisis.until - now);
     state.order.forEach(function (id) {
@@ -2347,10 +2379,17 @@ function grid(o) {
         if (bi >= 0) { b.fix = { i: bi }; b.task = { fix: bi, k: CR.points[bi].k }; goTo(b, CR.points[bi].x, CR.points[bi].y); }
       }
     } else if (b.fix) { b.fix = null; if (b.task && b.task.fix !== undefined) { b.task = null; b.mode = 'idle'; } }
+    // 停電: 配電盤まで復旧に向かう(少し遅れて)
+    var blk = (state.blackoutUntil || 0) > now && E.GIM.panel;
+    if (blk) {
+      if (!b.blkAt) b.blkAt = now + 2000 + rand() * 6000;
+      if (b.mode !== 'work' && !b.pan && now >= b.blkAt) { b.pan = true; b.task = { pan: true, k: 'lights' }; goTo(b, E.GIM.panel.x, E.GIM.panel.y); }
+    } else { b.blkAt = 0; if (b.pan) { b.pan = false; if (b.task && b.task.pan) { b.task = null; b.mode = 'idle'; } } }
     if (b.mode === 'work') {
       b.w = 0; b.tw -= dt;
       if (b.tw <= 0) {
-        if (b.task.fix !== undefined) api.act(b.id, { type: 'fixcrisis', s: b.task.fix });
+        if (b.task.pan) { api.act(b.id, { type: 'fixlights' }); b.pan = false; b.blkAt = 0; }
+        else if (b.task.fix !== undefined) api.act(b.id, { type: 'fixcrisis', s: b.task.fix });
         else api.act(b.id, { type: 'task', s: b.task.s, st: b.task.st });
         b.mode = 'idle'; b.task = null; b.fix = null; b.fixAt = now + 500; b.think = 0.5;
       }
@@ -2602,6 +2641,289 @@ var VOICE = (function () {
 })();
 if (typeof module !== 'undefined' && module.exports && typeof window === 'undefined') module.exports = VOICE;
 
+/* 音(BGM・効果音): 音声ファイルは使わず、ブラウザの中で合成する。
+ * SND.play(name, {vol, pan, dur, team})  効果音(止められる場合は {stop} を返す)
+ * SND.bgm(name|null)                      BGMの切り替え(lobby / play / alert / meeting)
+ * SND.settings / SND.setVol / SND.setMute  音量とミュート(端末ごとに保存)
+ * SND.unlock()                            最初のタップ・キー入力で呼ぶ(ブラウザの自動再生制限のため)
+ * SND.render(name, sec)                   書き出しテスト用: OfflineAudioContext で鳴らしてピークと平均を返す
+ */
+var SND = (function () {
+  var ctx = null, bus = null, unlocked = false, cur = null, curG = null, timer = null, nextT = 0, step = 0;
+  var cfg = { bgm: 0.5, se: 0.8, mute: false };
+  var KEY = 'uso-snd-v1';
+  try { var j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (j) { if (typeof j.bgm === 'number') cfg.bgm = j.bgm; if (typeof j.se === 'number') cfg.se = j.se; cfg.mute = !!j.mute; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch (e) {} }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function mtof(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+
+  /* ---- 音の出口(BGMとSEを分け、最後に軽いコンプレッサーで割れを防ぐ) ---- */
+  function graph(c) {
+    var out = c.createDynamicsCompressor();
+    out.threshold.value = -14; out.knee.value = 18; out.ratio.value = 5; out.attack.value = 0.004; out.release.value = 0.2;
+    var master = c.createGain(); master.gain.value = 0.9; out.connect(master); master.connect(c.destination);
+    var seG = c.createGain(), bgG = c.createGain();
+    seG.connect(out);
+    // BGMには、ほんのり反響をつける
+    var dl = c.createDelay(1); dl.delayTime.value = 0.34;
+    var fb = c.createGain(), wet = c.createGain(); fb.gain.value = 0.32; wet.gain.value = 0.28;
+    var lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400;
+    bgG.connect(out); bgG.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(wet); wet.connect(out);
+    return { out: out, se: seG, bgm: bgG };
+  }
+  function applyVol() {
+    if (!bus) return;
+    var m = cfg.mute ? 0 : 1;
+    bus.se.gain.value = m * cfg.se * cfg.se;
+    bus.bgm.gain.value = m * cfg.bgm * cfg.bgm * 0.9;
+  }
+  function ensure() {
+    if (ctx) return ctx;
+    if (!unlocked) return null;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try { ctx = new AC(); } catch (e) { return null; }
+    bus = graph(ctx); applyVol();
+    return ctx;
+  }
+  function unlock() {
+    unlocked = true;
+    var c = ensure();
+    if (c && c.state === 'suspended') { try { c.resume(); } catch (e) {} }
+  }
+  function alive() {
+    if (!ctx) return false;
+    if (ctx.state === 'suspended') { try { ctx.resume(); } catch (e) {} }
+    return ctx.state === 'running';
+  }
+
+  /* ---- 音のもと ---- */
+  function noiseBuf(c) {
+    if (c._nb) return c._nb;
+    var n = c.sampleRate * 2, b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0), s = 22222;
+    for (var i = 0; i < n; i++) { s = (s * 16807) % 2147483647; d[i] = (s / 1073741823) - 1; }
+    c._nb = b; return b;
+  }
+  // 音程のある音。o: type f f2(到達音程) t(開始) d(長さ) v(音量) a(立ち上がり) lp(ローパス) q
+  function tone(c, dest, o) {
+    var t = o.t, d = o.d, a = o.a == null ? 0.006 : o.a, v = o.v == null ? 0.2 : o.v;
+    var os = c.createOscillator(), g = c.createGain();
+    os.type = o.type || 'sine';
+    os.frequency.setValueAtTime(o.f, t);
+    if (o.f2) os.frequency.exponentialRampToValueAtTime(Math.max(1, o.f2), t + d);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, v), t + a);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    var node = os;
+    if (o.lp) { var f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; f.Q.value = o.q || 0.7; os.connect(f); node = f; }
+    node.connect(g); g.connect(dest);
+    os.start(t); os.stop(t + d + 0.05);
+  }
+  // 雑音。o: t d v ft(filter type) f f2 q a
+  function noise(c, dest, o) {
+    var t = o.t, d = o.d, a = o.a == null ? 0.004 : o.a, v = o.v == null ? 0.2 : o.v;
+    var s = c.createBufferSource(); s.buffer = noiseBuf(c); s.loop = true;
+    var f = c.createBiquadFilter(); f.type = o.ft || 'bandpass'; f.frequency.setValueAtTime(o.f || 1000, t); f.Q.value = o.q || 0.8;
+    if (o.f2) f.frequency.exponentialRampToValueAtTime(Math.max(20, o.f2), t + d);
+    var g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, v), t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    s.connect(f); f.connect(g); g.connect(dest);
+    s.start(t, Math.random() * 1.5); s.stop(t + d + 0.05);
+  }
+  function arp(c, dest, t, notes, gap, o) {
+    notes.forEach(function (m, i) { tone(c, dest, { type: o.type || 'triangle', f: mtof(m), t: t + i * gap, d: o.d || 0.3, v: o.v || 0.2, a: o.a || 0.006, lp: o.lp }); });
+  }
+
+  /* ---- 効果音 ---- */
+  var SE = {
+    click: function (c, d, t) { tone(c, d, { type: 'square', f: 1200, f2: 700, t: t, d: 0.05, v: 0.17, lp: 4000 }); },
+    notify: function (c, d, t) { tone(c, d, { f: 988, t: t, d: 0.18, v: 0.14 }); tone(c, d, { f: 1319, t: t + 0.09, d: 0.22, v: 0.12 }); },
+    chat: function (c, d, t) { tone(c, d, { f: 1500, f2: 1100, t: t, d: 0.07, v: 0.22 }); },
+    join: function (c, d, t) { tone(c, d, { f: 520, f2: 780, t: t, d: 0.16, v: 0.14 }); },
+    taskstep: function (c, d, t) { arp(c, d, t, [72, 79], 0.07, { d: 0.18, v: 0.16 }); },
+    taskdone: function (c, d, t) { arp(c, d, t, [72, 76, 79, 84], 0.075, { d: 0.32, v: 0.18 }); tone(c, d, { f: 2093, t: t + 0.3, d: 0.5, v: 0.05 }); },
+    reveal: function (c, d, t, o) {
+      if (o.team === 'impostor') { // 不穏な低音
+        tone(c, d, { type: 'sawtooth', f: 55, f2: 41, t: t, d: 1.6, v: 0.26, lp: 380, a: 0.08 });
+        tone(c, d, { type: 'sawtooth', f: 58, t: t + 0.05, d: 1.5, v: 0.12, lp: 300, a: 0.1 });
+        arp(c, d, t + 0.5, [57, 56, 52], 0.32, { type: 'sine', d: 0.9, v: 0.12 });
+      } else if (o.team === 'neutral') {
+        arp(c, d, t, [62, 65, 69, 68], 0.18, { type: 'triangle', d: 0.7, v: 0.16 });
+      } else { // 明るいきらめき
+        arp(c, d, t, [67, 71, 74, 79], 0.1, { type: 'triangle', d: 0.6, v: 0.17 });
+        tone(c, d, { type: 'sine', f: 1567, t: t + 0.45, d: 0.9, v: 0.06 });
+      }
+    },
+    kill: function (c, d, t) { // 自分がやられた
+      noise(c, d, { t: t, d: 0.5, v: 0.5, ft: 'lowpass', f: 3500, f2: 200 });
+      tone(c, d, { type: 'sawtooth', f: 260, f2: 38, t: t, d: 0.7, v: 0.3, lp: 1200 });
+      tone(c, d, { f: 90, f2: 36, t: t, d: 0.6, v: 0.5 });
+      tone(c, d, { type: 'square', f: 1400, f2: 300, t: t, d: 0.12, v: 0.12 });
+    },
+    killnear: function (c, d, t) { // 近くで誰かが倒れた
+      noise(c, d, { t: t, d: 0.3, v: 0.3, ft: 'lowpass', f: 2500, f2: 250 });
+      tone(c, d, { type: 'sawtooth', f: 200, f2: 50, t: t, d: 0.4, v: 0.2, lp: 900 });
+    },
+    meetbtn: function (c, d, t) { // 緊急ボタン
+      tone(c, d, { f: 110, f2: 70, t: t, d: 0.7, v: 0.5 });
+      [0, 0.32, 0.64].forEach(function (x) { tone(c, d, { type: 'square', f: 880, t: t + x, d: 0.2, v: 0.14, lp: 3000 }); });
+      tone(c, d, { type: 'triangle', f: 1760, t: t + 0.9, d: 0.8, v: 0.1 });
+    },
+    report: function (c, d, t) { // 遺体の通報
+      [0, 0.22, 0.44, 0.66].forEach(function (x, i) { tone(c, d, { type: 'square', f: i % 2 ? 622 : 932, t: t + x, d: 0.2, v: 0.15, lp: 2600 }); });
+      noise(c, d, { t: t, d: 0.25, v: 0.25, ft: 'highpass', f: 2000 });
+      tone(c, d, { f: 80, f2: 50, t: t, d: 0.9, v: 0.45 });
+    },
+    vote: function (c, d, t) { tone(c, d, { f: 620, f2: 340, t: t, d: 0.12, v: 0.2 }); noise(c, d, { t: t, d: 0.04, v: 0.12, ft: 'highpass', f: 3000 }); },
+    tick: function (c, d, t) { tone(c, d, { type: 'square', f: 1000, t: t, d: 0.04, v: 0.24, lp: 3500 }); },
+    eject: function (c, d, t) { // 追放: 遠ざかる風切り音
+      noise(c, d, { t: t, d: 1.6, v: 0.35, ft: 'bandpass', f: 300, f2: 3600, q: 1.2, a: 0.3 });
+      tone(c, d, { type: 'sine', f: 440, f2: 70, t: t + 0.2, d: 1.4, v: 0.2 });
+    },
+    sab: function (c, d, t) { // 緊急事態・マップ妨害: サイレン
+      for (var i = 0; i < 6; i++) tone(c, d, { type: 'sawtooth', f: i % 2 ? 640 : 960, f2: i % 2 ? 960 : 640, t: t + i * 0.26, d: 0.26, v: 0.15, lp: 2200, a: 0.02 });
+    },
+    blackout: function (c, d, t) { // 停電: 電源が落ちる
+      tone(c, d, { type: 'sawtooth', f: 520, f2: 38, t: t, d: 1.3, v: 0.28, lp: 1500 });
+      noise(c, d, { t: t, d: 0.6, v: 0.2, ft: 'lowpass', f: 1800, f2: 120 });
+      tone(c, d, { f: 70, f2: 40, t: t, d: 1.0, v: 0.35 });
+    },
+    lightson: function (c, d, t) { // 復旧: 電源が入る
+      tone(c, d, { type: 'sawtooth', f: 60, f2: 520, t: t, d: 0.6, v: 0.2, lp: 2400, a: 0.05 });
+      arp(c, d, t + 0.55, [72, 76, 79], 0.08, { type: 'square', d: 0.3, v: 0.1, lp: 3000 });
+    },
+    jam: function (c, d, t) { // 通信妨害: ノイズ
+      for (var i = 0; i < 5; i++) noise(c, d, { t: t + i * 0.09, d: 0.07, v: 0.28, ft: 'bandpass', f: 800 + i * 900, q: 0.6 });
+      tone(c, d, { type: 'square', f: 180, f2: 90, t: t, d: 0.5, v: 0.12, lp: 900 });
+    },
+    fix: function (c, d, t) { arp(c, d, t, [72, 76, 79], 0.09, { type: 'square', d: 0.22, v: 0.11, lp: 3200 }); tone(c, d, { f: 1568, t: t + 0.28, d: 0.5, v: 0.08 }); },
+    door: function (c, d, t) { tone(c, d, { f: 100, f2: 42, t: t, d: 0.5, v: 0.45 }); noise(c, d, { t: t, d: 0.3, v: 0.25, ft: 'lowpass', f: 1200, f2: 150 }); },
+    vent: function (c, d, t) { noise(c, d, { t: t, d: 0.4, v: 0.3, ft: 'bandpass', f: 500, f2: 2200, q: 1.5, a: 0.05 }); tone(c, d, { f: 150, f2: 80, t: t + 0.15, d: 0.2, v: 0.25 }); },
+    portal: function (c, d, t) { tone(c, d, { f: 300, f2: 1400, t: t, d: 0.35, v: 0.16 }); tone(c, d, { f: 1400, f2: 300, t: t + 0.3, d: 0.35, v: 0.14 }); },
+    wavecharge: function (c, d, t, o) { // ため: だんだん高くなる
+      var dur = o.dur || 3;
+      tone(c, d, { type: 'sawtooth', f: 70, f2: 880, t: t, d: dur, v: 0.2, lp: 1400, a: Math.min(0.4, dur * 0.3) });
+      tone(c, d, { type: 'sine', f: 140, f2: 1760, t: t, d: dur, v: 0.12, a: Math.min(0.4, dur * 0.3) });
+      noise(c, d, { t: t, d: dur, v: 0.06, ft: 'bandpass', f: 400, f2: 5000, q: 2, a: 0.5 });
+    },
+    wavefire: function (c, d, t) { // 発射: どーん
+      noise(c, d, { t: t, d: 1.1, v: 0.55, ft: 'lowpass', f: 4500, f2: 150 });
+      tone(c, d, { type: 'sawtooth', f: 90, f2: 28, t: t, d: 1.0, v: 0.4, lp: 900 });
+      tone(c, d, { type: 'sine', f: 1500, f2: 120, t: t, d: 0.7, v: 0.22 });
+      tone(c, d, { f: 60, f2: 30, t: t, d: 1.0, v: 0.5 });
+    },
+    shield: function (c, d, t) { tone(c, d, { f: 700, f2: 1500, t: t, d: 0.35, v: 0.14 }); tone(c, d, { type: 'triangle', f: 1050, f2: 2250, t: t + 0.05, d: 0.4, v: 0.08 }); },
+    shieldoff: function (c, d, t) { tone(c, d, { f: 1400, f2: 500, t: t, d: 0.3, v: 0.12 }); },
+    reflect: function (c, d, t) { tone(c, d, { type: 'square', f: 1568, t: t, d: 0.4, v: 0.14, lp: 5000 }); tone(c, d, { type: 'square', f: 2349, f2: 2300, t: t, d: 0.5, v: 0.08, lp: 6000 }); noise(c, d, { t: t, d: 0.2, v: 0.3, ft: 'highpass', f: 3000 }); },
+    fortune: function (c, d, t) { [76, 83, 88].forEach(function (m, i) { tone(c, d, { f: mtof(m), t: t + i * 0.12, d: 1.2, v: 0.12 }); tone(c, d, { f: mtof(m) * 2.01, t: t + i * 0.12, d: 0.7, v: 0.04 }); }); },
+    win: function (c, d, t) {
+      arp(c, d, t, [60, 64, 67, 72], 0.14, { type: 'triangle', d: 0.5, v: 0.22 });
+      [60, 64, 67, 72, 76].forEach(function (m) { tone(c, d, { type: 'triangle', f: mtof(m), t: t + 0.62, d: 1.8, v: 0.1, a: 0.02 }); });
+      tone(c, d, { type: 'sine', f: mtof(84), t: t + 0.65, d: 1.6, v: 0.07 });
+    },
+    lose: function (c, d, t) {
+      arp(c, d, t, [69, 65, 62, 57], 0.22, { type: 'triangle', d: 0.7, v: 0.2 });
+      [45, 52, 57].forEach(function (m) { tone(c, d, { type: 'sawtooth', f: mtof(m), t: t + 0.9, d: 2.0, v: 0.07, lp: 700, a: 0.05 }); });
+    }
+  };
+
+  function play(name, o) {
+    o = o || {};
+    var c = ensure(); if (!c || !alive() || cfg.mute || !SE[name]) return null;
+    var vol = o.vol == null ? 1 : o.vol; if (vol <= 0.01) return null;
+    var g = c.createGain(); g.gain.value = vol;
+    var dest = g, pn = null;
+    if (o.pan && c.createStereoPanner) { pn = c.createStereoPanner(); pn.pan.value = clamp(o.pan, -1, 1); g.connect(pn); pn.connect(bus.se); } else g.connect(bus.se);
+    SE[name](c, g, c.currentTime + 0.01, o);
+    void dest;
+    return { stop: function () { try { g.gain.cancelScheduledValues(c.currentTime); g.gain.setTargetAtTime(0, c.currentTime, 0.03); } catch (e) {} } };
+  }
+
+  /* ---- BGM ---- */
+  // 各トラックは「8分音符ひとつぶん」を鳴らす。 s: 何拍目か、t: 鳴らす時刻、sd: 8分音符の長さ(秒)
+  var TRACKS = {
+    lobby: { bpm: 100, fn: function (c, d, s, t, sd) {
+      var ch = [[48, [0, 4, 7]], [45, [0, 3, 7]], [41, [0, 4, 7]], [43, [0, 4, 7]]], bar = Math.floor(s / 8) % 4, i = s % 8, r = ch[bar][0], iv = ch[bar][1];
+      if (i === 0) tone(c, d, { f: mtof(r), t: t, d: sd * 6, v: 0.2, a: 0.02 });
+      if (i === 4) tone(c, d, { f: mtof(r + 7), t: t, d: sd * 3, v: 0.1, a: 0.02 });
+      var pat = [0, 1, 2, 1, 2, 1, 2, 1], n = r + 24 + iv[pat[i]] % 12 + (pat[i] > 2 ? 12 : 0);
+      tone(c, d, { type: 'triangle', f: mtof(n), t: t, d: sd * 1.7, v: 0.1, lp: 2800 });
+      if (i % 2) noise(c, d, { t: t, d: 0.04, v: 0.025, ft: 'highpass', f: 7000 });
+      var mel = { 2: 0, 5: 2, 6: 1 }; if (bar % 2 === 1 && mel[i] != null) tone(c, d, { f: mtof(r + 36 + iv[mel[i]]), t: t, d: sd * 2, v: 0.06, a: 0.01 });
+    } },
+    play: { bpm: 84, fn: function (c, d, s, t, sd) {
+      var ch = [[33, [0, 3, 7]], [29, [0, 4, 7]], [26, [0, 3, 7]], [28, [0, 4, 7]]], bar = Math.floor(s / 8) % 4, i = s % 8, r = ch[bar][0], iv = ch[bar][1];
+      if (i === 0 || i === 3 || i === 6) tone(c, d, { type: 'sawtooth', f: mtof(r), t: t, d: sd * 1.8, v: 0.26, lp: 340, a: 0.01 });
+      if (i === 0) { iv.forEach(function (x) { tone(c, d, { type: 'sawtooth', f: mtof(r + 24 + x), t: t, d: sd * 7, v: 0.05, lp: 760, a: 0.5 }); }); }
+      if (i === 4) noise(c, d, { t: t, d: 0.09, v: 0.07, ft: 'bandpass', f: 1800, q: 2 });
+      var ping = [[2, 0], [5, 2], [7, 1]][(bar + Math.floor(s / 32)) % 3];
+      if (i === ping[0]) tone(c, d, { f: mtof(r + 36 + iv[ping[1]]), t: t, d: sd * 3, v: 0.11, a: 0.008 });
+    } },
+    alert: { bpm: 150, fn: function (c, d, s, t, sd) {
+      var i = s % 8, r = (Math.floor(s / 8) % 2) ? 34 : 33;
+      tone(c, d, { type: 'sawtooth', f: mtof(r), t: t, d: sd * 0.9, v: 0.2, lp: 420, a: 0.005 });
+      if (i % 2 === 0) noise(c, d, { t: t, d: 0.05, v: 0.06, ft: 'highpass', f: 6000 });
+      if (i === 0 || i === 4) tone(c, d, { type: 'square', f: mtof(r + 38), t: t, d: sd * 1.2, v: 0.07, lp: 2400 });
+      if (i === 6) tone(c, d, { type: 'square', f: mtof(r + 37), t: t, d: sd * 1.2, v: 0.06, lp: 2400 });
+    } },
+    meeting: { bpm: 112, fn: function (c, d, s, t, sd) {
+      var ch = [[45, [0, 3, 7, 10]], [41, [0, 4, 7, 11]], [38, [0, 3, 7, 10]], [40, [0, 4, 7, 10]]], bar = Math.floor(s / 8) % 4, i = s % 8, r = ch[bar][0], iv = ch[bar][1];
+      if (i % 2 === 0) tone(c, d, { f: 210, f2: 120, t: t, d: 0.06, v: i % 4 === 0 ? 0.3 : 0.16 });
+      if (i === 0) iv.forEach(function (x) { tone(c, d, { type: 'sawtooth', f: mtof(r + 12 + x), t: t, d: sd * 8, v: 0.048, lp: 900, a: 0.4 }); });
+      if (i === 0) tone(c, d, { type: 'triangle', f: mtof(r), t: t, d: sd * 4, v: 0.26, a: 0.02 });
+      var q = { 3: 0, 5: 2, 7: 1 }; if (bar % 2 === 0 && q[i] != null) tone(c, d, { type: 'triangle', f: mtof(r + 24 + iv[q[i]]), t: t, d: sd * 1.5, v: 0.09 });
+    } }
+  };
+  function sched() {
+    if (!ctx || !cur || !alive()) return;
+    var tr = TRACKS[cur], sd = 60 / tr.bpm / 2;
+    if (nextT < ctx.currentTime) nextT = ctx.currentTime + 0.05;
+    while (nextT < ctx.currentTime + 0.25) { tr.fn(ctx, curG, step, nextT, sd); nextT += sd; step++; }
+  }
+  function bgm(name) {
+    if (name && !TRACKS[name]) name = null;
+    if (name === cur) return;
+    var c = ensure();
+    if (!c) { cur = name; return; } // まだ音を出せない: あとで unlock されたら始まる
+    var now = c.currentTime;
+    if (curG) { var og = curG; try { og.gain.cancelScheduledValues(now); og.gain.setTargetAtTime(0, now, 0.25); } catch (e) {} setTimeout(function () { try { og.disconnect(); } catch (e) {} }, 2500); curG = null; }
+    cur = name; step = 0; nextT = now + 0.1;
+    if (name) {
+      curG = c.createGain(); curG.gain.setValueAtTime(0.0001, now); curG.gain.linearRampToValueAtTime(1, now + 0.8); curG.connect(bus.bgm);
+      if (!timer) timer = setInterval(sched, 60);
+    } else if (timer) { clearInterval(timer); timer = null; }
+  }
+  // unlock 後に、保留していたBGMを始める
+  function kick() {
+    if (!ctx || !cur || curG) return;
+    var n = cur; cur = null; bgm(n);
+  }
+
+  /* ---- 設定 ---- */
+  function setVol(kind, v) { cfg[kind] = clamp(v, 0, 1); applyVol(); save(); }
+  function setMute(m) { cfg.mute = !!m; applyVol(); save(); }
+
+  /* ---- 書き出しテスト(耳で聞けない環境でも、無音や音割れを調べられる) ---- */
+  function render(name, sec, o) {
+    var OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!OC) return Promise.resolve(null);
+    var c = new OC(1, Math.ceil(44100 * sec), 44100), gr = graph(c);
+    gr.se.gain.value = 0.64; gr.bgm.gain.value = 0.2;
+    if (SE[name]) SE[name](c, gr.se, 0.01, o || {});
+    else if (TRACKS[name]) { var sd = 60 / TRACKS[name].bpm / 2, s = 0; for (var t = 0.01; t < sec; t += sd, s++) TRACKS[name].fn(c, gr.bgm, s, t, sd); }
+    return c.startRendering().then(function (buf) {
+      var d = buf.getChannelData(0), pk = 0, sum = 0, nan = 0;
+      for (var i = 0; i < d.length; i++) { var a = Math.abs(d[i]); if (a !== a) nan++; if (a > pk) pk = a; sum += d[i] * d[i]; }
+      return { name: name, peak: +pk.toFixed(3), rms: +Math.sqrt(sum / d.length).toFixed(4), nan: nan };
+    });
+  }
+
+  return {
+    unlock: unlock, play: play, bgm: bgm, kick: kick, setVol: setVol, setMute: setMute, render: render,
+    settings: cfg, names: Object.keys(SE), tracks: Object.keys(TRACKS), get current() { return cur; }, get ready() { return !!ctx && ctx.state === 'running'; }
+  };
+})();
+
 /* ---------- 共通 ---------- */
 var E = window.Engine, B = window.Bots, C = E.COLORS;
 function $(id) { return document.getElementById(id); }
@@ -2724,6 +3046,7 @@ function pushChat(pid, text, dead) {
   S.chat.push({ pid: pid, name: p ? p.name : '?', color: p ? p.color : 6, text: String(text).slice(0, 60), dead: !!dead });
   if (S.chat.length > 80) S.chat.shift();
   S.chatDirty = true;
+  if (pid !== S.pid) SND.play('chat', { vol: 0.8 });
 }
 function sendPresence(force) {
   if (S.mode !== 'online' || !S.room) return;
@@ -2906,6 +3229,7 @@ function hostTick(dt) {
 
 /* ---------- 行動の送信 ---------- */
 function sendAct(a) {
+  if (a.type === 'vent') SND.play('vent'); else if (a.type === 'portal') SND.play('portal');
   if (S.isHost && S.hostState) {
     var r = E.act(S.hostState, S.pid, a, hostCtx());
     touch();
@@ -4111,6 +4435,7 @@ function toast(text) {
   var t = h('div', { class: 'toast', text: text });
   box.appendChild(t);
   setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 4400);
+  SND.play('notify', { vol: 0.7 });
   while (box.children.length > 4) box.removeChild(box.firstChild);
 }
 function checkMsgs(me) {
@@ -4191,7 +4516,7 @@ function readName() {
 
 /* ---------- ロビー ---------- */
 var PROG_OPTS = [[0, '会議のあとに表示', '進み具合は、会議が始まるたびに更新されます。それまでは前回の会議の時点の値です。'], [1, '完了するたび動く', 'タスクが終わるたびに、画面上部のバーがすぐ動きます。'], [2, '表示しない', '進み具合は出ません。決着はこれまでどおり、全タスク完了で付きます。']];
-var TABS = [{ id: 'crew', n: 'クルー陣営' }, { id: 'impostor', n: 'インポスター陣営' }, { id: 'neutral', n: '第三陣営' }, { id: 'task', n: 'タスク' }, { id: 'rule', n: 'ルール' }, { id: 'abil', n: '能力' }];
+var TABS = [{ id: 'crew', n: 'クルー陣営' }, { id: 'impostor', n: 'インポスター陣営' }, { id: 'neutral', n: '第三陣営' }, { id: 'task', n: 'タスク' }, { id: 'rule', n: 'ルール' }];
 function setSetting(k, v) {
   if (!S.isHost || !S.hostState || S.hostState.phase !== 'lobby') return;
   S.hostState.settings[k] = typeof v === 'boolean' ? v : E.clampSetting(k, v);
@@ -4207,6 +4532,7 @@ function toggleRow(d, s, canEdit) {
     h('button', { class: 'switch', type: 'button', role: 'switch', 'aria-checked': s[d.k] ? 'true' : 'false', 'aria-label': d.label, disabled: !canEdit, onclick: function () { setSetting(d.k, !s[d.k]); } })]);
 }
 function renderSettings(st, canEdit) {
+  if (!TABS.some(function (t) { return t.id === S.tab; })) S.tab = 'crew';
   var tabs = $('set-tabs'); clear(tabs);
   TABS.forEach(function (t) {
     tabs.appendChild(h('button', { class: 'tab', type: 'button', role: 'tab', 'aria-selected': S.tab === t.id ? 'true' : 'false', text: t.n, onclick: function () { S.tab = t.id; renderLobby(S.state); } }));
@@ -4220,10 +4546,24 @@ function renderSettings(st, canEdit) {
     body.appendChild(h('p', { class: 'small mute', text: tm === 'crew' ? 'クルー陣営の役職です。選ばれなかった人は、全員が普通のクルーになります(いまは ' + crewLeft + '人)。' : E.TEAMS[tm].name + 'の役職です。この陣営は合計 ' + teamSum + '人です。' }));
     E.ROLE_ORDER.filter(function (r) { return E.ROLES[r].team === tm; }).forEach(function (r) {
       var def = E.SETTING_DEFS.filter(function (d) { return d.role === r; })[0], R = E.ROLES[r], T = E.TEAMS[R.team];
-      body.appendChild(h('div', { class: 'set-row' }, [
+      var cnt = c[r] | 0;
+      body.appendChild(h('div', { class: 'set-row role-main' + (cnt > 0 ? ' on' : '') }, [
         h('div', { class: 'lb' }, [h('span', { class: 'team-dot', style: 'background:' + T.hex }), h('span', { text: R.n }), h('span', { class: 'ds', text: R.d })]),
         stepper(def, s[def.k], canEdit)
       ]));
+      // この役職だけの設定(人数を1人以上にしたときに、すぐ下に出る)
+      var mine = E.SETTING_DEFS.filter(function (d) { return d.g === 'abil' && d.r && [].concat(d.r).indexOf(r) >= 0; }),
+        myTg = E.TOGGLES.filter(function (d) { return d.r && [].concat(d.r).indexOf(r) >= 0; });
+      if (cnt > 0 && (mine.length || myTg.length)) {
+        var box = h('div', { class: 'role-opts' });
+        mine.forEach(function (d) { box.appendChild(h('div', { class: 'set-row' }, [h('div', { class: 'lb', text: d.label }), stepper(d, s[d.k], canEdit)])); });
+        myTg.forEach(function (d) { box.appendChild(toggleRow(d, s, canEdit)); });
+        var shared = mine.concat(myTg).some(function (d) { return [].concat(d.r).length > 1; });
+        if (shared) box.appendChild(h('p', { class: 'small mute', text: '※ 波動砲の設定は、波動砲とジャッカル波動砲で共通です。' }));
+        body.appendChild(box);
+      } else if (cnt === 0 && (mine.length || myTg.length)) {
+        body.appendChild(h('p', { class: 'small mute role-hint', text: '人数を1人以上にすると、' + R.n + 'の設定がここに出ます。' }));
+      }
     });
     if (tm === 'crew') body.appendChild(h('div', { class: 'set-row' }, [
       h('div', { class: 'lb' }, [h('span', { class: 'team-dot', style: 'background:' + E.TEAMS.crew.hex }), h('span', { text: 'クルー' }), h('span', { class: 'ds', text: '役職に選ばれなかった人は、全員クルーになります。' })]),
@@ -4247,14 +4587,6 @@ function renderSettings(st, canEdit) {
     E.TOGGLES.filter(function (d) { return !d.r && (d.m !== 'voice' || S.standalone); }).forEach(function (d) { body.appendChild(toggleRow(d, s, canEdit)); });
     var sabs = E.mapSabs();
     if (sabs.length) body.appendChild(h('p', { class: 'small mute', text: 'このマップ固有の妨害: ' + sabs.map(function (k) { var i = E.mapSabInfo(k); return i.n + '(' + i.d + ')'; }).join(' / ') }));
-  } else {
-    // 能力の設定は、その役職を1人以上入れているときだけ表示する
-    var rc = E.roleCounts(s), used = function (d) { var rr = d.r ? [].concat(d.r) : null; return !rr || rr.some(function (r) { return (rc[r] | 0) > 0; }); }, shown = 0;
-    E.SETTING_DEFS.filter(function (d) { return d.g === 'abil' && used(d); }).forEach(function (d) {
-      shown++; body.appendChild(h('div', { class: 'set-row' }, [h('div', { class: 'lb', text: d.label }), stepper(d, s[d.k], canEdit)]));
-    });
-    E.TOGGLES.filter(function (d) { return d.r && used(d); }).forEach(function (d) { shown++; body.appendChild(toggleRow(d, s, canEdit)); });
-    if (!shown) body.appendChild(h('p', { class: 'small mute', text: '「役職」タブで、能力のある役職を1人以上入れると、その役職の設定がここに出ます。' }));
   }
 }
 function addBot() {
@@ -4372,6 +4704,7 @@ function showRoleCard() {
   var st = S.state, me = myPlayer();
   if (!st || !me || !me.role) return;
   var R = E.ROLES[me.role], T = E.TEAMS[R.team], box = $('rolecard');
+  SND.play('reveal', { team: R.team });
   clear(box); box.style.setProperty('--c', T.hex);
   box.appendChild(h('div', { class: 'team', text: T.name }));
   box.appendChild(h('div', { class: 'rn', text: R.n }));
@@ -4442,7 +4775,7 @@ function applyOverlays() {
 function openSab() {
   var s = S.state.settings, CR = E.M.crisis, box = $('sab-list'); clear(box);
   var opts = [
-    ['blackout', '停電', s.blackoutSec + '秒間、クルーの視界が狭くなる' + (E.GIM.panel ? '(配電盤で復旧される)' : '')],
+    ['blackout', '停電', 'クルーの視界がずっと狭いまま。配電盤で直されるまで続く(会議をはさんでも続く)'],
     ['jam', '通信妨害', s.jamSec + '秒間、クルーのタスクとマップが使えなくなる(修理地点で復旧される)']
   ];
   if (CR) opts.push(['crisis', '緊急事態: ' + CR.n, Math.round(E.crisisMs(s) / 1000) + '秒以内に2か所とも直されなければ、インポスターの勝ち']);
@@ -4717,10 +5050,12 @@ function playKillFx(st, me) {
   $('fx-kt').textContent = mis ? '誤射…' : 'やられた…';
   $('fx-ks').textContent = mis ? '撃つべきでない相手を撃ってしまった(または撃たれた)' : kd.how === 'wave' && killer ? cname(killer) + 'の ' + killer.name + ' の波動砲に貫かれた' : kd.how === 'reflect' && killer ? cname(killer) + 'の ' + killer.name + ' のシールドに波動砲を跳ね返された' : killer ? cname(killer) + 'の ' + killer.name + (kd.how === 'shot' ? ' に撃たれた' : ' に倒された') : '倒された';
   showFx('fx-kill', 2800);
+  SND.play('kill');
   buzz([90, 50, 260]);
 }
 // 会議の開始: 遺体の通報か、緊急ボタンかを、全員に見せる
 function playMeetFx(st, m) {
+  SND.play(m.bodyOf ? 'report' : 'meetbtn');
   var body = !!m.bodyOf, caller = st.players[m.caller], vic = body ? st.players[m.bodyOf] : null;
   var cvs = $('fx-mcv'), c = cvs.getContext('2d');
   c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cvs.width, cvs.height);
@@ -4750,6 +5085,138 @@ function checkFx(st, me) {
     var k2 = st.round + ':' + m.n;
     if (S.fxMeet !== k2) { S.fxMeet = k2; if (tn - (m.end - st.settings.discussSec * 1000) < 5000) playMeetFx(st, m); }
   }
+}
+
+/* ---------- 音(BGM・効果音)をゲームの出来事につなぐ ---------- */
+// 画面の状態を毎フレーム見て、前回との違いから音を鳴らす(ホストも参加者も同じ仕組み)
+var SP = null; // 前回の状態の控え
+function sndNear(id, range) {
+  if (id === S.pid) return { vol: 1, pan: 0 };
+  var p = getPos(id);
+  if (!p) return { vol: 0, pan: 0 };
+  var d = Math.hypot(p.x - S.me.x, p.y - S.me.y);
+  return { vol: Math.max(0, 1 - d / (range || 800)), pan: Math.max(-1, Math.min(1, (p.x - S.me.x) / 700)) };
+}
+function sndSnap(st, me, now) {
+  var o = {
+    phase: st.phase, round: st.round, mn: st.meeting ? st.meeting.n : 0, stage: st.meeting ? st.meeting.stage : '',
+    votes: st.meeting && st.meeting.votes ? Object.keys(st.meeting.votes).length : 0,
+    bl: st.blackoutUntil > now, jam: st.jamUntil > now, crisis: st.crisis ? 1 : 0,
+    cfix: st.crisis ? st.crisis.fixed.filter(Boolean).length : 0,
+    ms: !!(st.mapSab && st.mapSab.until > now), n: st.order.length, alive: {}, wv: {}, wf: {}, sh: {},
+    steps: 0, done: 0, fr: me && me.fr ? me.fr.length : 0, wvh: SP && SP.wvh || {}, tick: SP ? SP.tick : 0
+  };
+  st.order.forEach(function (id) {
+    var p = st.players[id]; if (!p || p.left) return;
+    o.alive[id] = !!p.alive; o.wv[id] = !!p.wv; o.wf[id] = p.wf ? p.wf.n : 0; o.sh[id] = (p.sh || 0) > now;
+  });
+  if (me && me.tasks) me.tasks.forEach(function (t) { if (t.done) o.done++; o.steps += t.p || 0; });
+  return o;
+}
+function sndWant(st, now) {
+  if (!S.mode || !st || st.phase === 'lobby') return 'lobby';
+  if (st.phase === 'meeting') return 'meeting';
+  if (st.phase === 'play') return (st.crisis || st.jamUntil > now || (st.mapSab && st.mapSab.until > now)) ? 'alert' : 'play';
+  return null;
+}
+function sndSync() {
+  var st = S.state, now = tnow(), me = myPlayer();
+  SND.bgm(sndWant(S.mode ? st : null, now));
+  if (!S.mode || !st) { SP = null; return; }
+  SND.kick();
+  var cur = sndSnap(st, me, now), pv = SP;
+  SP = cur;
+  if (!pv || pv.round !== cur.round) return;
+  if (st.phase === 'lobby') { if (cur.n > pv.n) SND.play('join', { vol: 0.8 }); return; }
+  var s = st.settings, id;
+  // ゲームの終わり
+  if (cur.phase === 'over' && pv.phase !== 'over' && st.winner) {
+    SND.play(st.winner.who.indexOf(S.pid) >= 0 ? 'win' : 'lose');
+    return;
+  }
+  // 会議
+  if (cur.phase === 'meeting') {
+    if (cur.votes > pv.votes && cur.mn === pv.mn) SND.play('vote');
+    if (cur.stage === 'result' && pv.stage !== 'result') SND.play(st.meeting.res && st.meeting.res.ejected ? 'eject' : 'vote', { vol: 0.9 });
+    var m = st.meeting, left = Math.ceil((m.end - now) / 1000);
+    if ((m.stage === 'vote' || m.stage === 'discuss') && left > 0 && left <= 5 && cur.tick !== m.n * 1000 + m.end % 997 + left) { cur.tick = m.n * 1000 + m.end % 997 + left; SND.play('tick'); }
+  }
+  // 倒れた人(近くだけ聞こえる)
+  if (cur.phase === 'play' && pv.phase === 'play') {
+    for (id in cur.alive) {
+      if (pv.alive[id] && !cur.alive[id] && id !== S.pid) { var kn = sndNear(id, 700); if (kn.vol > 0.05) SND.play('killnear', { vol: kn.vol, pan: kn.pan }); }
+    }
+  }
+  // 波動砲・シールド
+  for (id in cur.wv) {
+    if (cur.wv[id] && !pv.wv[id]) {
+      var wn = sndNear(id, 900);
+      if (wn.vol > 0.05) cur.wvh[id] = SND.play('wavecharge', { vol: wn.vol * 0.9, pan: wn.pan, dur: s.waveCharge || 3 });
+    }
+    if (!cur.wv[id] && pv.wv[id] && cur.wvh[id]) { if (cur.wf[id] === pv.wf[id]) cur.wvh[id].stop(); delete cur.wvh[id]; }
+    if (cur.wf[id] > (pv.wf[id] || 0)) {
+      var pl = st.players[id], wf = pl && pl.wf, d = wf && S.me ? Math.hypot(wf.x - S.me.x, wf.y - S.me.y) : 0;
+      SND.play('wavefire', { vol: id === S.pid ? 1 : Math.max(0.3, 1 - d / 1800), pan: Math.max(-1, Math.min(1, ((wf ? wf.x : S.me.x) - S.me.x) / 900)) });
+      if (wf && wf.rf) setTimeout(function () { SND.play('reflect', { vol: 0.9 }); }, 280);
+    }
+    if (cur.sh[id] && !pv.sh[id]) { var sn = sndNear(id, 700); if (sn.vol > 0.05) SND.play('shield', { vol: sn.vol, pan: sn.pan }); }
+    if (!cur.sh[id] && pv.sh[id] && id === S.pid && cur.alive[id]) SND.play('shieldoff');
+  }
+  // タスク(自分の)
+  if (me && me.tasks && cur.phase === 'play') {
+    if (cur.done > pv.done) SND.play('taskdone');
+    else if (cur.steps > pv.steps) SND.play('taskstep');
+  }
+  if (cur.fr > pv.fr) SND.play('fortune');
+  // 妨害と復旧
+  if (cur.phase === 'play' || cur.phase === 'meeting') {
+    if (cur.bl && !pv.bl) SND.play('blackout');
+    if (!cur.bl && pv.bl) SND.play('lightson');
+    if (cur.jam && !pv.jam) SND.play('jam');
+    if (!cur.jam && pv.jam) SND.play('fix');
+    if (cur.crisis && !pv.crisis) SND.play('sab');
+    if (cur.crisis && pv.crisis && cur.cfix > pv.cfix) SND.play('fix');
+    if (!cur.crisis && pv.crisis && cur.phase === 'play') SND.play('fix');
+    if (cur.ms && !pv.ms) SND.play('sab');
+    if (!cur.ms && pv.ms) SND.play('door', { vol: 0.7 });
+  }
+}
+
+/* ---------- 音の設定画面 ---------- */
+var SND_BTNS = ['btn-snd-e', 'btn-snd-l', 'btn-snd-g', 'btn-snd-m'];
+function sndRefreshUi() {
+  var c = SND.settings;
+  $('snd-bgm').value = Math.round(c.bgm * 100); $('snd-se').value = Math.round(c.se * 100);
+  $('snd-bgm-v').textContent = Math.round(c.bgm * 100) + '%'; $('snd-se-v').textContent = Math.round(c.se * 100) + '%';
+  $('snd-mute').textContent = c.mute ? '音を出す' : 'すべて消す';
+  $('snd-mute').classList.toggle('off', !!c.mute);
+  var lab = c.mute ? '音 OFF' : '音';
+  SND_BTNS.forEach(function (id) {
+    var b = $(id), long = id === 'btn-snd-e';
+    b.textContent = long ? (c.mute ? '音の設定(いまは消音中)' : '音の設定(BGM・効果音)') : lab;
+    b.classList.toggle('off', !!c.mute);
+  });
+}
+function bindSnd() {
+  // ブラウザは、最初の操作があるまで音を出せない
+  var unl = function () { SND.unlock(); SND.kick(); };
+  ['pointerdown', 'touchend', 'keydown', 'click'].forEach(function (ev) { document.addEventListener(ev, unl, { capture: true, passive: true }); });
+  // ボタンを押したときの小さな音(音の設定の中のスライダーなどは除く)
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('button') : null;
+    if (b && !b.disabled && b.id !== 'snd-test') SND.play('click');
+  }, true);
+  SND_BTNS.forEach(function (id) {
+    $(id).addEventListener('click', function () { sndRefreshUi(); $('ov-sound').hidden = false; });
+  });
+  $('btn-snd-x').addEventListener('click', function () { $('ov-sound').hidden = true; });
+  $('snd-bgm').addEventListener('input', function () { SND.setVol('bgm', this.value / 100); sndRefreshUi(); });
+  $('snd-se').addEventListener('input', function () { SND.setVol('se', this.value / 100); sndRefreshUi(); });
+  $('snd-se').addEventListener('change', function () { SND.play('taskdone'); });
+  $('snd-mute').addEventListener('click', function () { SND.setMute(!SND.settings.mute); sndRefreshUi(); });
+  var order = ['taskdone', 'kill', 'report', 'wavefire', 'win', 'sab', 'fortune', 'shield'], oi = 0;
+  $('snd-test').addEventListener('click', function () { SND.play(order[oi++ % order.length]); });
+  sndRefreshUi();
 }
 
 /* ---------- キャンバス描画 ---------- */
@@ -5076,12 +5543,18 @@ function render(dt) {
   }
   drawBeacons(c, st, now);
 }
-// 画面の外にある修理地点を、縁の矢印で知らせる
+// 画面の外にある修理地点(緊急事態・通信妨害・停電の配電盤)を、縁の矢印で知らせる
 function drawBeacons(c, st, now) {
-  if (!E.M.crisis || st.phase !== 'play' || !(st.crisis || st.jamUntil > tnow())) return;
-  var mg = 56;
-  E.M.crisis.points.forEach(function (pt, i) {
+  if (st.phase !== 'play') return;
+  var tn = tnow(), pts = [], me0 = myPlayer();
+  if (E.M.crisis && (st.crisis || st.jamUntil > tn)) E.M.crisis.points.forEach(function (pt, i) {
     if (st.crisis && st.crisis.fixed[i]) return;
+    pts.push({ x: pt.x, y: pt.y, i: i, t: '修理' });
+  });
+  if (st.blackoutUntil > tn && E.GIM.panel && me0 && me0.alive && teamOf(me0) !== 'impostor') pts.push({ x: E.GIM.panel.x, y: E.GIM.panel.y, i: 9, t: '配電盤' });
+  var mg = 56;
+  pts.forEach(function (pt) {
+    var i = pt.i;
     var sx = VW / 2 + (pt.x - S.me.x) * SCALE, sy = VH / 2 + (pt.y - S.me.y) * SCALE;
     if (sx > 20 && sx < VW - 20 && sy > mg && sy < VH - 20) return;
     var ang = Math.atan2(sy - VH / 2, sx - VW / 2), ex = VW / 2 - 30, ey = VH / 2 - 52;
@@ -5093,7 +5566,7 @@ function drawBeacons(c, st, now) {
     c.restore();
     c.font = '700 11px "Zen Maru Gothic", sans-serif'; c.textAlign = 'center'; c.lineWidth = 3; c.strokeStyle = 'rgba(6,9,20,.95)';
     var tx = ax - Math.cos(ang) * 26, ty = ay - Math.sin(ang) * 26 + 4;
-    c.strokeText('修理', tx, ty); c.fillStyle = '#ffb3bf'; c.fillText('修理', tx, ty);
+    c.strokeText(pt.t, tx, ty); c.fillStyle = '#ffb3bf'; c.fillText(pt.t, tx, ty);
   });
 }
 function stepVis(dt) {
@@ -5386,7 +5859,8 @@ function updateHud(st, me) {
     if (teamOf(me) === 'impostor') txt = msi.n + 'を起こしている(残り' + mleft + '秒)';
     else { txt = msi.n + '! ' + msi.d + '(残り' + mleft + '秒)'; alert = true; }
   }
-  else if (st.blackoutUntil > tn && teamOf(me) === 'crew') { txt = '停電中! 視界が狭くなっています'; alert = true; }
+  else if (st.blackoutUntil > tn && teamOf(me) === 'impostor') { txt = '停電を起こしている(直されるまで続く)'; }
+  else if (st.blackoutUntil > tn && teamOf(me) === 'crew') { var pr = E.GIM.panel && E.roomAt(E.GIM.panel.x, E.GIM.panel.y); txt = '停電中! 視界が狭いまま。' + (pr ? pr.n + 'の' : '') + '配電盤で復旧しよう'; alert = true; }
   else if (me.wv) { txt = '波動砲をためています…動けません'; }
   else if ((me.sh || 0) > tn) { txt = 'シールド展開中…動けません'; }
   if (txt) { bn.hidden = false; if (bn.textContent !== txt) bn.textContent = txt; bn.className = 'banner' + (alert ? ' alert' : ''); } else bn.hidden = true;
@@ -5394,6 +5868,7 @@ function updateHud(st, me) {
 
 /* ---------- メインループ ---------- */
 function frame(ts) {
+  try { sndSync(); } catch (e) {}
   var dt = Math.min(0.06, (ts - (S.lastFrame || ts)) / 1000);
   S.lastFrame = ts;
   var st = S.state, me = myPlayer();
@@ -5491,7 +5966,7 @@ function boot() {
   S.name = store('uso.name') || '';
   $('inp-name').value = S.name;
   var rm = store('uso.rot'); S.rot = rm === 'cw' || rm === 'ccw' ? rm : 'auto';
-  drawShip(); applyRot(); renderRotSeg(); bindInput(); bindUi();
+  drawShip(); applyRot(); renderRotSeg(); bindInput(); bindUi(); bindSnd();
   updateEntryStatus();
   initCaps().then(function () {
     if (S.standalone) { var m = /^#?([A-Za-z0-9]{4})$/.exec(location.hash || ''); if (m) $('inp-code').value = m[1].toUpperCase(); }
