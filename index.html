@@ -87,8 +87,9 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 .pl .tag.host { background: var(--accent); color: var(--accent-ink); }
 .pl .x { margin-left: auto; margin-top: -2px; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--mute); flex: none; }
 .swatch { width: 22px; height: 22px; border-radius: 50% 50% 46% 46%; flex: none; border: 2px solid rgba(8, 12, 24, .8); }
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
-.tab { padding: 10px 16px; border: 0; background: transparent; color: var(--mute); font-weight: 700; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: none; white-space: nowrap; padding: 10px 12px; border: 0; background: transparent; color: var(--mute); font-weight: 700; border-bottom: 3px solid transparent; margin-bottom: -1px; }
 .tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
 .set-list { display: grid; gap: 2px; }
 .set-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 10px 2px; border-bottom: 1px solid rgba(43, 56, 96, .55); }
@@ -405,6 +406,30 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 .hbtn.off, .btn.off { color: var(--warn); border-color: var(--warn); }
 .swatch.speaking { box-shadow: 0 0 0 3px rgba(95, 208, 138, .85); }
 
+/* 人数モニター・会議の能力パネル・波動砲/シールドの表示 */
+#ov-count { z-index: 61; }
+.count-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.count-list .cn { border: 1px solid var(--line, #2b365f); border-radius: 10px; padding: 4px 10px; font-size: 13px; background: rgba(255, 255, 255, .04); }
+.count-list .cn b { margin-left: 6px; color: #ffd24d; font-size: 15px; }
+.count-list .cn.zero { opacity: .45; }
+.skill-panel { border: 1px solid var(--crew); border-radius: 12px; padding: 12px; display: grid; gap: 8px; background: rgba(79, 184, 166, .08); }
+.skill-panel.fort { border-color: var(--neu); background: rgba(169, 139, 255, .08); }
+.skill-panel .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.fort-log { display: grid; gap: 4px; font-size: 13px; }
+.fort-log b { color: #cbb8ff; }
+
+/* 登場する役職の一覧 */
+#ov-roles { z-index: 62; }
+.roles-list { display: grid; gap: 14px; }
+.roles-team { display: grid; gap: 8px; }
+.roles-team > h3 { margin: 0; font-size: 14px; letter-spacing: .06em; color: var(--c, var(--mute)); }
+.roles-item { border: 1px solid var(--c, var(--line)); border-radius: 12px; padding: 10px 12px; display: grid; gap: 4px; background: rgba(255, 255, 255, .03); }
+.roles-item .rn { display: flex; align-items: baseline; gap: 8px; font-family: var(--font-d); font-size: 18px; }
+.roles-item .rn b { color: var(--c, var(--fg)); font-size: 14px; }
+.roles-item p { margin: 0; font-size: 13px; color: var(--mute); }
+.roles-item ul { margin: 0; padding-left: 18px; font-size: 12px; color: var(--mute); }
+.hgroup .hbtn { white-space: nowrap; }
+
 </style>
 </head>
 <body>
@@ -504,7 +529,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     <div class="hud top">
       <button id="btn-role" class="rolechip" type="button"><small id="rc-team"></small><span id="rc-name"></span></button>
       <div class="prog" id="prog"><div class="bar"><i id="prog-fill"></i></div><span id="prog-text"></span></div>
-      <div class="hgroup"><button id="btn-mic" class="hbtn" type="button" hidden>マイクON</button><button id="btn-map" class="hbtn" type="button">マップ</button></div>
+      <div class="hgroup"><button id="btn-mic" class="hbtn" type="button" hidden>マイクON</button><button id="btn-roles" class="hbtn" type="button">役職一覧</button><button id="btn-map" class="hbtn" type="button">マップ</button></div>
     </div>
     <div id="tasklist" class="tasklist"></div>
     <div id="banner" class="banner" hidden></div>
@@ -557,6 +582,25 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     </div>
   </div>
 
+  <!-- この試合に登場する役職 -->
+  <div id="ov-roles" class="ov" hidden>
+    <div class="box">
+      <div class="game-head"><h2 style="font-size:24px">登場する役職</h2><button id="btn-roles-x" class="btn small" type="button">閉じる</button></div>
+      <p class="small mute" id="roles-note"></p>
+      <div id="roles-list" class="roles-list"></div>
+    </div>
+  </div>
+
+  <!-- 人数モニター -->
+  <div id="ov-count" class="ov" hidden>
+    <div class="box map-box">
+      <div class="game-head"><h2 style="font-size:24px">人数モニター</h2><button id="btn-count-x" class="btn small" type="button">閉じる</button></div>
+      <canvas id="cv-count" class="mapbox" width="800" height="500"></canvas>
+      <p class="small mute" id="count-note">部屋ごとの、いまの人数です。遺体も1人として数えます。通路にいる人は数えません。</p>
+      <div id="count-list" class="count-list"></div>
+    </div>
+  </div>
+
   <!-- マップ -->
   <div id="ov-map" class="ov" hidden>
     <div class="box map-box">
@@ -572,7 +616,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     <div class="box meet">
       <div class="game-head mt-head">
         <div><h2 id="mt-title" style="font-size:28px"></h2><p id="mt-sub" class="small mute"></p></div>
-        <div class="mt-right"><button id="btn-mt-mic" class="btn small" type="button" hidden>マイクON</button><button id="btn-mt-map" class="btn small" type="button">マップ</button><div style="text-align:right"><div id="mt-stage" class="small mute"></div><div id="mt-timer" class="timer"></div></div></div>
+        <div class="mt-right"><button id="btn-mt-mic" class="btn small" type="button" hidden>マイクON</button><button id="btn-mt-roles" class="btn small" type="button">役職一覧</button><button id="btn-mt-map" class="btn small" type="button">マップ</button><div style="text-align:right"><div id="mt-stage" class="small mute"></div><div id="mt-timer" class="timer"></div></div></div>
       </div>
       <div class="mt-main">
         <div id="mt-me" class="small mute"></div>
@@ -582,6 +626,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
         <div id="mt-cards" class="cards"></div>
         <div id="mt-skip" class="row" hidden><button id="btn-skip" class="btn" type="button">スキップ(誰にも投票しない)</button><span id="mt-voted" class="small mute"></span></div>
         <div id="mt-assassin"></div>
+        <div id="mt-skill"></div>
       </div>
       <div class="chat mt-chat">
         <div id="chat-list" class="chat-list"></div>
@@ -1106,6 +1151,41 @@ function grid(o) {
       deco: { twrw: 'tower', gal: 'gallery', thr: 'throne', arm: 'armory', twre: 'tower', lib: 'library', hall: 'ballroom', cy: 'garden', chap: 'chapel', bed: 'bedroom', lab: 'alchemy', kit: 'kitchen', din: 'dining', gh: 'greenhouse', cel: 'dungeon', wine: 'cellar', ent: 'hallway', stb: 'stable', gar: 'garden' } },
     city: { outer: 'cavern', theme: 'dark', deco: { rec: 'reception', bio: 'lab', ctl: 'server', frz: 'cold', wst: 'waste', sp1: 'corridor', sto: 'storage', gen: 'electric', fac: 'factory', lab2: 'lab', arc: 'archive', sp2: 'corridor', hang: 'dock', qua: 'medical', srv: 'server', hyd: 'greenhouse', rea: 'reactor' } }
   };
+  /* 人数モニター: 部屋ごとの人数(遺体も1人)を確認できる端末。指定した部屋の中で、ほかの物から最も離れた場所に置く。 */
+  var COUNTER_ROOM = { ship: 'com', mansion: 'stu', lab: 'ctl', queen: 'bri', castle: 'gal', city: 'ctl' };
+  function counterSpot(m, roomId) {
+    var room = m.rooms.filter(function (r) { return r.id === roomId; })[0], objs = [];
+    m.tasks.forEach(function (t) { t.steps.forEach(function (st) { objs.push([st.x, st.y]); }); });
+    m.vents.forEach(function (v) { objs.push([v.x, v.y]); });
+    objs.push([m.table.x, m.table.y]);
+    var G = m.gimmicks || {};
+    if (G.panel) objs.push([G.panel.x, G.panel.y]);
+    (G.portals || []).forEach(function (q) { objs.push([q.x, q.y]); });
+    if (m.crisis) m.crisis.points.forEach(function (q) { objs.push([q.x, q.y]); });
+    var best = null, bd = -1;
+    for (var x = room.x + 70; x <= room.x + room.w - 70; x += 10) {
+      for (var y = room.y + 70; y <= room.y + room.h - 50; y += 10) {
+        var d = 1e9;
+        objs.forEach(function (o) { d = Math.min(d, Math.hypot(o[0] - x, o[1] - y)); });
+        if (d > bd) { bd = d; best = { x: x, y: y, r: roomId }; }
+      }
+    }
+    return best;
+  }
+  // マップ固有の妨害の名前(しかけの種類は、エンジン側の mapSabs が決める)
+  var SABN = {
+    ship: { lockdown: '船内の全隔壁閉鎖' },
+    mansion: { portals: '本棚の施錠', fog: '濃霧の発生' },
+    lab: { gates: '電流ゲートの全閉鎖', belts: '搬送ベルトの逆回転' },
+    queen: { lockdown: '客船の全防水扉閉鎖' },
+    castle: { portals: '隠し扉の封鎖', fog: '古城に濃霧が立ちこめる' },
+    city: { gates: '地下ゲートの全閉鎖', belts: '搬送路の逆流' }
+  };
+  [ship, mansion, lab, queen, castle, city].forEach(function (m) {
+    m.counter = counterSpot(m, COUNTER_ROOM[m.id]);
+    m.sabn = SABN[m.id];
+  });
+
   [ship, mansion, lab, queen, castle, city].forEach(function (m) {
     var lk = LOOK[m.id]; m.theme = lk.theme; m.outer = lk.outer; m.deco = lk.deco; m.floors = lk.floors || {};
     if (lk.colors) m.rooms.forEach(function (r) { if (lk.colors[r.id]) r.c = lk.colors[r.id]; });
@@ -1145,9 +1225,9 @@ function grid(o) {
     detective: { n: '探偵', team: 'crew', tasks: true, threat: false,
       d: '遺体を調べて、死亡時に近くにいた人の手がかりを得る。', goal: 'クルーと同じ。手がかりを会議で共有する。',
       abil: ['鑑識: 遺体のそばで使うと、死後の経過時間と付近にいた人の色がわかる(回数制限あり)'] },
-    sheriff: { n: '保安官', team: 'crew', tasks: true, threat: false,
-      d: '怪しい相手を撃てる。ただし撃った相手が危険人物でなければ自分が倒れる。', goal: 'クルーと同じ。',
-      abil: ['射撃: 近くの1人を撃つ。危険人物なら倒す。違えば自分が死ぬ(弾数制限あり)'] },
+    sheriff: { n: 'シェリフ', team: 'crew', tasks: true, threat: false,
+      d: '怪しい相手を撃てる。ただし撃った相手がインポスター陣営(設定によっては第三陣営も)でなければ自分が倒れる。', goal: 'クルーと同じ。',
+      abil: ['射撃: 近くの1人を撃つ。倒せる相手なら倒す。違えば自分が死ぬ(弾数・クールダウンあり)'] },
     guardian: { n: '守護者', team: 'crew', tasks: true, threat: false,
       d: '近くの1人にバリアを張る。バリアは次の会議まで、襲撃を1回防ぐ。', goal: 'クルーと同じ。',
       abil: ['守護: 近くの1人を守る(1ラウンドに1回)'] },
@@ -1160,10 +1240,10 @@ function grid(o) {
     impostor: { n: 'インポスター', team: 'impostor', tasks: false, threat: true, kill: true, vent: true, sab: true,
       d: 'クルーに紛れて倒していく。仲間の正体がわかる。', goal: '生き残りの数で、クルー側と並ぶか上回る。',
       abil: ['襲撃: 近くの1人を倒す', 'ベント: ダクトで移動', '妨害: 停電(視界を狭く)・通信妨害(タスクとマップを封じる)・緊急事態(時間内に直されなければ勝ち)'] },
-    assassin: { n: '暗殺者', team: 'impostor', tasks: false, threat: true, kill: true, vent: true, sab: true, guess: true,
+    assassin: { n: 'イビルゲッサー', team: 'impostor', tasks: false, threat: true, kill: true, vent: true, sab: true, guess: true,
       d: 'インポスター陣営。会議中に相手の役職を言い当てて撃てる。外すと自分が倒れる。', goal: 'インポスターと同じ。',
-      abil: ['襲撃・ベント・妨害(インポスターと同じ)', '暗殺: 会議中に相手と役職を指定して撃つ。当たれば相手が、外れば自分が倒れる'] },
-    jackal: { n: 'ジャッカル', team: 'neutral', tasks: false, threat: true, kill: true, anyKill: true,
+      abil: ['襲撃・ベント・妨害(インポスターと同じ)', '役職当て: 会議中に相手と役職を指定して撃つ。当たれば相手が、外れば自分が倒れる(回数制限あり)'] },
+    jackal: { n: 'ジャッカル', team: 'neutral', tasks: false, threat: true, kill: true, anyKill: true, jk: true,
       d: '誰とも組まない単独の殺し屋。', goal: 'インポスターがいない状態で、生き残りの半数以上を自分たちにする。',
       abil: ['襲撃: 近くの1人を倒す(インポスター陣営も対象)'] },
     arsonist: { n: '放火魔', team: 'neutral', tasks: false, threat: true,
@@ -1171,23 +1251,43 @@ function grid(o) {
       abil: ['ガソリン: 近くの1人にかける', '点火: 生き残り全員にかけ終えたら発動して勝利'] },
     jester: { n: 'ピエロ', team: 'neutral', tasks: false, threat: false,
       d: 'わざと怪しまれて、投票で追放されたい。', goal: '会議の投票で追放される。',
-      abil: [] }
+      abil: [] },
+    fortune: { n: '占い師', team: 'crew', tasks: true, threat: false,
+      d: '会議中に1人を選んで、その人の役職を知れる。', goal: 'クルーと同じ。占った結果を会議で共有する。',
+      abil: ['占い: 会議中に生きている1人を選ぶと、その人の役職がわかる(回数制限あり)'] },
+    niceguesser: { n: 'ナイスゲッサー', team: 'crew', tasks: true, threat: false,
+      d: '会議中に、怪しい1人を「クルー陣営ではない」と見抜いて倒せる。クルー陣営を選ぶと自分が倒れる。', goal: 'クルーと同じ。',
+      abil: ['看破: 会議中に1人を選ぶ。クルー陣営以外なら相手が、クルー陣営なら自分が倒れる(回数制限あり)'] },
+    shielder: { n: 'シールダー', team: 'crew', tasks: true, threat: false,
+      d: 'シールドを張って、あらゆる襲撃・射撃を防ぐ。張っているあいだは動けない。波動砲だけは撃った相手に跳ね返す。', goal: 'クルーと同じ。',
+      abil: ['シールド: 展開中は動けないが、襲撃や射撃を防ぐ。もう一度押すと解除(展開時間・クールタイムあり)', '波動砲を受けたときだけ、ビームを跳ね返して撃った相手を倒す'] },
+    wavecannon: { n: '波動砲', team: 'impostor', tasks: false, threat: true, wave: true, vent: true, sab: true,
+      d: 'インポスター陣営。障害物を貫通するビームを撃つ。通常の襲撃はできない。', goal: '生き残りの数で、クルー側と並ぶか上回る。',
+      abil: ['波動砲: 向いている方向に、壁を貫通するビームを放つ。ためているあいだは動けず、ビームの線が全員に見える。触れた人は倒れる', 'ベント・妨害(インポスターと同じ)'] },
+    wavejackal: { n: '波動砲ジャッカル', team: 'neutral', tasks: false, threat: true, wave: true, jk: true, anyKill: true,
+      d: '誰とも組まない単独の殺し屋。壁を貫通するビームで倒していく。', goal: 'インポスターがいない状態で、生き残りの半数以上を自分たちにする。',
+      abil: ['波動砲: 向いている方向に、壁を貫通するビームを放つ。ためているあいだは動けない。触れた人は(インポスター陣営も)倒れる'] }
   };
-  var ROLE_ORDER = ['impostor', 'assassin', 'jackal', 'arsonist', 'jester', 'detective', 'sheriff', 'guardian', 'watcher', 'engineer'];
+  var ROLE_ORDER = ['impostor', 'assassin', 'wavecannon', 'jackal', 'wavejackal', 'arsonist', 'jester', 'detective', 'sheriff', 'guardian', 'watcher', 'engineer', 'fortune', 'niceguesser', 'shielder'];
 
   // ---------- 設定 ----------
   var SETTING_DEFS = [
     { g: 'map', k: 'map', label: 'マップ', min: 0, max: Maps.list.length - 1, step: 1, def: 0, unit: '' },
     { g: 'role', k: 'r_impostor', role: 'impostor', label: 'インポスター', min: 0, max: 4, step: 1, def: 1, unit: '人' },
-    { g: 'role', k: 'r_assassin', role: 'assassin', label: '暗殺者', min: 0, max: 3, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_assassin', role: 'assassin', label: 'イビルゲッサー', min: 0, max: 3, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_wavecannon', role: 'wavecannon', label: '波動砲', min: 0, max: 3, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_jackal', role: 'jackal', label: 'ジャッカル', min: 0, max: 2, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_wavejackal', role: 'wavejackal', label: '波動砲ジャッカル', min: 0, max: 2, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_arsonist', role: 'arsonist', label: '放火魔', min: 0, max: 2, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_jester', role: 'jester', label: 'ピエロ', min: 0, max: 2, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_detective', role: 'detective', label: '探偵', min: 0, max: 2, step: 1, def: 1, unit: '人' },
-    { g: 'role', k: 'r_sheriff', role: 'sheriff', label: '保安官', min: 0, max: 2, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_sheriff', role: 'sheriff', label: 'シェリフ', min: 0, max: 2, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_guardian', role: 'guardian', label: '守護者', min: 0, max: 2, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_watcher', role: 'watcher', label: '管制官', min: 0, max: 2, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_engineer', role: 'engineer', label: '技師', min: 0, max: 2, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_fortune', role: 'fortune', label: '占い師', min: 0, max: 2, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_niceguesser', role: 'niceguesser', label: 'ナイスゲッサー', min: 0, max: 2, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_shielder', role: 'shielder', label: 'シールダー', min: 0, max: 2, step: 1, def: 0, unit: '人' },
 
     { g: 'task', k: 'tasksPer', label: 'タスクの数(1人あたり)', min: 1, max: 12, step: 1, def: 4, unit: '個' },
     { g: 'task', k: 'longTasks', label: 'うち長いタスク(複数の場所をまわる)', min: 0, max: 5, step: 1, def: 1, unit: '個' },
@@ -1196,32 +1296,46 @@ function grid(o) {
     { g: 'rule', k: 'killCd', label: '襲撃のクールダウン', min: 10, max: 60, step: 5, def: 25, unit: '秒' },
     { g: 'rule', k: 'killRange', label: '襲撃・射撃の距離', min: 60, max: 140, step: 10, def: 90, unit: '' },
     { g: 'rule', m: 'voice', k: 'voiceRange', label: '声の届く距離(近くだけのとき)', min: 200, max: 700, step: 50, def: 400, unit: '' },
-    { g: 'rule', k: 'speed', label: '移動速度', min: 120, max: 260, step: 10, def: 190, unit: '' },
-    { g: 'rule', k: 'vision', label: 'クルーの視界', min: 150, max: 450, step: 10, def: 270, unit: '' },
+    { g: 'rule', k: 'speed', label: 'クルー・第三陣営の移動速度', min: 120, max: 260, step: 10, def: 190, unit: '' },
+    { g: 'rule', k: 'speedImp', label: 'インポスター陣営の移動速度', min: 120, max: 260, step: 10, def: 190, unit: '' },
+    { g: 'rule', k: 'vision', label: 'クルー・第三陣営の視界', min: 150, max: 450, step: 10, def: 270, unit: '' },
+    { g: 'rule', k: 'visionImp', label: 'インポスター陣営の視界', min: 150, max: 550, step: 10, def: 310, unit: '' },
     { g: 'rule', k: 'emergencyN', label: '緊急会議の回数(1人あたり)', min: 0, max: 3, step: 1, def: 1, unit: '回' },
     { g: 'rule', k: 'discussSec', label: '話し合いの時間', min: 10, max: 120, step: 10, def: 40, unit: '秒' },
     { g: 'rule', k: 'voteSec', label: '投票の時間', min: 10, max: 90, step: 5, def: 30, unit: '秒' },
     { g: 'rule', k: 'blackoutSec', label: '停電の長さ', min: 10, max: 40, step: 5, def: 20, unit: '秒' },
     { g: 'rule', k: 'sabCd', label: '妨害のクールダウン', min: 20, max: 90, step: 5, def: 45, unit: '秒' },
     { g: 'rule', k: 'jamSec', label: '通信妨害の長さ', min: 10, max: 40, step: 5, def: 25, unit: '秒' },
+    { g: 'rule', m: 'mapsab', k: 'mapSabSec', label: 'このマップ固有の妨害の長さ', min: 10, max: 40, step: 5, def: 20, unit: '秒' },
     { g: 'rule', k: 'crisisSec', label: '緊急事態の制限時間', min: 30, max: 90, step: 5, def: 50, unit: '秒' },
     { g: 'rule', m: 'doors', k: 'sealSec', label: '隔壁の閉鎖時間', min: 6, max: 24, step: 2, def: 12, unit: '秒' },
     { g: 'rule', m: 'doors', k: 'sealCd', label: '隔壁のクールダウン', min: 15, max: 60, step: 5, def: 30, unit: '秒' },
 
-    { g: 'abil', k: 'assassinShots', label: '暗殺できる回数(ゲーム全体)', min: 1, max: 5, step: 1, def: 2, unit: '回' },
-    { g: 'abil', k: 'assassinPerMeeting', label: '暗殺できる回数(1回の会議)', min: 1, max: 3, step: 1, def: 1, unit: '回' },
-    { g: 'abil', k: 'sheriffShots', label: '保安官の弾数', min: 1, max: 5, step: 1, def: 1, unit: '発' },
-    { g: 'abil', k: 'sheriffCd', label: '保安官の射撃クールダウン', min: 10, max: 60, step: 5, def: 25, unit: '秒' },
-    { g: 'abil', k: 'detectiveUses', label: '探偵の鑑識回数', min: 1, max: 5, step: 1, def: 2, unit: '回' },
-    { g: 'abil', k: 'watcherUses', label: '管制官の監視回数', min: 1, max: 6, step: 1, def: 3, unit: '回' },
-    { g: 'abil', k: 'watchSec', label: '監視の長さ', min: 4, max: 20, step: 2, def: 8, unit: '秒' },
-    { g: 'abil', k: 'watcherCd', label: '監視のクールダウン', min: 10, max: 60, step: 5, def: 25, unit: '秒' },
-    { g: 'abil', k: 'engineerUses', label: '技師のベント回数', min: 1, max: 8, step: 1, def: 4, unit: '回' },
-    { g: 'abil', k: 'douseCd', label: 'ガソリンのクールダウン', min: 5, max: 30, step: 1, def: 12, unit: '秒' }
+    { g: 'abil', r: 'assassin', k: 'assassinShots', label: '役職当てできる回数(ゲーム全体)', min: 1, max: 5, step: 1, def: 2, unit: '回' },
+    { g: 'abil', r: 'assassin', k: 'assassinPerMeeting', label: '役職当てできる回数(1回の会議)', min: 1, max: 3, step: 1, def: 1, unit: '回' },
+    { g: 'abil', r: 'sheriff', k: 'sheriffShots', label: 'シェリフの弾数(殺害できる回数)', min: 1, max: 5, step: 1, def: 1, unit: '発' },
+    { g: 'abil', r: 'sheriff', k: 'sheriffCd', label: 'シェリフの射撃クールダウン', min: 10, max: 60, step: 5, def: 25, unit: '秒' },
+    { g: 'abil', r: 'detective', k: 'detectiveUses', label: '探偵の鑑識回数', min: 1, max: 5, step: 1, def: 2, unit: '回' },
+    { g: 'abil', r: 'watcher', k: 'watcherUses', label: '管制官の監視回数', min: 1, max: 6, step: 1, def: 3, unit: '回' },
+    { g: 'abil', r: 'watcher', k: 'watchSec', label: '監視の長さ', min: 4, max: 20, step: 2, def: 8, unit: '秒' },
+    { g: 'abil', r: 'watcher', k: 'watcherCd', label: '監視のクールダウン', min: 10, max: 60, step: 5, def: 25, unit: '秒' },
+    { g: 'abil', r: 'engineer', k: 'engineerUses', label: '技師のベント回数', min: 1, max: 8, step: 1, def: 4, unit: '回' },
+    { g: 'abil', r: 'arsonist', k: 'douseCd', label: 'ガソリンのクールダウン', min: 5, max: 30, step: 1, def: 12, unit: '秒' },
+    { g: 'abil', r: 'fortune', k: 'fortuneUses', label: '占いの回数(ゲーム全体)', min: 1, max: 6, step: 1, def: 3, unit: '回' },
+    { g: 'abil', r: 'fortune', k: 'fortunePerMeeting', label: '占いの回数(1回の会議)', min: 1, max: 3, step: 1, def: 1, unit: '回' },
+    { g: 'abil', r: 'niceguesser', k: 'niceShots', label: '看破できる回数(ゲーム全体)', min: 1, max: 5, step: 1, def: 1, unit: '回' },
+    { g: 'abil', r: 'niceguesser', k: 'nicePerMeeting', label: '看破できる回数(1回の会議)', min: 1, max: 3, step: 1, def: 1, unit: '回' },
+    { g: 'abil', r: ['wavecannon', 'wavejackal'], k: 'waveCharge', label: '波動砲を放つまでの時間(ため)', min: 1, max: 8, step: 1, def: 3, unit: '秒' },
+    { g: 'abil', r: ['wavecannon', 'wavejackal'], k: 'waveCd', label: '波動砲のクールタイム', min: 10, max: 90, step: 5, def: 35, unit: '秒' },
+    { g: 'abil', r: 'shielder', k: 'shieldSec', label: 'シールドの展開時間', min: 2, max: 15, step: 1, def: 8, unit: '秒' },
+    { g: 'abil', r: 'shielder', k: 'shieldCd', label: 'シールドのクールタイム', min: 10, max: 60, step: 5, def: 25, unit: '秒' }
   ];
   var TOGGLES = [
     { k: 'confirmEjects', label: '追放された人の役職を明かす', def: true },
     { k: 'anonVotes', label: '誰が誰に投票したかを隠す', def: false },
+    { k: 'sheriffNeutral', r: 'sheriff', label: 'シェリフ: 第三陣営も撃って倒せる(オフなら撃っても倒せず、シェリフが倒れる)', def: true },
+    { k: 'sheriffMisBoth', r: 'sheriff', label: 'シェリフ: クルー陣営を撃ったとき、相手も一緒に倒れる(オフなら自分だけ)', def: false },
+    { k: 'waveAlly', r: ['wavecannon', 'wavejackal'], label: '波動砲: 仲間(同じ陣営)にも当たる', def: true },
     { k: 'voiceProx', m: 'voice', label: 'ボイスチャット: ゲーム中は近くの人の声だけ聞こえる(オフなら常に全員)', def: true }
   ];
   function defaultSettings() {
@@ -1242,7 +1356,7 @@ function grid(o) {
   // いまのマップ(M)に応じて下の変数が切り替わる。state.settings.map が正で、act/startGame の先頭で合わせる。
   var MAPS = Maps.list, M = null, mapIdx = -1;
   var ROOMS, HALLS, WORLD, TABLE, VENTS, TASKS, GIM, NODES, EDGES, ROOM_NODE, ROOM_NODES, RECTS;
-  var DYN = { now: 0, doors: [] };
+  var DYN = { now: 0, doors: [], ms: null };
 
   function touches(a, b) { return a.x < b.x + b.w + 2 && a.x + a.w > b.x - 2 && a.y < b.y + b.h + 2 && a.y + a.h > b.y - 2; }
   // 部屋の中心・通路の中心・「通路と部屋の接点」をノードにした、ボット用の経路グラフを作る
@@ -1305,15 +1419,38 @@ function grid(o) {
   }
 
   // ---- マップ固有のしかけ ----
-  function setDyn(state, now) { DYN.now = now; DYN.doors = (state && state.doors) || []; }
+  function setDyn(state, now) { DYN.now = now; DYN.doors = (state && state.doors) || []; DYN.ms = (state && state.mapSab) || null; }
+  // マップ固有の妨害(いまのマップのしかけに応じて決まる)。種類: lockdown(全通路の隔壁) / portals(本棚) / fog(濃霧) / gates(ゲート) / belts(動く歩道の逆流)
+  function mapSabs() {
+    var o = [];
+    if (GIM.doors) o.push('lockdown');
+    if (GIM.portals) o.push('portals');
+    if (GIM.fog) o.push('fog');
+    if (GIM.gates) o.push('gates');
+    if (GIM.belts) o.push('belts');
+    return o;
+  }
+  var MAPSAB = {
+    lockdown: { n: '全通路の封鎖', d: 'すべての通路の隔壁が閉まり、部屋から出られなくなる' },
+    portals: { n: '隠し扉の封鎖', d: '秘密の本棚が使えなくなる' },
+    fog: { n: '濃霧の発生', d: '霧の区画の視界がさらに狭くなる' },
+    gates: { n: 'ゲートの全閉鎖', d: 'すべての高圧ゲートが閉じたままになる' },
+    belts: { n: '動く歩道の逆流', d: '動く歩道が逆向きに流れる' }
+  };
+  function mapSabInfo(k) {
+    var o = MAPSAB[k] || { n: k, d: '' }, nm = M && M.sabn && M.sabn[k];
+    return { k: k, n: nm || o.n, d: o.d };
+  }
+  function msOn(k) { return !!(DYN.ms && DYN.ms.k === k && DYN.ms.until > DYN.now); }
   function gateT(g, now) { return (now + g.ph) % g.per; }
-  function gateClosed(g, now) { return gateT(g, now) < g.cl; }
+  function gateClosed(g, now) { return msOn('gates') || gateT(g, now) < g.cl; }
   // 閉じる直前(ms)なら残り時間、そうでなければ -1
   function gateWarn(g, now) { var t = gateT(g, now); return t >= g.cl && g.per - t < 2000 ? g.per - t : -1; }
   function closedRects() {
     var out = [];
     DYN.doors.forEach(function (d) { if (d.until > DYN.now && HALLS[d.h]) out.push(HALLS[d.h]); });
     (GIM.gates || []).forEach(function (g) { if (gateClosed(g, DYN.now)) out.push(g); });
+    if (msOn('lockdown')) HALLS.forEach(function (q) { out.push(q); });
     return out;
   }
   function overlapsRect(x, y, rad, q) { return x > q.x - rad && x < q.x + q.w + rad && y > q.y - rad && y < q.y + q.h + rad; }
@@ -1326,16 +1463,20 @@ function grid(o) {
   }
   function fogAt(x, y) {
     var f = 1;
-    (GIM.fog || []).forEach(function (z) { if (x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h) f = Math.min(f, z.f); });
+    (GIM.fog || []).forEach(function (z) { if (x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h) f = Math.min(f, msOn('fog') ? z.f * 0.6 : z.f); });
     return f;
   }
   function beltAt(x, y) {
     var bs = GIM.belts || [];
-    for (var i = 0; i < bs.length; i++) { var b = bs[i]; if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) return b; }
+    for (var i = 0; i < bs.length; i++) {
+      var b = bs[i];
+      if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) return msOn('belts') ? { x: b.x, y: b.y, w: b.w, h: b.h, dx: -b.dx, dy: -b.dy } : b;
+    }
     return null;
   }
   function portalNear(x, y, range) {
     var best = -1, bd = range;
+    if (msOn('portals')) return -1;
     (GIM.portals || []).forEach(function (p, i) { var d = Math.hypot(p.x - x, p.y - y); if (d <= bd) { bd = d; best = i; } });
     return best;
   }
@@ -1346,6 +1487,20 @@ function grid(o) {
     return best;
   }
   function dist(a, b) { var dx = a.x - b.x, dy = a.y - b.y; return Math.sqrt(dx * dx + dy * dy); }
+  // 人数モニター: 部屋ごとの人数。生きている人と、遺体(1つにつき1人)を数える。通路にいる人は数えない
+  function roomCounts(state, posOf) {
+    useMap(state.settings.map);
+    var out = {};
+    ROOMS.forEach(function (r) { out[r.id] = 0; });
+    state.order.forEach(function (id) {
+      var p = state.players[id];
+      if (!p || !p.alive || p.left || !p.role) return;
+      var pos = posOf(id); if (!pos) return;
+      var r = roomAt(pos.x, pos.y); if (r) out[r.id]++;
+    });
+    (state.bodies || []).forEach(function (b) { var r = roomAt(b.x, b.y); if (r) out[r.id]++; });
+    return out;
+  }
 
   // ---------- 状態 ----------
   function newLobby(hostId, settings, epoch) {
@@ -1353,7 +1508,7 @@ function grid(o) {
       v: 1, rev: 0, now: 0, epoch: epoch || 1, hostId: hostId, phase: 'lobby',
       settings: settings ? Object.assign(defaultSettings(), settings) : defaultSettings(),
       players: {}, order: [], ack: {}, bodies: [], meeting: null, winner: null,
-      tasksTotal: 0, tasksDone: 0, blackoutUntil: 0, jamUntil: 0, crisis: null, doors: [], roundStart: 0, meetingCount: 0, nextBody: 1, round: 0
+      tasksTotal: 0, tasksDone: 0, blackoutUntil: 0, jamUntil: 0, mapSab: null, crisis: null, doors: [], roundStart: 0, meetingCount: 0, nextBody: 1, round: 0
     };
   }
   function freeColor(state) {
@@ -1397,7 +1552,7 @@ function grid(o) {
       if (ROLES[r].team === 'impostor') imp += c[r];
     });
     if (sum > n) return '役職の合計(' + sum + '人)が参加人数(' + n + '人)を超えています。';
-    if (threats < 1) return 'インポスター・暗殺者・ジャッカル・放火魔のどれかを1人以上入れてください。';
+    if (threats < 1) return 'インポスター・イビルゲッサー・波動砲・ジャッカル・波動砲ジャッカル・放火魔のどれかを1人以上入れてください。';
     if (imp * 2 >= n) return 'インポスター陣営が多すぎます(参加人数の半分未満にしてください)。';
     return null;
   }
@@ -1431,7 +1586,7 @@ function grid(o) {
     state.order.forEach(function (id) {
       var p = state.players[id];
       p.alive = true; p.left = false; p.notes = []; p.msgs = []; p.tp = null; p.kd = null;
-      ['ck', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'tasks'].forEach(function (k) { delete p[k]; });
+      ['ck', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'tasks', 'wv', 'wf', 'wn', 'sh', 'fr'].forEach(function (k) { delete p[k]; });
     });
     // タスクの割り当て: 全員共通 + 長いタスク(複数の場所) + 短いタスク。長いタスクは全体の半分まで
     var singles = [], longs = [];
@@ -1456,12 +1611,16 @@ function grid(o) {
       }
       p.em = 0;
       if (R.kill) p.ck = now + (s.killCd + 5) * 1000;
+      if (R.wave) p.ck = now + (Math.min(s.waveCd, 20) + 5) * 1000;
       if (R.sab) { p.cs = now + 15000; p.cq = now + 20000; }
       if (p.role === 'assassin') p.gs = s.assassinShots;
       if (p.role === 'sheriff') { p.u = s.sheriffShots; p.ca = now + 15000; }
       if (p.role === 'detective') { p.u = s.detectiveUses; p.ca = now; }
       if (p.role === 'watcher') { p.u = s.watcherUses; p.ca = now; }
       if (p.role === 'engineer') p.u = s.engineerUses;
+      if (p.role === 'fortune') { p.u = s.fortuneUses; p.fr = []; }
+      if (p.role === 'niceguesser') p.u = s.niceShots;
+      if (p.role === 'shielder') { p.ca = now; p.sh = 0; }
       if (p.role === 'arsonist') { p.dz = []; p.ca = now; }
       if (p.role === 'guardian') { p.gu = false; }
     });
@@ -1470,7 +1629,7 @@ function grid(o) {
       tp(state.players[id], sp.x, sp.y);
     });
     state.phase = 'play'; state.round++; state.bodies = []; state.meeting = null; state.winner = null;
-    state.blackoutUntil = 0; state.jamUntil = 0; state.crisis = null; state.doors = []; state.roundStart = now; state.meetingCount = 0; state.nextBody = 1;
+    state.blackoutUntil = 0; state.jamUntil = 0; state.mapSab = null; state.crisis = null; state.doors = []; state.roundStart = now; state.meetingCount = 0; state.nextBody = 1;
     recalcTasks(state);
     return null;
   }
@@ -1492,7 +1651,7 @@ function grid(o) {
     var I = 0, J = 0, A = 0;
     al.forEach(function (p) {
       if (ROLES[p.role].team === 'impostor') I++;
-      if (p.role === 'jackal') J++;
+      if (ROLES[p.role].jk) J++;
       if (p.role === 'arsonist') A++;
     });
     if (state.tasksTotal > 0 && state.tasksDone >= state.tasksTotal) return { team: 'crew', reason: 'タスクがすべて完了した' };
@@ -1509,7 +1668,7 @@ function grid(o) {
       var p = state.players[id], t = ROLES[p.role] && ROLES[p.role].team;
       if (team === 'crew' && t === 'crew') out.push(id);
       else if (team === 'impostor' && t === 'impostor') out.push(id);
-      else if (team === 'jackal' && p.role === 'jackal') out.push(id);
+      else if (team === 'jackal' && ROLES[p.role] && ROLES[p.role].jk) out.push(id);
       else if (team === 'arsonist' && p.role === 'arsonist') out.push(id);
     });
     if (extra) out = [extra];
@@ -1534,7 +1693,7 @@ function grid(o) {
   // 緊急事態の制限時間(大きなマップほど長い)
   function crisisMs(s) { return Math.round(s.crisisSec * ((M.crisis && M.crisis.t) || 1)) * 1000; }
   function sabActive(state, now) {
-    return (state.blackoutUntil || 0) > now || (state.jamUntil || 0) > now || !!state.crisis;
+    return (state.blackoutUntil || 0) > now || (state.jamUntil || 0) > now || !!state.crisis || !!(state.mapSab && state.mapSab.until > now);
   }
   function nearOk(ctx, a, b, range) {
     var pa = ctx.pos(a), pb = typeof b === 'string' ? ctx.pos(b) : b;
@@ -1544,7 +1703,7 @@ function grid(o) {
   // by: 手を下した人のid(誤射なら null)、how: 'kill'(襲撃) / 'shot'(射撃) / 'misfire'(誤射)。倒された本人の画面で演出を出すために残す
   function killBody(state, ctx, victim, by, how) {
     var pos = ctx.pos(victim.id) || { x: TABLE.x, y: TABLE.y };
-    victim.alive = false;
+    victim.alive = false; victim.wv = null; victim.sh = 0;
     victim.kd = { n: ((victim.kd && victim.kd.n) || 0) + 1, by: by || null, how: how || 'kill', at: ctx.now };
     var near = [];
     state.order.forEach(function (id) {
@@ -1555,6 +1714,14 @@ function grid(o) {
       if (qp && dist(qp, pos) <= 300) near.push(id);
     });
     state.bodies.push({ id: state.nextBody++, p: victim.id, x: Math.round(pos.x), y: Math.round(pos.y), t: ctx.now, near: near });
+  }
+  // 会議中に、誰かを倒す(役職当て・看破)。投票の残りがそろっていれば、すぐ次へ進める
+  function meetKill(state, mm, victim, text, now) {
+    victim.alive = false;
+    delete mm.votes[victim.id];
+    mm.log.push(text);
+    checkWin(state, now);
+    if (state.phase === 'meeting' && mm.stage === 'vote' && alivePlayers(state).every(function (q) { return mm.votes[q.id] !== undefined; })) mm.end = now;
   }
   function act(state, pid, a, ctx) {
     useMap(state.settings.map);
@@ -1576,20 +1743,32 @@ function grid(o) {
       return { ok: true };
     }
 
-    if (a.type === 'assassinate') {
+    // 会議中の能力(イビルゲッサー・占い師・ナイスゲッサー)
+    if (a.type === 'assassinate' || a.type === 'fortune' || a.type === 'nicekill') {
       var mm = state.meeting;
-      if (state.phase !== 'meeting' || !mm || (mm.stage !== 'discuss' && mm.stage !== 'vote')) return { ok: false };
-      if (p.role !== 'assassin' || !p.alive || !(p.gs > 0) || (p.gm || 0) >= s.assassinPerMeeting) return { ok: false };
-      if (!T || !T.alive || T.left || T.id === pid || !ROLES[a.r]) return { ok: false };
-      p.gs--; p.gm = (p.gm || 0) + 1;
-      var hit = T.role === a.r;
-      var victim = hit ? T : p;
-      victim.alive = false;
-      delete mm.votes[victim.id];
-      mm.log.push(hit ? COLORS[T.color].name + 'の' + T.name + 'が暗殺された。' : COLORS[p.color].name + 'の' + p.name + 'が暗殺に失敗して倒れた。');
-      pushMsg(p, hit ? '暗殺成功: ' + T.name + 'は ' + ROLES[a.r].n + ' だった。' : '暗殺失敗: ' + T.name + 'は ' + ROLES[a.r].n + ' ではなかった。');
-      checkWin(state, now);
-      if (state.phase === 'meeting' && alivePlayers(state).every(function (q) { return mm.votes[q.id] !== undefined; }) && mm.stage === 'vote') mm.end = now;
+      if (state.phase !== 'meeting' || !mm || (mm.stage !== 'discuss' && mm.stage !== 'vote') || !p.alive) return { ok: false };
+      if (!T || !T.alive || T.left || T.id === pid) return { ok: false };
+      if (a.type === 'assassinate') {
+        if (p.role !== 'assassin' || !(p.gs > 0) || (p.gm || 0) >= s.assassinPerMeeting || !ROLES[a.r]) return { ok: false };
+        p.gs--; p.gm = (p.gm || 0) + 1;
+        var hit = T.role === a.r;
+        meetKill(state, mm, hit ? T : p, hit ? COLORS[T.color].name + 'の' + T.name + 'が役職を当てられて倒れた。' : COLORS[p.color].name + 'の' + p.name + 'が役職を外して倒れた。', now);
+        pushMsg(p, hit ? '役職当て成功: ' + T.name + 'は ' + ROLES[a.r].n + ' だった。' : '役職当て失敗: ' + T.name + 'は ' + ROLES[a.r].n + ' ではなかった。');
+        return { ok: true };
+      }
+      if (a.type === 'fortune') {
+        if (p.role !== 'fortune' || !(p.u > 0) || (p.gm || 0) >= s.fortunePerMeeting) return { ok: false };
+        p.u--; p.gm = (p.gm || 0) + 1;
+        p.fr = (p.fr || []).concat([{ t: T.id, r: T.role, m: mm.n }]);
+        pushNote(p, '占い結果: ' + COLORS[T.color].name + 'の' + T.name + 'は「' + ROLES[T.role].n + '」だった。');
+        return { ok: true };
+      }
+      // nicekill
+      if (p.role !== 'niceguesser' || !(p.u > 0) || (p.gm || 0) >= s.nicePerMeeting) return { ok: false };
+      p.u--; p.gm = (p.gm || 0) + 1;
+      var bad = ROLES[T.role].team !== 'crew';
+      meetKill(state, mm, bad ? T : p, bad ? COLORS[T.color].name + 'の' + T.name + 'が看破されて倒れた。' : COLORS[p.color].name + 'の' + p.name + 'が看破を外して倒れた。', now);
+      pushMsg(p, bad ? '看破成功: ' + T.name + 'はクルー陣営ではなかった。' : '看破失敗: ' + T.name + 'はクルー陣営だった。');
       return { ok: true };
     }
 
@@ -1636,6 +1815,11 @@ function grid(o) {
       if (!R.anyKill && ROLES[T.role].team === 'impostor') return { ok: false };
       if (!nearOk(ctx, pid, T.id, rng)) return { ok: false, err: 'far' };
       p.ck = now + s.killCd * 1000;
+      if ((T.sh || 0) > now) {
+        pushMsg(T, 'シールドが襲撃を防いだ。');
+        pushMsg(p, '襲撃は何かに阻まれた。');
+        return { ok: true, blocked: true };
+      }
       if (T.shield) {
         T.shield = false;
         state.order.forEach(function (id) { var g = state.players[id]; if (g.role === 'guardian' && g.gt === T.id) pushMsg(g, 'あなたのバリアが襲撃を防いだ。'); });
@@ -1652,10 +1836,34 @@ function grid(o) {
       if (!T || !T.alive || T.left || T.id === pid) return { ok: false };
       if (!nearOk(ctx, pid, T.id, rng)) return { ok: false, err: 'far' };
       p.u--; p.ca = now + s.sheriffCd * 1000;
+      if ((T.sh || 0) > now) { pushMsg(T, 'シールドが射撃を防いだ。'); pushMsg(p, '弾は何かに阻まれた。'); return { ok: true, blocked: true }; }
       if (T.shield) { T.shield = false; pushMsg(p, '弾は何かに阻まれた。'); return { ok: true, blocked: true }; }
-      if (ROLES[T.role].threat) { killBody(state, ctx, T, pid, 'shot'); pushMsg(p, T.name + 'は危険人物だった。'); }
-      else { killBody(state, ctx, p, null, 'misfire'); }
+      var tt = ROLES[T.role].team;
+      if (tt === 'impostor' || (tt === 'neutral' && s.sheriffNeutral)) { killBody(state, ctx, T, pid, 'shot'); pushMsg(p, T.name + 'を倒した。'); }
+      else {
+        // 外れ: 撃った本人が倒れる。クルー陣営を撃ったとき、設定によっては相手も倒れる
+        if (tt === 'crew' && s.sheriffMisBoth) killBody(state, ctx, T, null, 'misfire');
+        killBody(state, ctx, p, null, 'misfire');
+      }
       checkWin(state, now);
+      return { ok: true };
+    }
+
+    if (a.type === 'shield') {
+      if (p.role !== 'shielder') return { ok: false };
+      if ((p.sh || 0) > now) { p.sh = now; p.ca = now + s.shieldCd * 1000; return { ok: true, off: true }; }
+      if (now < (p.ca || 0)) return { ok: false };
+      p.sh = now + s.shieldSec * 1000; p.ca = p.sh + s.shieldCd * 1000;
+      return { ok: true };
+    }
+
+    if (a.type === 'wave') {
+      if (!R || !R.wave || now < (p.ck || 0) || p.wv) return { ok: false };
+      var wp = ctx.pos(pid);
+      if (!wp) return { ok: false };
+      var wx = +a.dx, wy = +a.dy, wl = Math.hypot(wx, wy);
+      if (!isFinite(wl) || wl < 0.2) { wx = wp.f === -1 ? -1 : 1; wy = 0; wl = 1; }
+      p.wv = { fire: now + s.waveCharge * 1000, x: Math.round(wp.x), y: Math.round(wp.y), dx: Math.round(wx / wl * 1000) / 1000, dy: Math.round(wy / wl * 1000) / 1000, n: (p.wn = (p.wn || 0) + 1) };
       return { ok: true };
     }
 
@@ -1685,6 +1893,8 @@ function grid(o) {
       p.u--; p.ca = now + s.watcherCd * 1000; p.ws = now + s.watchSec * 1000;
       return { ok: true };
     }
+
+    if ((a.type === 'vent' || a.type === 'portal') && (p.wv || (p.sh || 0) > now)) return { ok: false, err: 'busy' };
 
     if (a.type === 'vent') {
       if (!R || !R.vent && p.role !== 'engineer') return { ok: false };
@@ -1735,6 +1945,7 @@ function grid(o) {
       if (kind === 'blackout') state.blackoutUntil = now + s.blackoutSec * 1000;
       else if (kind === 'jam') state.jamUntil = now + s.jamSec * 1000;
       else if (kind === 'crisis' && M.crisis) state.crisis = { at: now, until: now + crisisMs(s), fixed: [false, false], pause: 0 };
+      else if (mapSabs().indexOf(kind) >= 0) state.mapSab = { k: kind, at: now, until: now + s.mapSabSec * 1000 };
       else return { ok: false };
       p.cs = now + s.sabCd * 1000;
       return { ok: true, kind: kind };
@@ -1780,18 +1991,53 @@ function grid(o) {
     return { ok: false, err: 'unknown' };
   }
 
+  // ---------- 波動砲 ----------
+  var WAVE_LEN = 3200, WAVE_HALF = 38;
+  function waveHits(state, ctx, p, w) {
+    var s = state.settings, hits = [], myTeam = ROLES[p.role].team;
+    state.order.forEach(function (id) {
+      var q = state.players[id];
+      if (!q || q.id === p.id || !q.alive || q.left || !q.role) return;
+      if (!s.waveAlly && myTeam !== 'crew' && ROLES[q.role].team === myTeam) return;
+      var qp = ctx.pos(id); if (!qp) return;
+      var rx = qp.x - w.x, ry = qp.y - w.y, t = rx * w.dx + ry * w.dy, perp = Math.abs(rx * w.dy - ry * w.dx);
+      if (t >= -10 && t <= WAVE_LEN && perp <= WAVE_HALF) hits.push({ q: q, t: t });
+    });
+    hits.sort(function (a, b) { return a.t - b.t; });
+    return hits;
+  }
+  // ためが終わったので、ビームを放つ。壁は貫通。シールダーに当たると跳ね返って、撃った本人が倒れる(そこでビームは止まる)
+  function fireWave(state, ctx, p) {
+    var w = p.wv, s = state.settings, now = ctx.now;
+    p.wv = null; p.ck = now + s.waveCd * 1000;
+    var hits = waveHits(state, ctx, p, w), len = WAVE_LEN, refl = 0;
+    for (var i = 0; i < hits.length; i++) {
+      var q = hits[i].q;
+      if ((q.sh || 0) > now) {
+        refl = 1; len = hits[i].t;
+        pushMsg(q, '波動砲を跳ね返した。');
+        killBody(state, ctx, p, q.id, 'reflect');
+        break;
+      }
+      if (q.shield) { q.shield = false; pushMsg(q, 'バリアが波動砲を防いだ。'); continue; }
+      killBody(state, ctx, q, p.id, 'wave');
+    }
+    p.wf = { n: (p.wf && p.wf.n || 0) + 1, at: now, x: w.x, y: w.y, dx: w.dx, dy: w.dy, len: Math.round(len), rf: refl };
+    checkWin(state, now);
+  }
+
   // ---------- 会議 ----------
   function startMeeting(state, ctx, caller, bodyOf) {
     var now = ctx.now, s = state.settings;
     state.phase = 'meeting'; state.meetingCount++;
     state.progSnap = [state.tasksDone, state.tasksTotal]; // 「会議のあとに表示」用: 会議のたびに最新の進み具合を記録する
     state.meeting = { n: state.meetingCount, caller: caller, bodyOf: bodyOf, stage: 'discuss', end: now + s.discussSec * 1000, votes: {}, log: [], res: null };
-    state.bodies = []; state.blackoutUntil = 0; state.jamUntil = 0; state.doors = [];
+    state.bodies = []; state.blackoutUntil = 0; state.jamUntil = 0; state.mapSab = null; state.doors = [];
     // 緊急事態は会議のあいだ止まり、会議が終わると残り時間から再開する
     if (state.crisis && !state.crisis.pause) state.crisis.pause = Math.max(1000, state.crisis.until - now);
     state.order.forEach(function (id) {
       var p = state.players[id];
-      p.gm = 0; p.shield = false; p.ws = 0;
+      p.gm = 0; p.shield = false; p.ws = 0; p.wv = null; p.sh = 0;
       if (p.role === 'guardian') { p.gu = false; p.gt = null; }
     });
   }
@@ -1826,7 +2072,9 @@ function grid(o) {
       tp(p, sp.x, sp.y);
       var R = ROLES[p.role];
       if (R.kill) p.ck = now + s.killCd * 1000;
+      if (R.wave) p.ck = now + Math.min(s.waveCd, 25) * 1000;
       if (R.sab) { p.cs = now + 15000; p.cq = now + 12000; }
+      if (p.role === 'shielder') p.ca = Math.max(p.ca || 0, now);
       if (p.role === 'sheriff') p.ca = now + 10000;
     });
     state.order.forEach(function (id) {
@@ -1842,6 +2090,13 @@ function grid(o) {
       if (m.stage === 'discuss' && now >= m.end) { m.stage = 'vote'; m.end = now + state.settings.voteSec * 1000; changed = true; }
       else if (m.stage === 'vote' && now >= m.end) { resolveVotes(state, ctx); changed = true; }
       else if (m.stage === 'result' && now >= m.end) { endMeeting(state, ctx); changed = true; }
+    }
+    if (state.phase === 'play') {
+      state.order.forEach(function (id) {
+        var q = state.players[id];
+        if (q && q.wv && now >= q.wv.fire) { if (q.alive && !q.left) fireWave(state, ctx, q); else q.wv = null; changed = true; }
+      });
+      if (state.mapSab && state.mapSab.until <= now) { state.mapSab = null; changed = true; }
     }
     // 緊急事態を直せないまま時間切れ → インポスターの勝ち
     if (state.phase === 'play' && state.crisis && !state.crisis.pause && now >= state.crisis.until) {
@@ -1867,13 +2122,13 @@ function grid(o) {
     return true;
   }
   function backToLobby(state) {
-    state.phase = 'lobby'; state.meeting = null; state.winner = null; state.bodies = []; state.blackoutUntil = 0; state.jamUntil = 0; state.crisis = null; state.doors = [];
+    state.phase = 'lobby'; state.meeting = null; state.winner = null; state.bodies = []; state.blackoutUntil = 0; state.jamUntil = 0; state.mapSab = null; state.crisis = null; state.doors = [];
     state.tasksTotal = 0; state.tasksDone = 0; state.progSnap = null;
     state.order = state.order.filter(function (id) { return !state.players[id].left || (delete state.players[id], false); });
     state.order.forEach(function (id) {
       var p = state.players[id];
       p.role = null; p.alive = true; p.left = false;
-      ['tasks', 'ck', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'notes', 'msgs', 'tp', 'kd'].forEach(function (k) { delete p[k]; });
+      ['tasks', 'ck', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'notes', 'msgs', 'tp', 'kd', 'wv', 'wf', 'wn', 'sh', 'fr'].forEach(function (k) { delete p[k]; });
     });
   }
 
@@ -1885,7 +2140,8 @@ function grid(o) {
     roomAt: roomAt, spawnPoint: spawnPoint, dist: dist,
     newLobby: newLobby, addPlayer: addPlayer, removePlayer: removePlayer, validate: validate, startGame: startGame,
     act: act, tick: tick, markLeft: markLeft, backToLobby: backToLobby, recalcTasks: recalcTasks, evalWin: evalWin,
-    alivePlayers: alivePlayers, cleanName: cleanName, roleCounts: roleCounts, sabActive: sabActive, crisisMs: crisisMs
+    alivePlayers: alivePlayers, cleanName: cleanName, roleCounts: roleCounts, sabActive: sabActive, crisisMs: crisisMs,
+    roomCounts: roomCounts, mapSabs: mapSabs, mapSabInfo: mapSabInfo, msOn: msOn, WAVE_LEN: WAVE_LEN, WAVE_HALF: WAVE_HALF
   });
   useMap(0);
   if (typeof module !== 'undefined' && module.exports) module.exports = Engine; else root.Engine = Engine;
@@ -2011,11 +2267,12 @@ function grid(o) {
     }
     if (state.phase !== 'play' || !p.alive) { b.w = 0; return; }
 
-    var R2 = E.ROLES[p.role], speed = s.speed * 0.8;
+    var R2 = E.ROLES[p.role], speed = (R2.team === 'impostor' ? (s.speedImp || s.speed) : s.speed) * 0.8;
+    if (p.wv || (p.sh || 0) > now) { b.w = 0; return; } // 波動砲のため中・シールド展開中は動けない
     b.think -= dt;
 
     // 遺体を見つけたら通報(殺す側は通報しない)
-    if (!R2.kill && state.bodies.length) {
+    if (!R2.kill && !R2.wave && state.bodies.length) {
       for (var i = 0; i < state.bodies.length; i++) {
         var bd = state.bodies[i];
         if (Math.hypot(bd.x - b.x, bd.y - b.y) < 200) {
@@ -2026,7 +2283,7 @@ function grid(o) {
       }
     } else b.reportAt = 0;
 
-    if (R2.kill) {
+    if (R2.kill || R2.wave) {
       // 狩り: 近い獲物へ向かい、目撃者が少なければ襲撃
       b.replan -= dt;
       if (!b.tgt || b.replan <= 0) {
@@ -2045,7 +2302,11 @@ function grid(o) {
       if (b.tgt) {
         var tq = state.players[b.tgt], tpos = ctx.pos(b.tgt);
         if (!tq || !tq.alive || !tpos) { b.tgt = null; }
-        else if (now >= (p.ck || 0) && Math.hypot(tpos.x - b.x, tpos.y - b.y) <= s.killRange * 0.9) {
+        else if (R2.wave) {
+          var wd = Math.hypot(tpos.x - b.x, tpos.y - b.y);
+          if (now >= (p.ck || 0) && wd > 1 && wd <= 520) { api.act(b.id, { type: 'wave', dx: (tpos.x - b.x) / wd, dy: (tpos.y - b.y) / wd }); b.tgt = null; b.replan = 0; }
+        }
+        else if (R2.kill && now >= (p.ck || 0) && Math.hypot(tpos.x - b.x, tpos.y - b.y) <= s.killRange * 0.9) {
           var witnesses = 0;
           state.order.forEach(function (id) {
             var q = state.players[id];
@@ -2061,7 +2322,8 @@ function grid(o) {
         if (!b.sabAt) b.sabAt = now + 3000 + rand() * 25000;
         if (now >= b.sabAt) {
           b.sabAt = 0;
-          var pickK = rand(), kind = pickK < 0.4 && E.M.crisis ? 'crisis' : pickK < 0.7 ? 'jam' : 'blackout';
+          var pickK = rand(), kind = pickK < 0.4 && E.M.crisis ? 'crisis' : pickK < 0.7 ? 'jam' : 'blackout', ms = E.mapSabs();
+          if (ms.length && rand() < 0.3) kind = ms[Math.floor(rand() * ms.length)];
           api.act(b.id, { type: 'sab', t: kind });
         }
       }
@@ -2373,7 +2635,7 @@ var S = {
   acts: [], actSeq: 0, chat: [], chatSeen: {}, chatMsg: null, chatSeq: 0, lastChatSent: 0,
   writing: false, dirty: false, writeErr: null, lastSig: '', lastPresenceAt: 0,
   uiRev: -1, cardRound: 0, lastTpKey: '', seenMsg: 0, msgRound: 0,
-  keys: {}, joy: { x: 0, y: 0, id: null }, tab: 'role', overlay: null, task: null, targetPid: null, nearInfo: null,
+  keys: {}, joy: { x: 0, y: 0, id: null }, tab: 'crew', overlay: null, task: null, targetPid: null, nearInfo: null,
   online: false, capsReady: false, lastFrame: 0, lastHostTick: 0
 };
 // 現在の状態に合わせてマップ(エンジン内部)を切り替え、隔壁やゲートの状態を最新にする
@@ -2567,12 +2829,12 @@ async function electionTick() {
 
 /* ---------- ホストの処理 ---------- */
 function cleanAct(x) {
-  var types = ['task', 'report', 'emergency', 'kill', 'shoot', 'guard', 'inspect', 'watch', 'vent', 'sab', 'douse', 'ignite', 'vote', 'assassinate', 'seal', 'fixlights', 'portal', 'fixcrisis'];
+  var types = ['task', 'report', 'emergency', 'kill', 'shoot', 'guard', 'inspect', 'watch', 'vent', 'sab', 'douse', 'ignite', 'vote', 'assassinate', 'fortune', 'nicekill', 'shield', 'wave', 'seal', 'fixlights', 'portal', 'fixcrisis'];
   if (!x || types.indexOf(x.type) < 0) return null;
   var a = { type: x.type };
   if (typeof x.t === 'string' && x.t.length <= 48) a.t = x.t;
   if (typeof x.r === 'string' && x.r.length <= 16) a.r = x.r;
-  ['s', 'st', 'b', 'to'].forEach(function (k) { if (typeof x[k] === 'number' && isFinite(x[k])) a[k] = x[k]; });
+  ['s', 'st', 'b', 'to', 'dx', 'dy'].forEach(function (k) { if (typeof x[k] === 'number' && isFinite(x[k])) a[k] = x[k]; });
   return a;
 }
 function hostPoll() {
@@ -2776,6 +3038,7 @@ function decoAnchors(M) {
   (M.tasks || []).forEach(function (T) { T.steps.forEach(function (s) { a.push([s.x, s.y, 34]); }); });
   (M.vents || []).forEach(function (v) { a.push([v.x, v.y, 32]); });
   if (M.table) a.push([M.table.x, M.table.y, 64]);
+  if (M.counter) a.push([M.counter.x, M.counter.y, 56]);
   var G = M.gimmicks || {};
   if (G.panel) a.push([G.panel.x, G.panel.y, 50]);
   (G.portals || []).forEach(function (p) { a.push([p.x, p.y, 50]); });
@@ -3928,7 +4191,7 @@ function readName() {
 
 /* ---------- ロビー ---------- */
 var PROG_OPTS = [[0, '会議のあとに表示', '進み具合は、会議が始まるたびに更新されます。それまでは前回の会議の時点の値です。'], [1, '完了するたび動く', 'タスクが終わるたびに、画面上部のバーがすぐ動きます。'], [2, '表示しない', '進み具合は出ません。決着はこれまでどおり、全タスク完了で付きます。']];
-var TABS = [{ id: 'role', n: '役職' }, { id: 'task', n: 'タスク' }, { id: 'rule', n: 'ルール' }, { id: 'abil', n: '能力' }];
+var TABS = [{ id: 'crew', n: 'クルー陣営' }, { id: 'impostor', n: 'インポスター陣営' }, { id: 'neutral', n: '第三陣営' }, { id: 'task', n: 'タスク' }, { id: 'rule', n: 'ルール' }, { id: 'abil', n: '能力' }];
 function setSetting(k, v) {
   if (!S.isHost || !S.hostState || S.hostState.phase !== 'lobby') return;
   S.hostState.settings[k] = typeof v === 'boolean' ? v : E.clampSetting(k, v);
@@ -3939,6 +4202,10 @@ function stepper(def, val, canEdit) {
   var inc = h('button', { type: 'button', 'aria-label': def.label + 'を増やす', text: '+', disabled: !canEdit || val >= def.max, onclick: function () { setSetting(def.k, val + def.step); } });
   return h('div', { class: 'step' }, [dec, h('output', { text: val + def.unit }), inc]);
 }
+function toggleRow(d, s, canEdit) {
+  return h('div', { class: 'set-row' }, [h('div', { class: 'lb', text: d.label }),
+    h('button', { class: 'switch', type: 'button', role: 'switch', 'aria-checked': s[d.k] ? 'true' : 'false', 'aria-label': d.label, disabled: !canEdit, onclick: function () { setSetting(d.k, !s[d.k]); } })]);
+}
 function renderSettings(st, canEdit) {
   var tabs = $('set-tabs'); clear(tabs);
   TABS.forEach(function (t) {
@@ -3946,19 +4213,21 @@ function renderSettings(st, canEdit) {
   });
   var body = $('set-body'); clear(body);
   var s = st.settings;
-  if (S.tab === 'role') {
-    var n = st.order.length, sum = 0, c = E.roleCounts(s);
-    Object.keys(c).forEach(function (r) { sum += c[r]; });
-    E.ROLE_ORDER.forEach(function (r) {
+  if (E.TEAMS[S.tab]) { // 陣営ごとの役職の人数
+    var n = st.order.length, sum = 0, c = E.roleCounts(s), tm = S.tab, teamSum = 0;
+    Object.keys(c).forEach(function (r) { sum += c[r]; if (E.ROLES[r].team === tm) teamSum += c[r]; });
+    var crewLeft = Math.max(0, n - sum);
+    body.appendChild(h('p', { class: 'small mute', text: tm === 'crew' ? 'クルー陣営の役職です。選ばれなかった人は、全員が普通のクルーになります(いまは ' + crewLeft + '人)。' : E.TEAMS[tm].name + 'の役職です。この陣営は合計 ' + teamSum + '人です。' }));
+    E.ROLE_ORDER.filter(function (r) { return E.ROLES[r].team === tm; }).forEach(function (r) {
       var def = E.SETTING_DEFS.filter(function (d) { return d.role === r; })[0], R = E.ROLES[r], T = E.TEAMS[R.team];
       body.appendChild(h('div', { class: 'set-row' }, [
         h('div', { class: 'lb' }, [h('span', { class: 'team-dot', style: 'background:' + T.hex }), h('span', { text: R.n }), h('span', { class: 'ds', text: R.d })]),
         stepper(def, s[def.k], canEdit)
       ]));
     });
-    body.appendChild(h('div', { class: 'set-row' }, [
-      h('div', { class: 'lb' }, [h('span', { class: 'team-dot', style: 'background:' + E.TEAMS.crew.hex }), h('span', { text: 'クルー' }), h('span', { class: 'ds', text: '上の役職に選ばれなかった人は、全員クルーになります。' })]),
-      h('output', { class: 'mute', style: 'font-family:var(--font-d);font-size:18px', text: Math.max(0, n - sum) + '人' })
+    if (tm === 'crew') body.appendChild(h('div', { class: 'set-row' }, [
+      h('div', { class: 'lb' }, [h('span', { class: 'team-dot', style: 'background:' + E.TEAMS.crew.hex }), h('span', { text: 'クルー' }), h('span', { class: 'ds', text: '役職に選ばれなかった人は、全員クルーになります。' })]),
+      h('output', { class: 'mute', style: 'font-family:var(--font-d);font-size:18px', text: crewLeft + '人' })
     ]));
   } else if (S.tab === 'task') {
     E.SETTING_DEFS.filter(function (d) { return d.g === 'task' && d.k !== 'progMode'; }).forEach(function (d) {
@@ -3972,17 +4241,20 @@ function renderSettings(st, canEdit) {
     var nl = Math.min(s.longTasks, Math.floor(s.tasksPer / 2)), nc = Math.min(s.commonTasks, s.tasksPer);
     body.appendChild(h('p', { class: 'small mute', text: '1人あたり: 共通 ' + nc + '個 + 長いタスク ' + nl + '個 + 短いタスク ' + Math.max(0, s.tasksPer - nc - nl) + '個(長いタスクは全体の半分まで)。「長いタスク」は2〜3か所をまわる手順のタスクです。' }));
   } else if (S.tab === 'rule') {
-    E.SETTING_DEFS.filter(function (d) { return d.g === 'rule' && (!d.m || (d.m === 'doors' ? !!(E.GIM && E.GIM.doors) : d.m === 'voice' ? !!S.standalone : d.m === E.M.id)); }).forEach(function (d) {
+    E.SETTING_DEFS.filter(function (d) { return d.g === 'rule' && (!d.m || (d.m === 'doors' ? !!(E.GIM && E.GIM.doors) : d.m === 'voice' ? !!S.standalone : d.m === 'mapsab' ? E.mapSabs().length > 0 : d.m === E.M.id)); }).forEach(function (d) {
       body.appendChild(h('div', { class: 'set-row' }, [h('div', { class: 'lb', text: d.label }), stepper(d, s[d.k], canEdit)]));
     });
-    E.TOGGLES.filter(function (d) { return d.m !== 'voice' || S.standalone; }).forEach(function (d) {
-      body.appendChild(h('div', { class: 'set-row' }, [h('div', { class: 'lb', text: d.label }),
-        h('button', { class: 'switch', type: 'button', role: 'switch', 'aria-checked': s[d.k] ? 'true' : 'false', 'aria-label': d.label, disabled: !canEdit, onclick: function () { setSetting(d.k, !s[d.k]); } })]));
-    });
+    E.TOGGLES.filter(function (d) { return !d.r && (d.m !== 'voice' || S.standalone); }).forEach(function (d) { body.appendChild(toggleRow(d, s, canEdit)); });
+    var sabs = E.mapSabs();
+    if (sabs.length) body.appendChild(h('p', { class: 'small mute', text: 'このマップ固有の妨害: ' + sabs.map(function (k) { var i = E.mapSabInfo(k); return i.n + '(' + i.d + ')'; }).join(' / ') }));
   } else {
-    E.SETTING_DEFS.filter(function (d) { return d.g === 'abil'; }).forEach(function (d) {
-      body.appendChild(h('div', { class: 'set-row' }, [h('div', { class: 'lb', text: d.label }), stepper(d, s[d.k], canEdit)]));
+    // 能力の設定は、その役職を1人以上入れているときだけ表示する
+    var rc = E.roleCounts(s), used = function (d) { var rr = d.r ? [].concat(d.r) : null; return !rr || rr.some(function (r) { return (rc[r] | 0) > 0; }); }, shown = 0;
+    E.SETTING_DEFS.filter(function (d) { return d.g === 'abil' && used(d); }).forEach(function (d) {
+      shown++; body.appendChild(h('div', { class: 'set-row' }, [h('div', { class: 'lb', text: d.label }), stepper(d, s[d.k], canEdit)]));
     });
+    E.TOGGLES.filter(function (d) { return d.r && used(d); }).forEach(function (d) { shown++; body.appendChild(toggleRow(d, s, canEdit)); });
+    if (!shown) body.appendChild(h('p', { class: 'small mute', text: '「役職」タブで、能力のある役職を1人以上入れると、その役職の設定がここに出ます。' }));
   }
 }
 function addBot() {
@@ -4054,7 +4326,8 @@ function renderLobby(st) {
   renderSettings(st, !!isH);
   renderMapPick(st, !!isH);
 
-  var c = E.roleCounts(st.settings), n = st.order.length, imp = (c.impostor || 0) + (c.assassin || 0), neu = (c.jackal || 0) + (c.arsonist || 0) + (c.jester || 0);
+  var c = E.roleCounts(st.settings), n = st.order.length, imp = 0, neu = 0;
+  Object.keys(c).forEach(function (r) { var tm = E.ROLES[r].team; if (tm === 'impostor') imp += c[r]; else if (tm === 'neutral') neu += c[r]; });
   var sum = 0; Object.keys(c).forEach(function (r) { sum += c[r]; });
   var crewN = Math.max(0, n - imp - neu);
   var sm = $('summary'); clear(sm);
@@ -4075,8 +4348,19 @@ function renderLobby(st) {
 /* ---------- 役職カード ---------- */
 function roleNotes(role, s) {
   var n = [];
-  if (role === 'assassin') n.push('暗殺はゲーム中に ' + s.assassinShots + ' 回まで。1回の会議では ' + s.assassinPerMeeting + ' 回までです。');
-  if (role === 'sheriff') n.push('弾は ' + s.sheriffShots + ' 発。撃ったあと ' + s.sheriffCd + ' 秒は撃てません。');
+  if (role === 'assassin') n.push('役職当てはゲーム中に ' + s.assassinShots + ' 回まで。1回の会議では ' + s.assassinPerMeeting + ' 回までです。');
+  if (role === 'sheriff') {
+    n.push('弾は ' + s.sheriffShots + ' 発。撃ったあと ' + s.sheriffCd + ' 秒は撃てません。');
+    n.push(s.sheriffNeutral ? '第三陣営も撃って倒せます。' : '第三陣営は撃っても倒せず、あなたが倒れます。');
+    n.push(s.sheriffMisBoth ? 'クルー陣営を撃つと、相手とあなたの両方が倒れます。' : 'クルー陣営を撃つと、あなただけが倒れます。');
+  }
+  if (role === 'fortune') n.push('占いはゲーム中に ' + s.fortuneUses + ' 回まで。1回の会議では ' + s.fortunePerMeeting + ' 回までです。');
+  if (role === 'niceguesser') n.push('看破はゲーム中に ' + s.niceShots + ' 回まで。1回の会議では ' + s.nicePerMeeting + ' 回までです。');
+  if (role === 'shielder') n.push('シールドは ' + s.shieldSec + ' 秒展開できます。終わってから ' + s.shieldCd + ' 秒はもう一度張れません。');
+  if (E.ROLES[role].wave) {
+    n.push('ビームは、動いた向きに飛びます(先に向きたい方向へ動いてから押してください)。ためるのに ' + s.waveCharge + ' 秒、撃ったあと ' + s.waveCd + ' 秒はクールタイムです。');
+    n.push(s.waveAlly ? 'ビームは仲間にも当たります。' : 'ビームは仲間には当たりません。');
+  }
   if (role === 'detective') n.push('鑑識はゲーム中に ' + s.detectiveUses + ' 回まで。');
   if (role === 'watcher') n.push('監視は ' + s.watcherUses + ' 回まで。1回 ' + s.watchSec + ' 秒、クールダウン ' + s.watcherCd + ' 秒。');
   if (role === 'engineer') n.push('ベントはゲーム中に ' + s.engineerUses + ' 回まで。');
@@ -4106,6 +4390,30 @@ function showRoleCard() {
   setOverlay('role');
 }
 function setOverlay(name) { S.overlay = name; applyOverlays(); }
+// この試合に登場する役職の一覧(設定で1人以上入れた役職と、普通のクルー)
+function showRoleList() {
+  var st = S.state;
+  if (!st || !st.settings) return;
+  var c = E.roleCounts(st.settings), n = st.order.length, sum = 0, box = $('roles-list'); clear(box);
+  Object.keys(c).forEach(function (r) { sum += c[r]; });
+  var me = myPlayer(), mine = me && me.role;
+  ['crew', 'impostor', 'neutral'].forEach(function (tm) {
+    var T = E.TEAMS[tm], items = [];
+    E.ROLE_ORDER.filter(function (r) { return E.ROLES[r].team === tm && (c[r] | 0) > 0; }).forEach(function (r) { items.push([r, c[r]]); });
+    if (tm === 'crew' && n - sum > 0) items.unshift(['crew', n - sum]);
+    if (!items.length) return;
+    box.appendChild(h('div', { class: 'roles-team', style: '--c:' + T.hex }, [h('h3', { text: T.name })].concat(items.map(function (it) {
+      var R = E.ROLES[it[0]];
+      return h('div', { class: 'roles-item', style: '--c:' + T.hex }, [
+        h('div', { class: 'rn' }, [h('span', { text: R.n }), h('b', { text: '×' + it[1] + (mine === it[0] ? '(あなた)' : '') })]),
+        h('p', { text: R.d }),
+        R.abil.length ? h('ul', {}, R.abil.map(function (t) { return h('li', { text: t }); })) : null
+      ]);
+    }))));
+  });
+  $('roles-note').textContent = '参加' + n + '人のうち、役職ごとの人数です。誰がどの役職かは、ここでは分かりません。';
+  setOverlay('roles');
+}
 
 /* ---------- オーバーレイの出し分け ---------- */
 function meetingShown(st) {
@@ -4119,13 +4427,16 @@ function applyOverlays() {
   $('ov-task').hidden = !(inGame && S.overlay === 'task' && st.phase === 'play');
   $('ov-vent').hidden = !(inGame && S.overlay === 'vent' && st.phase === 'play');
   $('ov-map').hidden = !(inGame && S.overlay === 'map');
+  $('ov-count').hidden = !(inGame && S.overlay === 'count' && st.phase === 'play');
+  $('ov-roles').hidden = !(inGame && S.overlay === 'roles' && !over);
   $('ov-sab').hidden = !(inGame && S.overlay === 'sab' && st.phase === 'play');
   if (S.overlay === 'task' && st && st.phase !== 'play') closeTask();
   // 会議中は、マップだけ開いたままにできる(会議が終わったら閉じる)
   if (S.overlay === 'map') {
     if (over || (meet && !S.mapFromMeeting) || (!meet && S.mapFromMeeting)) { S.overlay = null; $('ov-map').hidden = true; }
     if (!meet) S.mapFromMeeting = false;
-  } else if (S.overlay && S.overlay !== 'role' && (meet || over)) S.overlay = null;
+  } else if (S.overlay && S.overlay !== 'role' && !(S.overlay === 'roles' && meet) && (meet || over)) S.overlay = null;
+  if (S.overlay === 'count' && st && st.phase !== 'play') S.overlay = null;
 }
 /* ---------- 妨害の選択(インポスター側) ---------- */
 function openSab() {
@@ -4135,6 +4446,7 @@ function openSab() {
     ['jam', '通信妨害', s.jamSec + '秒間、クルーのタスクとマップが使えなくなる(修理地点で復旧される)']
   ];
   if (CR) opts.push(['crisis', '緊急事態: ' + CR.n, Math.round(E.crisisMs(s) / 1000) + '秒以内に2か所とも直されなければ、インポスターの勝ち']);
+  E.mapSabs().forEach(function (k) { var i = E.mapSabInfo(k); opts.push([k, 'このマップ固有: ' + i.n, s.mapSabSec + '秒間、' + i.d]); });
   opts.forEach(function (o) {
     box.appendChild(h('button', { class: 'btn block sab-opt', type: 'button', onclick: function () { sendAct({ type: 'sab', t: o[0] }); setOverlay(null); } },
       [h('span', { text: o[1] }), h('small', { text: o[2] })]));
@@ -4195,6 +4507,29 @@ function drawMapOverlay() {
   if (lg.textContent !== txt) lg.textContent = txt;
 }
 
+/* ---------- 人数モニター ---------- */
+// 部屋ごとの人数(遺体も1人)。開いているあいだ、毎フレーム更新する
+function drawCountOverlay() {
+  var st = S.state, u = E.M.scale || 1;
+  if (!st) return;
+  var cnt = E.roomCounts(st, getPos), total = 0;
+  drawMapThumb($('cv-count'), E.M, { names: true, table: false, fs: 28, after: function (c) {
+    E.ROOMS.forEach(function (r) {
+      var n = cnt[r.id] || 0; total += n;
+      var cx = r.x + r.w / 2, cy = r.y + r.h / 2 - 26 * u, rad = 24 * u;
+      c.fillStyle = n ? '#ffd24d' : 'rgba(16,23,43,.55)'; c.beginPath(); c.arc(cx, cy, rad, 0, 6.2832); c.fill();
+      c.fillStyle = n ? '#10172b' : '#93a0c4'; c.font = '700 ' + 30 * u + 'px sans-serif'; c.textAlign = 'center'; c.fillText(String(n), cx, cy + 10 * u);
+    });
+    if (E.M.counter) { c.strokeStyle = '#5fd08a'; c.lineWidth = 6 * u; c.beginPath(); c.arc(E.M.counter.x, E.M.counter.y, 20 * u, 0, 6.2832); c.stroke(); }
+  } });
+  var sig = E.ROOMS.map(function (r) { return r.id + ':' + (cnt[r.id] || 0); }).join(',');
+  var box = $('count-list');
+  if (box.getAttribute('data-sig') !== sig) {
+    box.setAttribute('data-sig', sig); clear(box);
+    E.ROOMS.forEach(function (r) { var n = cnt[r.id] || 0; box.appendChild(h('span', { class: 'cn' + (n ? '' : ' zero') }, [r.n, h('b', { text: n + '人' })])); });
+  }
+}
+
 /* ---------- 会議 ---------- */
 var WIN = { crew: ['クルーの勝利', 'crew'], impostor: ['インポスターの勝利', 'impostor'], jackal: ['ジャッカルの勝利', 'neutral'], arsonist: ['放火魔の勝利', 'neutral'], jester: ['ピエロの勝利', 'neutral'] };
 function swatch(p) { return h('span', { class: 'swatch', 'data-pid': p.id, style: 'background:' + C[p.color].hex }); }
@@ -4212,6 +4547,9 @@ function renderMeeting() {
   var canVote = !!(me && me.alive && m.stage === 'vote' && m.votes[S.pid] === undefined);
   var cards = $('mt-cards'); clear(cards);
   var res = m.res;
+  var mtOpen = m.stage === 'discuss' || m.stage === 'vote';
+  var fort = !!(me && me.role === 'fortune' && me.alive && (me.u || 0) > 0 && (me.gm || 0) < st.settings.fortunePerMeeting && mtOpen);
+  var nice = !!(me && me.role === 'niceguesser' && me.alive && (me.u || 0) > 0 && (me.gm || 0) < st.settings.nicePerMeeting && mtOpen);
   var asn = !!(me && me.role === 'assassin' && me.alive && (me.gs || 0) > 0 && (me.gm || 0) < st.settings.assassinPerMeeting && (m.stage === 'discuss' || m.stage === 'vote'));
   st.order.forEach(function (id) {
     var p = st.players[id];
@@ -4230,7 +4568,9 @@ function renderMeeting() {
     }
     var btns = [];
     if (canVote && p.alive && id !== S.pid) btns.push(h('button', { class: 'btn small primary', type: 'button', text: '投票', onclick: function () { sendAct({ type: 'vote', t: id }); renderMeeting(); } }));
-    if (asn && p.alive && id !== S.pid) btns.push(h('button', { class: 'btn small danger', type: 'button', text: '暗殺', onclick: function () { S.asn = { t: id, r: S.asn && S.asn.r || 'crew' }; renderMeeting(); } }));
+    if (fort && p.alive && id !== S.pid) btns.push(h('button', { class: 'btn small', type: 'button', text: '占う', onclick: function () { S.skill = { k: 'fortune', t: id }; renderMeeting(); } }));
+    if (nice && p.alive && id !== S.pid) btns.push(h('button', { class: 'btn small danger', type: 'button', text: '看破', onclick: function () { S.skill = { k: 'nicekill', t: id }; renderMeeting(); } }));
+    if (asn && p.alive && id !== S.pid) btns.push(h('button', { class: 'btn small danger', type: 'button', text: '役職当て', onclick: function () { S.asn = { t: id, r: S.asn && S.asn.r || 'crew' }; renderMeeting(); } }));
     cards.appendChild(h('div', { class: 'card' + (p.alive ? '' : ' dead') + (res && res.ejected === id ? ' eject' : '') }, [
       h('div', { class: 'top' }, [swatch(p), h('span', { class: 'nm', text: p.name })]),
       h('div', { class: 'tags' }, tags),
@@ -4252,7 +4592,25 @@ function renderMeeting() {
     var sub = ej ? (res.reveal ? '役職は「' + E.ROLES[res.reveal].n + '」だった。' : '役職は明かされない。') : (res.skip ? 'スキップ ' + res.skip + ' 票' : '');
     rs.appendChild(h('div', { class: 'result' }, [h('div', { class: 'big', text: big }), h('div', { class: 'mute', text: sub })]));
   }
-  // 暗殺パネル
+  // 占い師・ナイスゲッサーの確認パネル
+  var sk = $('mt-skill'); clear(sk);
+  var cur = S.skill && st.players[S.skill.t] && st.players[S.skill.t].alive ? S.skill : null;
+  if (cur && ((cur.k === 'fortune' && fort) || (cur.k === 'nicekill' && nice))) {
+    var tg = st.players[cur.t], isF = cur.k === 'fortune';
+    sk.appendChild(h('div', { class: 'skill-panel' + (isF ? ' fort' : '') }, [
+      h('div', { text: cname(tg) + 'の ' + tg.name + (isF ? ' を占う' : ' を看破する') + '(残り ' + me.u + ' 回)' }),
+      h('div', { class: 'small mute', text: isF ? '選んだ人の役職がわかります。' : 'クルー陣営以外なら相手が倒れます。クルー陣営なら、あなたが倒れます。' }),
+      h('div', { class: 'row' }, [
+        h('button', { class: 'btn ' + (isF ? 'primary' : 'danger'), type: 'button', text: isF ? '占う' : '看破する', onclick: function () { sendAct({ type: cur.k, t: cur.t }); S.skill = null; renderMeeting(); } }),
+        h('button', { class: 'btn', type: 'button', text: 'やめる', onclick: function () { S.skill = null; renderMeeting(); } })
+      ])
+    ]));
+  } else S.skill = null;
+  if (me && me.role === 'fortune' && me.fr && me.fr.length) {
+    sk.appendChild(h('div', { class: 'skill-panel fort' }, [h('div', { text: '占いの結果' }),
+      h('div', { class: 'fort-log' }, me.fr.map(function (f) { var q = st.players[f.t]; return h('div', {}, [q ? cname(q) + 'の ' + q.name : '?', ' → ', h('b', { text: E.ROLES[f.r] ? E.ROLES[f.r].n : f.r }), q && !q.alive ? '(死亡)' : '']); }))]));
+  }
+  // 役職当てパネル
   var ap = $('mt-assassin');
   if (document.activeElement && document.activeElement.id === 'asn-role' && asn && S.asn) { renderChat(); return; }
   clear(ap);
@@ -4262,7 +4620,7 @@ function renderMeeting() {
     sel.value = S.asn.r;
     sel.addEventListener('change', function () { S.asn.r = sel.value; });
     ap.appendChild(h('div', { class: 'assassin-panel' }, [
-      h('div', { text: cname(tgt) + 'の ' + tgt.name + ' を暗殺する(残り ' + me.gs + ' 回)' }),
+      h('div', { text: cname(tgt) + 'の ' + tgt.name + ' の役職を当てる(残り ' + me.gs + ' 回)' }),
       h('div', { class: 'small mute', text: '役職を当てれば相手が倒れます。外れると、あなたが倒れます。' }),
       sel,
       h('div', { class: 'row' }, [
@@ -4271,7 +4629,7 @@ function renderMeeting() {
       ])
     ]));
   } else if (asn) {
-    ap.appendChild(h('p', { class: 'small mute', text: '暗殺できます(残り ' + me.gs + ' 回)。相手のカードの「暗殺」を押してください。' }));
+    ap.appendChild(h('p', { class: 'small mute', text: '役職当てができます(残り ' + me.gs + ' 回)。相手のカードの「役職当て」を押してください。' }));
   }
   renderChat();
 }
@@ -4357,7 +4715,7 @@ function playKillFx(st, me) {
     c.save(); c.translate(130, 120); c.scale(3.2, 3.2); drawBlob(c, 0, 0, C[me.color].hex, 1, 0, 1, false, true); c.restore();
   }
   $('fx-kt').textContent = mis ? '誤射…' : 'やられた…';
-  $('fx-ks').textContent = mis ? '危険人物ではない人を撃ってしまった' : killer ? cname(killer) + 'の ' + killer.name + (kd.how === 'shot' ? ' に撃たれた' : ' に倒された') : '倒された';
+  $('fx-ks').textContent = mis ? '撃つべきでない相手を撃ってしまった(または撃たれた)' : kd.how === 'wave' && killer ? cname(killer) + 'の ' + killer.name + ' の波動砲に貫かれた' : kd.how === 'reflect' && killer ? cname(killer) + 'の ' + killer.name + ' のシールドに波動砲を跳ね返された' : killer ? cname(killer) + 'の ' + killer.name + (kd.how === 'shot' ? ' に撃たれた' : ' に倒された') : '倒された';
   showFx('fx-kill', 2800);
   buzz([90, 50, 260]);
 }
@@ -4457,8 +4815,9 @@ function label(c, text, x, y, color) {
 function visionOf(st, me) {
   var s = st.settings, v = s.vision;
   if (!me || !me.alive) return 99999;
-  if (teamOf(me) === 'impostor') v = v * 1.15;
-  else if (st.blackoutUntil > tnow()) v = v * 0.35;
+  var tm = teamOf(me);
+  if (tm === 'impostor') v = s.visionImp || v * 1.15;
+  else if (tm === 'crew' && st.blackoutUntil > tnow()) v = v * 0.35; // 停電で狭くなるのはクルー陣営だけ
   return v * E.fogAt(S.me.x, S.me.y);
 }
 function hazard(c, o, a) {
@@ -4506,6 +4865,43 @@ function drawSpeak(c, x, y, now) {
   for (var i = 1; i <= 2; i++) { c.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(now / 230 - i * 0.7)); c.beginPath(); c.arc(x, y, 3.5 + i * 6, -0.9, 0.9); c.stroke(); c.beginPath(); c.arc(x, y, 3.5 + i * 6, Math.PI - 0.9, Math.PI + 0.9); c.stroke(); }
   c.restore();
 }
+// シールダーの、展開中の防壁
+function drawShieldBubble(c, x, y, now) {
+  c.save();
+  var r = 36 + 2 * Math.sin(now / 160);
+  var g = c.createRadialGradient(x, y, 10, x, y, r);
+  g.addColorStop(0, 'rgba(120,200,255,.05)'); g.addColorStop(1, 'rgba(120,200,255,.38)');
+  c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 6.2832); c.fill();
+  c.strokeStyle = 'rgba(170,225,255,.95)'; c.lineWidth = 3; c.beginPath(); c.arc(x, y, r, 0, 6.2832); c.stroke();
+  c.restore();
+}
+// 波動砲: ためている最中の予告線と、放ったあとのビーム(壁は貫通して描く)
+function drawBeams(c, st, now) {
+  var tn = tnow();
+  st.order.forEach(function (id) {
+    var p = st.players[id];
+    if (!p || p.left) return;
+    var L = E.WAVE_LEN;
+    if (p.wv && p.alive) {
+      var w = p.wv, left = Math.max(0, w.fire - tn), pul = 0.35 + 0.35 * Math.sin(now / 70), k = Math.min(1, 1 - left / Math.max(1, (st.settings.waveCharge || 3) * 1000));
+      c.save(); c.lineCap = 'round';
+      c.strokeStyle = 'rgba(255,70,90,' + (0.25 + 0.3 * k + pul * 0.3) + ')'; c.lineWidth = 6 + k * 10; c.setLineDash([22, 14]);
+      c.beginPath(); c.moveTo(w.x, w.y); c.lineTo(w.x + w.dx * L, w.y + w.dy * L); c.stroke(); c.setLineDash([]);
+      c.fillStyle = 'rgba(255,90,100,' + (0.35 + 0.4 * k) + ')'; c.beginPath(); c.arc(w.x, w.y, 18 + 22 * k, 0, 6.2832); c.fill();
+      c.restore();
+    }
+    if (p.wf && tn - p.wf.at < 750) {
+      var f = p.wf, a = Math.max(0, 1 - (tn - f.at) / 750);
+      c.save(); c.lineCap = 'round';
+      c.strokeStyle = 'rgba(255,120,140,' + (0.5 * a) + ')'; c.lineWidth = 62 * (0.4 + 0.6 * a);
+      c.beginPath(); c.moveTo(f.x, f.y); c.lineTo(f.x + f.dx * f.len, f.y + f.dy * f.len); c.stroke();
+      c.strokeStyle = 'rgba(255,255,255,' + (0.95 * a) + ')'; c.lineWidth = 22 * (0.4 + 0.6 * a);
+      c.beginPath(); c.moveTo(f.x, f.y); c.lineTo(f.x + f.dx * f.len, f.y + f.dy * f.len); c.stroke();
+      if (f.rf) { c.strokeStyle = 'rgba(140,220,255,' + a + ')'; c.lineWidth = 14; c.beginPath(); c.moveTo(f.x + f.dx * f.len, f.y + f.dy * f.len); c.lineTo(f.x, f.y); c.stroke(); }
+      c.restore();
+    }
+  });
+}
 function drawFog(c, z, now) {
   c.save(); c.beginPath(); c.rect(z.x, z.y, z.w, z.h); c.clip();
   c.fillStyle = 'rgba(150,170,190,' + (0.1 + (1 - z.f) * 0.16) + ')'; c.fillRect(z.x, z.y, z.w, z.h);
@@ -4529,7 +4925,7 @@ function drawWorld(c, st, me, vr, watching, ghost, now) {
   });
   drawDecor(c, E.M, th, now, S.me.x - VW / SCALE, S.me.y - VH / SCALE, S.me.x + VW / SCALE, S.me.y + VH / SCALE);
   // 動く歩道
-  (G.belts || []).forEach(function (b) { drawBelt(c, b, now); });
+  (G.belts || []).forEach(function (b) { drawBelt(c, E.msOn('belts') ? { x: b.x, y: b.y, w: b.w, h: b.h, dx: -b.dx, dy: -b.dy } : b, now); });
   // ベント
   E.VENTS.forEach(function (v) {
     c.fillStyle = '#080c18'; c.fillRect(v.x - 20, v.y - 10, 40, 20);
@@ -4542,6 +4938,16 @@ function drawWorld(c, st, me, vr, watching, ghost, now) {
   c.strokeStyle = '#0b1020'; c.lineWidth = 4; ell(c, E.TABLE.x, E.TABLE.y, 74, 46); c.stroke();
   var usable = S.nearInfo && S.nearInfo.table;
   c.fillStyle = usable ? '#ff6a6f' : '#b13b43'; c.beginPath(); c.arc(E.TABLE.x, E.TABLE.y, 12 + (usable ? Math.sin(now / 160) * 2 : 0), 0, 6.2832); c.fill();
+  // 人数モニター
+  if (E.M.counter) {
+    var ct = E.M.counter, cu = S.nearInfo && S.nearInfo.counter;
+    c.fillStyle = '#10172b'; c.fillRect(ct.x - 30, ct.y - 22, 60, 44);
+    c.fillStyle = cu ? '#5fd08a' : '#2f5a63'; c.fillRect(ct.x - 24, ct.y - 16, 48, 26);
+    for (var cq = 0; cq < 4; cq++) { c.fillStyle = '#10172b'; c.fillRect(ct.x - 18 + cq * 11, ct.y - 10 + (cq % 2) * 4, 7, 14 - (cq % 2) * 4); }
+    c.fillStyle = '#10172b'; c.fillRect(ct.x - 24, ct.y + 13, 48, 4);
+    if (cu) { c.strokeStyle = 'rgba(95,208,138,' + (0.5 + 0.4 * Math.sin(now / 200)) + ')'; c.lineWidth = 3; c.strokeRect(ct.x - 36, ct.y - 28, 72, 56); }
+    label(c, '人数モニター', ct.x, ct.y - 36, cu ? '#9be8b4' : '#8fb7c0');
+  }
   // 配電盤(宇宙船)
   if (G.panel) {
     var pn = G.panel, bo = st.blackoutUntil > tn;
@@ -4564,7 +4970,7 @@ function drawWorld(c, st, me, vr, watching, ghost, now) {
     label(c, fx ? pt.n + ' 修理済' : pt.n, pt.x, pt.y - 40, fx ? '#9be8b4' : '#ffb3bf');
   });
   // 秘密の本棚
-  (G.portals || []).forEach(function (p, i) { drawPortal(c, p, S.nearInfo && S.nearInfo.portal === i, now); });
+  (G.portals || []).forEach(function (p, i) { drawPortal(c, p, S.nearInfo && S.nearInfo.portal === i, now); if (E.msOn('portals')) label(c, '封鎖中', p.x, p.y - 46, '#ffb3bf'); });
   // タスクの端末(手順ごと)
   var mine = {};
   if (me && me.tasks) me.tasks.forEach(function (t) { mine[t.s] = t; });
@@ -4577,8 +4983,15 @@ function drawWorld(c, st, me, vr, watching, ghost, now) {
       c.fillStyle = stt === 1 ? '#f3b94d' : stt === 2 ? '#8a7440' : '#3d4d7e'; c.fillRect(s.x - 15, s.y - 10, 30, 14);
       c.fillStyle = '#10172b'; c.fillRect(s.x - 15, s.y + 7, 30, 3);
       if (stt === 1) {
-        c.strokeStyle = 'rgba(243,185,77,' + (0.5 + 0.4 * Math.sin(now / 280)) + ')'; c.lineWidth = 3; c.strokeRect(s.x - 24, s.y - 19, 48, 38);
-        label(c, T.steps.length > 1 ? (k + 1) + '/' + T.steps.length : '!', s.x, s.y - 28, '#f3b94d');
+        var dd = Math.hypot(S.me.x - s.x, S.me.y - s.y), nearT = dd <= 230, useT = dd <= 90;
+        if (nearT) { // 近づくと、自分のタスクの場所を強く光らせる
+          var gl = c.createRadialGradient(s.x, s.y, 8, s.x, s.y, 80 + 10 * Math.sin(now / 200));
+          gl.addColorStop(0, 'rgba(255,214,90,' + (useT ? 0.55 : 0.38) + ')'); gl.addColorStop(1, 'rgba(255,214,90,0)');
+          c.fillStyle = gl; c.fillRect(s.x - 100, s.y - 100, 200, 200);
+          c.strokeStyle = useT ? 'rgba(255,255,255,.95)' : 'rgba(255,214,90,.95)'; c.lineWidth = 4; c.strokeRect(s.x - 28, s.y - 23, 56, 46);
+          c.strokeStyle = 'rgba(255,214,90,' + (0.55 + 0.4 * Math.sin(now / 150)) + ')'; c.lineWidth = 3; c.beginPath(); c.arc(s.x, s.y, 46 + 8 * Math.sin(now / 190), 0, 6.2832); c.stroke();
+        } else { c.strokeStyle = 'rgba(243,185,77,' + (0.5 + 0.4 * Math.sin(now / 280)) + ')'; c.lineWidth = 3; c.strokeRect(s.x - 24, s.y - 19, 48, 38); }
+        label(c, nearT ? 'タスク' + (T.steps.length > 1 ? ' ' + (k + 1) + '/' + T.steps.length : '') : (T.steps.length > 1 ? (k + 1) + '/' + T.steps.length : '!'), s.x, s.y - (nearT ? 34 : 28), nearT ? '#fff2c0' : '#f3b94d');
       } else if (stt === 2) {
         c.setLineDash([6, 5]); c.strokeStyle = 'rgba(243,185,77,.5)'; c.lineWidth = 2; c.strokeRect(s.x - 24, s.y - 19, 48, 38); c.setLineDash([]);
         label(c, String(k + 1), s.x, s.y - 28, '#b89a55');
@@ -4586,7 +4999,7 @@ function drawWorld(c, st, me, vr, watching, ghost, now) {
     });
   });
   // 霧の区画
-  (G.fog || []).forEach(function (z) { drawFog(c, z, now); });
+  (G.fog || []).forEach(function (z) { drawFog(c, E.msOn('fog') ? { x: z.x, y: z.y, w: z.w, h: z.h, f: z.f * 0.6 } : z, now); });
   // 高圧ゲート
   (G.gates || []).forEach(function (g) {
     var cl = E.gateClosed(g, tn), wn = E.gateWarn(g, tn);
@@ -4599,6 +5012,7 @@ function drawWorld(c, st, me, vr, watching, ghost, now) {
     label(c, cl ? '閉鎖中' : wn >= 0 ? '閉まる!' : 'ゲート', g.x + g.w / 2, g.y - 8, cl || wn >= 0 ? '#ffb3bf' : '#ffd88a');
   });
   // 封鎖された通路(隔壁)
+  if (E.msOn('lockdown')) E.HALLS.forEach(function (o) { hazard(c, o, 0.92); });
   (st.doors || []).forEach(function (d) {
     if (d.until > tn && E.HALLS[d.h]) { var o = E.HALLS[d.h]; hazard(c, o, 0.92); label(c, '隔壁', o.x + o.w / 2, o.y - 8, '#ffb3bf'); }
   });
@@ -4639,9 +5053,11 @@ function render(dt) {
     var ally = me && teamOf(me) === 'impostor' && teamOf(p) === 'impostor' && o.id !== S.pid;
     if (S.targetPid === o.id) { c.strokeStyle = '#ffd24d'; c.lineWidth = 3; ell(c, v.x, v.y + 18, 24, 10); c.stroke(); }
     drawBlob(c, v.x, v.y, C[p.color].hex, v.f || 1, v.ph || 0, isGhost ? 0.45 : 1, isGhost, false);
+    if (p.alive && (p.sh || 0) > tnow()) drawShieldBubble(c, v.x, v.y, now);
     label(c, p.name, v.x, v.y - 34, ally ? '#ff8c9b' : (o.id === S.pid ? '#ffffff' : '#e9eef9'));
     if (S.speaking[o.id]) drawSpeak(c, v.x, v.y - 52, now);
   });
+  drawBeams(c, st, now);
   c.restore();
 
   // 視界(霧)
@@ -4719,9 +5135,13 @@ function moveMe(dt) {
   var ghost = !me || !me.alive;
   var v = moveVec(), len = Math.hypot(v[0], v[1]);
   var ox = S.me.x, oy = S.me.y;
+  // 向き(波動砲を撃つ方向)。動こうとした方向を覚えておく
+  if (len >= 0.2) { S.aim = { x: v[0] / len, y: v[1] / len }; }
+  // シールド展開中・波動砲のため中は動けない
+  if (!ghost && me && (me.wv || (me.sh || 0) > tnow())) { S.me.w = 0; return; }
   if (len >= 0.12) {
     if (len > 1) { v[0] /= len; v[1] /= len; }
-    var sp = st.settings.speed * (ghost ? 1.15 : 1);
+    var sp = (teamOf(me) === 'impostor' ? (st.settings.speedImp || st.settings.speed) : st.settings.speed) * (ghost ? 1.15 : 1);
     var nx = S.me.x + v[0] * sp * dt, ny = S.me.y + v[1] * sp * dt;
     if (ghost) { S.me.x = Math.max(20, Math.min(E.WORLD.w - 20, nx)); S.me.y = Math.max(20, Math.min(E.WORLD.h - 20, ny)); }
     else { if (E.canMove(S.me.x, S.me.y, nx, S.me.y, 14)) S.me.x = nx; if (E.canMove(S.me.x, S.me.y, S.me.x, ny, 14)) S.me.y = ny; }
@@ -4774,7 +5194,7 @@ function nearest(list, from, range) {
   return best;
 }
 function computeNear(st, me) {
-  var near = { task: -1, step: 0, table: false, vent: -1, body: null, portal: -1, panel: false, hall: -1, fix: -1 };
+  var near = { task: -1, step: 0, table: false, vent: -1, body: null, portal: -1, panel: false, hall: -1, fix: -1, counter: false };
   if (!me) return near;
   var G = E.GIM, now = tnow(), jamOn = st.jamUntil > now;
   if (me.alive && teamOf(me) !== 'impostor' && E.M.crisis && (st.crisis || jamOn)) {
@@ -4797,6 +5217,7 @@ function computeNear(st, me) {
   var bb = nearest(st.bodies.map(function (b) { return { x: b.x, y: b.y, id: b.id }; }), S.me, 150);
   if (bb) near.body = bb.id;
   if (me.alive && G.portals) near.portal = E.portalNear(S.me.x, S.me.y, 100);
+  if (me.alive && E.M.counter && !(jamOn && teamOf(me) !== 'impostor') && E.dist(S.me, E.M.counter) <= 110) near.counter = true;
   if (me.alive && G.panel && st.blackoutUntil > now && teamOf(me) !== 'impostor' && E.dist(S.me, G.panel) <= 110) near.panel = true;
   if (me.alive && G.doors) near.hall = E.hallNear(S.me.x, S.me.y, 140);
   return near;
@@ -4819,9 +5240,10 @@ function computeActions(st, me) {
   var near = S.nearInfo, R = E.ROLES[me.role], s = st.settings, now = tnow(), alive = me.alive;
   function cd(t, total) { var l = Math.max(0, t - now); return { left: l, ratio: total ? Math.min(1, l / total) : 0 }; }
   // 使う
-  var useLabel = near.task >= 0 ? E.TASKS[near.task].steps[near.step].n : near.table ? '緊急会議' : '調べる';
-  list.push({ id: 'use', label: useLabel, big: true, color: 'var(--accent)', ready: near.task >= 0 || near.table,
-    press: function () { if (near.task >= 0) openTask(near.task); else if (near.table) sendAct({ type: 'emergency' }); } });
+  // タスクのボタンの文字は「タスク」で統一(タスク名は小さく添える)
+  var useLabel = near.task >= 0 ? 'タスク' : near.table ? '緊急会議' : near.counter ? '人数確認' : '調べる';
+  list.push({ id: 'use', label: useLabel, big: true, color: 'var(--accent)', sub: near.task >= 0 ? E.TASKS[near.task].n : '', ready: near.task >= 0 || near.table || near.counter,
+    press: function () { if (near.task >= 0) openTask(near.task); else if (near.table) sendAct({ type: 'emergency' }); else if (near.counter) setOverlay('count'); } });
   var G = E.GIM;
   if (alive && G.portals) list.push({ id: 'portal', label: '隠し扉', color: 'var(--neu)', ready: near.portal >= 0 && now >= (me.cp || 0), cd: cd(me.cp || 0, 2500).ratio, press: function () { sendAct({ type: 'portal' }); } });
   if (alive && G.panel && teamOf(me) !== 'impostor') list.push({ id: 'fix', label: '復旧', color: 'var(--warn)', ready: !!near.panel, press: openPanel });
@@ -4838,6 +5260,15 @@ function computeActions(st, me) {
     tgt = nearestTarget(st, me, tgtRange);
     var c2 = cd(me.ca || 0, s.sheriffCd * 1000);
     list.push({ id: 'shoot', label: '射撃', color: 'var(--imp)', sub: '残り' + (me.u || 0), ready: !!tgt && (me.u || 0) > 0 && c2.left === 0, cd: c2.ratio, press: function () { sendAct({ type: 'shoot', t: tgt }); } });
+  }
+  if (R.wave) {
+    var cw = cd(me.ck || 0, s.waveCd * 1000), charging = !!me.wv;
+    list.push({ id: 'wave', label: '波動砲', color: 'var(--imp)', sub: charging ? 'ため中' : cw.left ? Math.ceil(cw.left / 1000) + '秒' : '', ready: !charging && cw.left === 0, cd: cw.ratio,
+      press: function () { var a = S.aim || { x: S.me.f === -1 ? -1 : 1, y: 0 }; sendAct({ type: 'wave', dx: a.x, dy: a.y }); } });
+  }
+  if (me.role === 'shielder') {
+    var on = (me.sh || 0) > now, c8 = cd(me.ca || 0, s.shieldCd * 1000);
+    list.push({ id: 'shield', label: on ? '解除' : 'シールド', color: 'var(--crew)', sub: on ? Math.ceil((me.sh - now) / 1000) + '秒' : c8.left ? Math.ceil(c8.left / 1000) + '秒' : '', ready: on || c8.left === 0, cd: on ? 0 : c8.ratio, press: function () { sendAct({ type: 'shield' }); } });
   }
   if (me.role === 'guardian') {
     tgt = nearestTarget(st, me, tgtRange + 40);
@@ -4950,7 +5381,14 @@ function updateHud(st, me) {
   }
   else if (jamCrew) { txt = '通信妨害中! タスクとマップが使えません'; alert = true; }
   else if (st.jamUntil > tn) { txt = '通信妨害を起こしている'; }
-  else if (st.blackoutUntil > tn && teamOf(me) !== 'impostor') { txt = '停電中! 視界が狭くなっています'; alert = true; }
+  else if (st.mapSab && st.mapSab.until > tn) {
+    var msi = E.mapSabInfo(st.mapSab.k), mleft = Math.ceil((st.mapSab.until - tn) / 1000);
+    if (teamOf(me) === 'impostor') txt = msi.n + 'を起こしている(残り' + mleft + '秒)';
+    else { txt = msi.n + '! ' + msi.d + '(残り' + mleft + '秒)'; alert = true; }
+  }
+  else if (st.blackoutUntil > tn && teamOf(me) === 'crew') { txt = '停電中! 視界が狭くなっています'; alert = true; }
+  else if (me.wv) { txt = '波動砲をためています…動けません'; }
+  else if ((me.sh || 0) > tn) { txt = 'シールド展開中…動けません'; }
   if (txt) { bn.hidden = false; if (bn.textContent !== txt) bn.textContent = txt; bn.className = 'banner' + (alert ? ' alert' : ''); } else bn.hidden = true;
 }
 
@@ -4972,6 +5410,7 @@ function frame(ts) {
     updateHud(st, me);
     render(dt);
     if (S.overlay === 'map') drawMapOverlay();
+    if (S.overlay === 'count') drawCountOverlay();
     if (!$('ov-meeting').hidden) { updateMeetingTimer(); if (S.chatDirty) renderChat(); }
     if (!S.lastPresence || ts - S.lastPresence > 80) { S.lastPresence = ts; sendPresence(false); }
   } else if (S.mode === 'online' && (!S.lastPresence || ts - S.lastPresence > 400)) { S.lastPresence = ts; sendPresence(false); }
@@ -5035,6 +5474,9 @@ function bindUi() {
   $('btn-map').addEventListener('click', function () { setOverlay('map'); });
   $('btn-sab-x').addEventListener('click', function () { setOverlay(null); });
   $('btn-map-x').addEventListener('click', function () { S.mapFromMeeting = false; setOverlay(null); });
+  $('btn-count-x').addEventListener('click', function () { setOverlay(null); });
+  ['btn-roles', 'btn-mt-roles'].forEach(function (id) { $(id).addEventListener('click', showRoleList); });
+  $('btn-roles-x').addEventListener('click', function () { setOverlay(null); });
   $('btn-mt-map').addEventListener('click', openMeetingMap);
   $('btn-vc').addEventListener('click', function () { if (VC.on) vcStop(); else vcStart(); });
   ['btn-mic', 'btn-mt-mic'].forEach(function (id) { $(id).addEventListener('click', function () { vcSetMuted(!VC.muted); }); });
