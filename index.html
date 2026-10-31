@@ -450,6 +450,16 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 .snd-row input[type=range] { width: 100%; min-height: 32px; accent-color: var(--accent, #7aa2ff); }
 .snd-row output { font-family: var(--font-d); text-align: right; }
 
+/* ---------- キー設定・キーのヒント ---------- */
+.keys-list { display: grid; gap: 6px; margin: 10px 0; }
+.key-row { display: grid; grid-template-columns: minmax(0, 1fr) 160px; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.key-row .kl { font-size: 14px; font-weight: 700; }
+.key-btn { justify-content: center; font-family: var(--font-d); letter-spacing: .06em; }
+.key-btn.cap { border-color: var(--warn); color: var(--warn); }
+.act .kb { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); z-index: 3; min-width: 18px; padding: 0 4px; height: 16px; line-height: 14px; border-radius: 5px; background: rgba(6, 9, 20, .85); border: 1px solid var(--line); color: var(--fg); font: 700 10px var(--font-b); text-align: center; pointer-events: none; white-space: nowrap; }
+.act .kb:empty { display: none; }
+@media (hover: none), (pointer: coarse) { .act .kb { display: none; } }
+
 </style>
 </head>
 <body>
@@ -477,7 +487,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
             <label for="inp-code">部屋コード(4文字)</label>
             <div class="row"><input id="inp-code" class="input" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="例: K7QM" style="max-width:9em;letter-spacing:.15em;text-transform:uppercase"><button id="btn-join" class="btn" type="button">コードで入る</button></div>
           </div>
-          <div class="row"><button id="btn-snd-e" class="btn small snd-btn" type="button">音の設定(BGM・効果音)</button></div>
+          <div class="row"><button id="btn-snd-e" class="btn small snd-btn" type="button">音の設定(BGM・効果音)</button><button id="btn-keys-e" class="btn small" type="button" hidden>キー設定(PC)</button></div>
           <div class="status-line"><span id="net-dot" class="dot"></span><span id="net-text">接続を確認しています…</span></div>
           <div class="field">
             <label>画面の向き</label>
@@ -509,7 +519,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
       <div class="lob-l">
         <div class="row between">
           <h2 style="font-size:26px">待機室</h2>
-          <div class="row"><button id="btn-snd-l" class="btn small snd-btn" type="button">音</button><button id="btn-rot" class="btn small" type="button">向き</button><button id="btn-leave" class="btn small" type="button">退出</button></div>
+          <div class="row"><button id="btn-snd-l" class="btn small snd-btn" type="button">音</button><button id="btn-keys-l" class="btn small" type="button" hidden>キー</button><button id="btn-rot" class="btn small" type="button">向き</button><button id="btn-leave" class="btn small" type="button">退出</button></div>
         </div>
         <div id="lobby-status" class="status-line"></div>
         <div id="vc-box" class="vc-box" hidden>
@@ -550,7 +560,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     <div class="hud top">
       <button id="btn-role" class="rolechip" type="button"><small id="rc-team"></small><span id="rc-name"></span></button>
       <div class="prog" id="prog"><div class="bar"><i id="prog-fill"></i></div><span id="prog-text"></span></div>
-      <div class="hgroup"><button id="btn-snd-g" class="hbtn snd-btn" type="button">音</button><button id="btn-mic" class="hbtn" type="button" hidden>マイクON</button><button id="btn-roles" class="hbtn" type="button">役職一覧</button><button id="btn-map" class="hbtn" type="button">マップ</button></div>
+      <div class="hgroup"><button id="btn-snd-g" class="hbtn snd-btn" type="button">音</button><button id="btn-keys-g" class="hbtn" type="button" hidden>キー</button><button id="btn-mic" class="hbtn" type="button" hidden>マイクON</button><button id="btn-roles" class="hbtn" type="button">役職一覧</button><button id="btn-map" class="hbtn" type="button">マップ</button></div>
     </div>
     <div id="tasklist" class="tasklist"></div>
     <div id="banner" class="banner" hidden></div>
@@ -568,6 +578,17 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
       <div class="snd-row"><label for="snd-se">効果音</label><input id="snd-se" type="range" min="0" max="100" step="5"><output id="snd-se-v"></output></div>
       <div class="row"><button id="snd-mute" class="btn" type="button">すべて消す</button><button id="snd-test" class="btn" type="button">効果音を試す</button></div>
       <p class="small mute">音は端末の中で作っています(音声ファイルは使いません)。この設定は、この端末にだけ保存されます。ボイスチャットの音量とは別です。</p>
+    </div>
+  </div>
+
+  <!-- キー設定(PC) -->
+  <div id="ov-keys" class="ov solid" hidden>
+    <div class="box">
+      <div class="game-head"><h2 style="font-size:24px">キー設定(PC)</h2><button id="btn-keys-x" class="btn small" type="button">閉じる</button></div>
+      <p class="small mute">変えたい項目のボタンを押してから、割り当てたいキーを押します(Esc でやめる)。ほかの項目と同じキーにすると、2つのキーを入れ替えます。矢印キーでも、いつでも動けます。Esc で、開いている画面を閉じられます。</p>
+      <div id="keys-list" class="keys-list"></div>
+      <div class="row"><button id="btn-keys-reset" class="btn" type="button">もとに戻す</button></div>
+      <p class="small mute">この設定は、この端末にだけ保存されます。</p>
     </div>
   </div>
 
@@ -1308,7 +1329,7 @@ function grid(o) {
       d: 'シールドを張って、あらゆる襲撃・射撃を防ぐ。張っているあいだは動けない。波動砲だけは撃った相手に跳ね返す。', goal: 'クルーと同じ。',
       abil: ['シールド: 展開中は動けないが、襲撃や射撃を防ぐ。もう一度押すと解除(展開時間・クールタイムあり)', '波動砲を受けたときだけ、ビームを跳ね返して撃った相手を倒す'] },
     wavecannon: { n: '波動砲', team: 'impostor', tasks: false, threat: true, wave: true, vent: true, sab: true,
-      d: 'インポスター陣営。障害物を貫通するビームを撃つ。通常の襲撃はできない。', goal: '生き残りの数で、クルー側と並ぶか上回る。',
+      d: 'インポスター陣営。障害物を貫通するビームを撃つ。通常の襲撃ができるかは、設定で決まる(下の「このゲームの設定」を見てください)。', goal: '生き残りの数で、クルー側と並ぶか上回る。',
       abil: ['波動砲: 向いている方向に、壁を貫通するビームを放つ。ためているあいだは動けず、ビームの線が全員に見える。触れた人は倒れる', 'ベント・妨害(インポスターと同じ)'] },
     wavejackal: { n: '波動砲ジャッカル', team: 'neutral', tasks: false, threat: true, wave: true, jk: true, anyKill: true,
       d: '誰とも組まない単独の殺し屋。壁を貫通するビームで倒していく。', goal: 'インポスターがいない状態で、生き残りの半数以上を自分たちにする。',
@@ -1340,6 +1361,8 @@ function grid(o) {
     { g: 'task', k: 'longTasks', label: 'うち長いタスク(複数の場所をまわる)', min: 0, max: 5, step: 1, def: 1, unit: '個' },
     { g: 'task', k: 'progMode', label: 'タスク進度の表示(0=会議のあと 1=完了するたび 2=表示なし)', min: 0, max: 2, step: 1, def: 1, unit: '' },
     { g: 'task', k: 'commonTasks', label: 'うち全員共通のタスク', min: 0, max: 3, step: 1, def: 0, unit: '個' },
+    { g: 'rule', k: 'discussSec', label: '話し合いの時間', min: 10, max: 300, step: 10, def: 40, unit: '秒' },
+    { g: 'rule', k: 'voteSec', label: '投票の時間', min: 10, max: 600, step: 5, def: 30, unit: '秒' },
     { g: 'rule', k: 'killCd', label: '襲撃のクールダウン', min: 10, max: 60, step: 5, def: 25, unit: '秒' },
     { g: 'rule', k: 'killRange', label: '襲撃・射撃の距離', min: 60, max: 140, step: 10, def: 90, unit: '' },
     { g: 'rule', m: 'voice', k: 'voiceRange', label: '声の届く距離(近くだけのとき)', min: 200, max: 700, step: 50, def: 400, unit: '' },
@@ -1348,8 +1371,6 @@ function grid(o) {
     { g: 'rule', k: 'vision', label: 'クルー・第三陣営の視界', min: 150, max: 450, step: 10, def: 270, unit: '' },
     { g: 'rule', k: 'visionImp', label: 'インポスター陣営の視界', min: 150, max: 550, step: 10, def: 310, unit: '' },
     { g: 'rule', k: 'emergencyN', label: '緊急会議の回数(1人あたり)', min: 0, max: 3, step: 1, def: 1, unit: '回' },
-    { g: 'rule', k: 'discussSec', label: '話し合いの時間', min: 10, max: 120, step: 10, def: 40, unit: '秒' },
-    { g: 'rule', k: 'voteSec', label: '投票の時間', min: 10, max: 90, step: 5, def: 30, unit: '秒' },
     { g: 'rule', k: 'sabCd', label: '妨害のクールダウン', min: 20, max: 90, step: 5, def: 45, unit: '秒' },
     { g: 'rule', k: 'jamSec', label: '通信妨害の長さ', min: 10, max: 40, step: 5, def: 25, unit: '秒' },
     { g: 'rule', m: 'mapsab', k: 'mapSabSec', label: 'このマップ固有の妨害の長さ', min: 10, max: 40, step: 5, def: 20, unit: '秒' },
@@ -1368,10 +1389,8 @@ function grid(o) {
     { g: 'abil', r: 'engineer', k: 'engineerUses', label: '技師のベント回数', min: 1, max: 8, step: 1, def: 4, unit: '回' },
     { g: 'abil', r: 'arsonist', k: 'douseCd', label: 'ガソリンのクールダウン', min: 5, max: 30, step: 1, def: 12, unit: '秒' },
     { g: 'abil', r: 'fortune', k: 'fortuneUses', label: '占いの回数(ゲーム全体)', min: 1, max: 6, step: 1, def: 3, unit: '回' },
-    { g: 'abil', r: 'fortune', k: 'fortunePerMeeting', label: '占いの回数(1回の会議)', min: 1, max: 3, step: 1, def: 1, unit: '回' },
     { g: 'abil', r: 'niceguesser', k: 'niceShots', label: '看破できる回数(ゲーム全体)', min: 1, max: 5, step: 1, def: 1, unit: '回' },
-    { g: 'abil', r: 'niceguesser', k: 'nicePerMeeting', label: '看破できる回数(1回の会議)', min: 1, max: 3, step: 1, def: 1, unit: '回' },
-    { g: 'abil', r: ['wavecannon', 'wavejackal'], k: 'waveCharge', label: '波動砲を放つまでの時間(ため)', min: 1, max: 8, step: 1, def: 3, unit: '秒' },
+    { g: 'abil', r: ['wavecannon', 'wavejackal'], k: 'waveCharge', label: '波動砲を放つまでの時間(ため)', min: 0.1, max: 8, step: 0.1, dec: 1, def: 3, unit: '秒' },
     { g: 'abil', r: ['wavecannon', 'wavejackal'], k: 'waveCd', label: '波動砲のクールタイム', min: 10, max: 90, step: 5, def: 35, unit: '秒' },
     { g: 'abil', r: 'vampire', k: 'vampireDelay', label: '噛んでから倒れる(遺体が出る)までの時間', min: 5, max: 60, step: 5, def: 20, unit: '秒' },
     { g: 'abil', r: 'shielder', k: 'shieldSec', label: 'シールドの展開時間', min: 2, max: 15, step: 1, def: 8, unit: '秒' },
@@ -1383,8 +1402,10 @@ function grid(o) {
     { k: 'sheriffNeutral', r: 'sheriff', label: 'シェリフ: 第三陣営も撃って倒せる(オフなら撃っても倒せず、シェリフが倒れる)', def: true },
     { k: 'sheriffMisBoth', r: 'sheriff', label: 'シェリフ: クルー陣営を撃ったとき、相手も一緒に倒れる(オフなら自分だけ)', def: false },
     { k: 'vampireThrall', r: 'vampire', label: 'ヴァンパイア: 眷属を作れる(オフなら噛みつくだけ)', def: true },
+    { k: 'waveKill', r: ['wavecannon', 'wavejackal'], label: '波動砲: 通常の襲撃(近くの1人を倒す)もできる', def: false },
     { k: 'waveAlly', r: ['wavecannon', 'wavejackal'], label: '波動砲: 仲間(同じ陣営)にも当たる', def: true },
-    { k: 'voiceProx', m: 'voice', label: 'ボイスチャット: ゲーム中は近くの人の声だけ聞こえる(オフなら常に全員)', def: true }
+    { k: 'voiceProx', m: 'voice', label: 'ボイスチャット: ゲーム中は近くの人の声だけ聞こえる(オフなら常に全員)', def: true },
+    { k: 'jamVoice', m: 'voice', label: '通信妨害のあいだ、クルー・第三陣営はボイスチャットが聞こえない(インポスター陣営には聞こえる)', def: true }
   ];
   function defaultSettings() {
     var s = {};
@@ -1395,7 +1416,7 @@ function grid(o) {
   function clampSetting(k, v) {
     for (var i = 0; i < SETTING_DEFS.length; i++) {
       var d = SETTING_DEFS[i];
-      if (d.k === k) { v = Math.round(Number(v)); if (!isFinite(v)) v = d.def; return Math.max(d.min, Math.min(d.max, v)); }
+      if (d.k === k) { var f = Math.pow(10, d.dec || 0); v = Math.round(Number(v) * f) / f; if (!isFinite(v)) v = d.def; return Math.max(d.min, Math.min(d.max, v)); }
     }
     return v;
   }
@@ -1815,15 +1836,15 @@ function grid(o) {
         return { ok: true };
       }
       if (a.type === 'fortune') {
-        if (p.role !== 'fortune' || !(p.u > 0) || (p.gm || 0) >= s.fortunePerMeeting) return { ok: false };
-        p.u--; p.gm = (p.gm || 0) + 1;
+        if (p.role !== 'fortune' || !(p.u > 0) ) return { ok: false };
+        p.u--;
         p.fr = (p.fr || []).concat([{ t: T.id, r: T.role, m: mm.n }]);
         pushNote(p, '占い結果: ' + COLORS[T.color].name + 'の' + T.name + 'は「' + ROLES[T.role].n + '」だった。');
         return { ok: true };
       }
       // nicekill
-      if (p.role !== 'niceguesser' || !(p.u > 0) || (p.gm || 0) >= s.nicePerMeeting) return { ok: false };
-      p.u--; p.gm = (p.gm || 0) + 1;
+      if (p.role !== 'niceguesser' || !(p.u > 0) ) return { ok: false };
+      p.u--;
       var bad = ROLES[T.role].team !== 'crew';
       meetKill(state, mm, bad ? T : p, bad ? COLORS[T.color].name + 'の' + T.name + 'が看破されて倒れた。' : COLORS[p.color].name + 'の' + p.name + 'が看破を外して倒れた。', now);
       pushMsg(p, bad ? '看破成功: ' + T.name + 'はクルー陣営ではなかった。' : '看破失敗: ' + T.name + 'はクルー陣営だった。');
@@ -1868,7 +1889,7 @@ function grid(o) {
     if (!p.alive) return { ok: false };
 
     if (a.type === 'kill') {
-      if (!R || !R.kill || now < (p.ck || 0)) return { ok: false };
+      if (!R || !(R.kill || (R.wave && s.waveKill)) || now < (p.ck || 0)) return { ok: false };
       if (!T || !T.alive || T.left || T.id === pid) return { ok: false };
       if (!R.anyKill && ROLES[T.role].team === 'impostor') return { ok: false };
       if (!nearOk(ctx, pid, T.id, rng)) return { ok: false, err: 'far' };
@@ -2701,13 +2722,15 @@ var NET = (function () {
  *   ゲーム中(近くだけ) : 生きている人どうしは、距離に応じて小さくなり、届かない所では聞こえない
  *                       死んだ人どうしは自由に話せる。死んだ人には、近くの生きている人の声が聞こえる
  *   ゲーム中(常に全員) : 距離に関係なく聞こえる(生死のルールは同じ)
- * 生きている人に、死んだ人の声は聞こえない。 */
+ * 生きている人に、死んだ人の声は聞こえない。
+ * 通信妨害のあいだ(jam)は、インポスター陣営以外の生きている人に、だれの声も届かない(インポスター陣営には、いつもどおり聞こえる)。 */
 var VOICE = (function () {
   function gain(o) {
     var ph = o.phase;
     if (ph === 'lobby' || ph === 'over' || !ph) return 1;
     if (o.lAlive && !o.sAlive) return 0;           // 生きている人に、死んだ人の声は届かない
     if (ph === 'meeting') return 1;
+    if (o.jam && o.lAlive && !o.lImp) return 0;    // 通信妨害中: インポスター陣営以外の生きている人には、だれの声も届かない
     if (!o.lAlive && !o.sAlive) return 1;          // 死んだ人どうしは自由に話せる
     if (!o.prox) return 1;
     var range = Math.max(60, o.range || 400), near = range * 0.3, d = o.dist;
@@ -3067,7 +3090,7 @@ var S = {
   acts: [], actSeq: 0, chat: [], chatSeen: {}, chatMsg: null, chatSeq: 0, lastChatSent: 0,
   writing: false, dirty: false, writeErr: null, lastSig: '', lastPresenceAt: 0,
   uiRev: -1, cardRound: 0, lastTpKey: '', seenMsg: 0, msgRound: 0,
-  keys: {}, joy: { x: 0, y: 0, id: null }, tab: 'crew', overlay: null, task: null, targetPid: null, nearInfo: null,
+  kc: {}, joy: { x: 0, y: 0, id: null }, tab: 'crew', overlay: null, task: null, targetPid: null, nearInfo: null,
   online: false, capsReady: false, lastFrame: 0, lastHostTick: 0
 };
 // 現在の状態に合わせてマップ(エンジン内部)を切り替え、隔壁やゲートの状態を最新にする
@@ -4080,11 +4103,12 @@ function vcTick() {
   if (!VC.on || !VC.ctx) return;
   var st = S.state, me = myPlayer(), owners = vcOwners(), sp = {}, t = VC.ctx.currentTime, now = Date.now(), hold = VC.hold || (VC.hold = {});
   var phase = st ? st.phase : 'lobby', prox = !st || !st.settings || st.settings.voiceProx !== false, range = st && st.settings && st.settings.voiceRange || 400;
+  var jam = !!(st && st.settings && st.settings.jamVoice !== false && phase === 'play' && st.jamUntil > tnow()), lImp = !!(me && teamOf(me) === 'impostor');
   Object.keys(VC.peers).forEach(function (id) {
     var p = VC.peers[id], pid = owners[id], sp0 = pid && st && st.players[pid], pos = pid && S.pos[pid], v = 0;
     if (pid) {
       var d = pos ? Math.hypot(pos.x - S.me.x, pos.y - S.me.y) : null;
-      v = VOICE.gain({ phase: phase, lAlive: me ? me.alive : true, sAlive: sp0 ? sp0.alive : true, dist: d, prox: prox, range: range });
+      v = VOICE.gain({ phase: phase, lAlive: me ? me.alive : true, sAlive: sp0 ? sp0.alive : true, dist: d, prox: prox, range: range, jam: jam, lImp: lImp });
       if (phase === 'play' && !pos && prox) v = 0;
     }
     p.vol = v;
@@ -4796,12 +4820,13 @@ function roleNotes(role, s) {
     n.push(s.sheriffNeutral ? '第三陣営も撃って倒せます。' : '第三陣営は撃っても倒せず、あなたが倒れます。');
     n.push(s.sheriffMisBoth ? 'クルー陣営を撃つと、相手とあなたの両方が倒れます。' : 'クルー陣営を撃つと、あなただけが倒れます。');
   }
-  if (role === 'fortune') n.push('占いはゲーム中に ' + s.fortuneUses + ' 回まで。1回の会議では ' + s.fortunePerMeeting + ' 回までです。');
-  if (role === 'niceguesser') n.push('看破はゲーム中に ' + s.niceShots + ' 回まで。1回の会議では ' + s.nicePerMeeting + ' 回までです。');
+  if (role === 'fortune') n.push('占いはゲーム中に ' + s.fortuneUses + ' 回まで(1回の会議で何回使ってもかまいません)。');
+  if (role === 'niceguesser') n.push('看破はゲーム中に ' + s.niceShots + ' 回まで(1回の会議で何回使ってもかまいません)。');
   if (role === 'shielder') n.push('シールドは ' + s.shieldSec + ' 秒展開できます。終わってから ' + s.shieldCd + ' 秒はもう一度張れません。');
   if (E.ROLES[role].wave) {
     n.push('ビームは、動いた向きに飛びます(先に向きたい方向へ動いてから押してください)。ためるのに ' + s.waveCharge + ' 秒、撃ったあと ' + s.waveCd + ' 秒はクールタイムです。');
     n.push(s.waveAlly ? 'ビームは仲間にも当たります。' : 'ビームは仲間には当たりません。');
+    n.push(s.waveKill ? '波動砲のほかに、通常の襲撃(近くの1人を倒す)もできます。クールダウンは波動砲と共通です。' : '通常の襲撃はできません(波動砲だけです)。');
   }
   if (role === 'detective') n.push('鑑識はゲーム中に ' + s.detectiveUses + ' 回まで。');
   if (role === 'watcher') n.push('監視は ' + s.watcherUses + ' 回まで。1回 ' + s.watchSec + ' 秒、クールダウン ' + s.watcherCd + ' 秒。');
@@ -4813,7 +4838,7 @@ function roleNotes(role, s) {
     n.push(s.vampireThrall ? '眷属化は、非インポスターの1人にだけ、ゲーム中1回できます。' : '眷属化はできません(噛みつくだけ)。');
   }
   if (role === 'thrall') n.push('視界は、停電のときと同じに狭くなります。仲間のうちわかるのはヴァンパイアだけです。');
-  if (E.ROLES[role].kill) n.push((E.ROLES[role].bite ? '噛みつき' : '襲撃') + 'のクールダウンは ' + s.killCd + ' 秒です。');
+  if (E.ROLES[role].kill || (E.ROLES[role].wave && s.waveKill)) n.push((E.ROLES[role].bite ? '噛みつき' : '襲撃') + 'のクールダウンは ' + s.killCd + ' 秒です。');
   return n;
 }
 function showRoleCard() {
@@ -4893,7 +4918,7 @@ function sabSpots() {
   var G = E.GIM || {}, CR = E.M.crisis, s = S.state.settings, o = [], mid = function (r) { return { x: r.x + r.w / 2, y: r.y + r.h / 2 }; };
   if (G.panel) o.push({ k: 'blackout', t: '停電', c: '停', x: G.panel.x, y: G.panel.y, d: 'クルーの視界がずっと狭いまま。配電盤で直されるまで続く(会議をはさんでも続く)' });
   if (CR) o.push({ k: 'crisis', t: '緊急事態', c: '緊', x: CR.points[0].x, y: CR.points[0].y, d: CR.n + ': ' + Math.round(E.crisisMs(s) / 1000) + '秒以内に2か所とも直されなければ、インポスターの勝ち' });
-  o.push({ k: 'jam', t: '通信妨害', c: '通', x: CR ? CR.points[1].x : E.TABLE.x, y: CR ? CR.points[1].y : E.TABLE.y + 90, d: s.jamSec + '秒間、クルーのタスクとマップが使えなくなる(修理地点で復旧される)' });
+  o.push({ k: 'jam', t: '通信妨害', c: '通', x: CR ? CR.points[1].x : E.TABLE.x, y: CR ? CR.points[1].y : E.TABLE.y + 90, d: s.jamSec + '秒間、クルーのタスクとマップが使えなくなる(修理地点で復旧される)' + (S.standalone && s.jamVoice !== false ? '。クルー・第三陣営はVCも聞こえなくなる(インポスター陣営には聞こえる)' : '') });
   E.mapSabs().forEach(function (k) {
     var i = E.mapSabInfo(k), p = k === 'portals' && G.portals ? G.portals[0] : k === 'fog' && G.fog ? mid(G.fog[0]) : k === 'gates' && G.gates ? mid(G.gates[0]) : k === 'belts' && G.belts ? mid(G.belts[0]) : mid(E.HALLS[0]);
     o.push({ k: k, t: i.n, c: '固', x: p.x, y: p.y, d: s.mapSabSec + '秒間、' + i.d, map: true });
@@ -5032,8 +5057,8 @@ function renderMeeting() {
   var cards = $('mt-cards'); clear(cards);
   var res = m.res;
   var mtOpen = m.stage === 'discuss' || m.stage === 'vote';
-  var fort = !!(me && me.role === 'fortune' && me.alive && (me.u || 0) > 0 && (me.gm || 0) < st.settings.fortunePerMeeting && mtOpen);
-  var nice = !!(me && me.role === 'niceguesser' && me.alive && (me.u || 0) > 0 && (me.gm || 0) < st.settings.nicePerMeeting && mtOpen);
+  var fort = !!(me && me.role === 'fortune' && me.alive && (me.u || 0) > 0 && mtOpen);
+  var nice = !!(me && me.role === 'niceguesser' && me.alive && (me.u || 0) > 0 && mtOpen);
   var asn = !!(me && me.role === 'assassin' && me.alive && (me.gs || 0) > 0 && (me.gm || 0) < st.settings.assassinPerMeeting && (m.stage === 'discuss' || m.stage === 'vote'));
   st.order.forEach(function (id) {
     var p = st.players[id];
@@ -5374,6 +5399,119 @@ function bindSnd() {
   var order = ['taskdone', 'kill', 'report', 'wavefire', 'win', 'sab', 'fortune', 'shield'], oi = 0;
   $('snd-test').addEventListener('click', function () { SND.play(order[oi++ % order.length]); });
   sndRefreshUi();
+}
+
+/* ---------- PCのキー操作(キー設定つき) ----------
+ * 移動: 設定したキー(初めは W A S D)と、矢印キー(いつでも使える)
+ * 行動ボタンは「グループ」ごとにキーを割り当てる。グループの中で、ボタンがあって押せるものを上から順に1つ押す。
+ * キーは e.code(物理キー)で覚えるので、日本語入力がオンでも、キー配列が違っても同じキーで動く。保存はこの端末だけ。 */
+var KEY_GROUPS = [
+  { id: 'use', n: 'タスク・使う(緊急会議・修復・人数確認)', def: 'KeyE', acts: ['use'] },
+  { id: 'report', n: '通報', def: 'KeyR', acts: ['report'] },
+  { id: 'attack', n: '襲撃・噛む・波動砲・射撃', def: 'KeyQ', acts: ['kill', 'wave', 'shoot'] },
+  { id: 'skill', n: '役職の能力(シールド・守護・鑑識・監視・ガソリン・眷属化・隠し扉)', def: 'KeyF', acts: ['shield', 'guard', 'inspect', 'watch', 'douse', 'thrall', 'portal'] },
+  { id: 'skill2', n: '点火', def: 'KeyG', acts: ['ignite'] },
+  { id: 'vent', n: 'ベント', def: 'KeyV', acts: ['vent'] },
+  { id: 'sab', n: '妨害(マップを開く)', def: 'KeyX', acts: ['sab'] },
+  { id: 'seal', n: '隔壁', def: 'KeyC', acts: ['seal'] },
+  { id: 'map', n: 'マップを開く・閉じる', def: 'KeyM', acts: [] },
+  { id: 'up', n: '上へ移動', def: 'KeyW', move: [0, -1] },
+  { id: 'down', n: '下へ移動', def: 'KeyS', move: [0, 1] },
+  { id: 'left', n: '左へ移動', def: 'KeyA', move: [-1, 0] },
+  { id: 'right', n: '右へ移動', def: 'KeyD', move: [1, 0] }
+];
+var KEYS_STORE = 'uso-keys-v1';
+var KB = { map: {}, cap: null, pc: false };
+function kbLoad() {
+  KB.map = {};
+  KEY_GROUPS.forEach(function (g) { KB.map[g.id] = g.def; });
+  try {
+    var j = JSON.parse(store(KEYS_STORE) || 'null');
+    if (j && typeof j === 'object') KEY_GROUPS.forEach(function (g) { if (typeof j[g.id] === 'string' && j[g.id].length <= 24) KB.map[g.id] = j[g.id]; });
+  } catch (e) {}
+}
+function kbSave() { var o = {}; KEY_GROUPS.forEach(function (g) { if (KB.map[g.id] !== g.def) o[g.id] = KB.map[g.id]; }); store(KEYS_STORE, JSON.stringify(o)); }
+function keyName(code) {
+  if (!code) return '(なし)';
+  var m = /^Key([A-Z])$/.exec(code); if (m) return m[1];
+  m = /^Digit(\d)$/.exec(code); if (m) return m[1];
+  m = /^Numpad(\w+)$/.exec(code); if (m) return 'テン' + m[1];
+  var t = { Space: 'スペース', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', ShiftLeft: '左Shift', ShiftRight: '右Shift', ControlLeft: '左Ctrl', ControlRight: '右Ctrl', AltLeft: '左Alt', AltRight: '右Alt', Tab: 'Tab', Enter: 'Enter', Backspace: 'BS', Comma: ',', Period: '.', Slash: '/', Semicolon: ';', Quote: "'", BracketLeft: '[', BracketRight: ']', Backslash: '\\', Minus: '-', Equal: '=', Backquote: '`' };
+  return t[code] || code;
+}
+function kbHint(actId) {
+  for (var i = 0; i < KEY_GROUPS.length; i++) if (KEY_GROUPS[i].acts.indexOf(actId) >= 0) return keyName(KB.map[KEY_GROUPS[i].id]);
+  return '';
+}
+// キーボードでの移動(設定したキー + 矢印キー)
+function keyMove() {
+  var vx = 0, vy = 0, k = S.kc || {};
+  KEY_GROUPS.forEach(function (g) { if (g.move && k[KB.map[g.id]]) { vx += g.move[0]; vy += g.move[1]; } });
+  if (k.ArrowLeft) vx -= 1; if (k.ArrowRight) vx += 1; if (k.ArrowUp) vy -= 1; if (k.ArrowDown) vy += 1;
+  return [Math.max(-1, Math.min(1, vx)), Math.max(-1, Math.min(1, vy))];
+}
+function kbPress(g) {
+  var st = S.state;
+  if (g.id === 'map') { if (S.overlay === 'map') { S.mapFromMeeting = false; setOverlay(null); } else if (!S.overlay) setOverlay('map'); return true; }
+  var list = (S.actList || []).filter(function (a) { return g.acts.indexOf(a.id) >= 0; });
+  for (var i = 0; i < list.length; i++) if (list[i].ready) { list[i].press(); return true; }
+  return !!list.length;
+}
+function kbEscape() {
+  if (!$('ov-keys').hidden) { $('ov-keys').hidden = true; return true; }
+  if (!$('ov-sound').hidden) { $('ov-sound').hidden = true; return true; }
+  var o = S.overlay;
+  if (o === 'task') { closeTask(); setOverlay(null); return true; }
+  if (o === 'map') { S.mapFromMeeting = false; setOverlay(null); return true; }
+  if (o === 'sab' || o === 'vent' || o === 'count' || o === 'roles') { setOverlay(null); return true; }
+  return false;
+}
+function kbConflict(code, except) { for (var i = 0; i < KEY_GROUPS.length; i++) if (KEY_GROUPS[i].id !== except && KB.map[KEY_GROUPS[i].id] === code) return KEY_GROUPS[i]; return null; }
+function kbRender() {
+  var box = $('keys-list'); clear(box);
+  KEY_GROUPS.forEach(function (g) {
+    var cap = KB.cap === g.id;
+    box.appendChild(h('div', { class: 'key-row' }, [
+      h('div', { class: 'kl', text: g.n }),
+      h('button', { class: 'btn small key-btn' + (cap ? ' cap' : ''), type: 'button', 'data-k': g.id, text: cap ? 'キーを押してください…' : keyName(KB.map[g.id]), onclick: function () { KB.cap = cap ? null : g.id; kbRender(); } })
+    ]));
+  });
+}
+function bindKeys() {
+  kbLoad();
+  S.kc = {};
+  try { KB.pc = !!(window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches); } catch (e) { KB.pc = false; }
+  S.pc = KB.pc;
+  ['btn-keys-e', 'btn-keys-l', 'btn-keys-g'].forEach(function (id) { var b = $(id); b.hidden = !KB.pc; b.addEventListener('click', function () { KB.cap = null; kbRender(); $('ov-keys').hidden = false; }); });
+  $('btn-keys-x').addEventListener('click', function () { KB.cap = null; $('ov-keys').hidden = true; });
+  $('btn-keys-reset').addEventListener('click', function () { KEY_GROUPS.forEach(function (g) { KB.map[g.id] = g.def; }); KB.cap = null; kbSave(); kbRender(); });
+  window.addEventListener('keydown', function (e) {
+    var code = e.code || '';
+    // キーの割り当て中: 次に押したキーを登録する(Esc でやめる)
+    if (KB.cap) {
+      e.preventDefault(); e.stopPropagation();
+      if (e.repeat) return;
+      if (code === 'Escape') { KB.cap = null; kbRender(); return; }
+      if (!code || code === 'MetaLeft' || code === 'MetaRight') return;
+      var id = KB.cap, other = kbConflict(code, id);
+      if (other) KB.map[other.id] = KB.map[id]; // 同じキーを使っていた項目とは、キーを入れ替える
+      KB.map[id] = code; KB.cap = null; kbSave(); kbRender();
+      return;
+    }
+    if (typing()) return;
+    if (code === 'Escape') { if (kbEscape()) e.preventDefault(); return; }
+    S.kc[code] = true;
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (!S.mode || !S.state || S.state.phase !== 'play') return;
+    if (S.overlay && S.overlay !== 'role' && !(S.overlay === 'map' && code === KB.map.map)) return;
+    for (var i = 0; i < KEY_GROUPS.length; i++) {
+      var g = KEY_GROUPS[i];
+      if (g.move || KB.map[g.id] !== code) continue;
+      if (kbPress(g)) { e.preventDefault(); return; }
+    }
+  }, true);
+  window.addEventListener('keyup', function (e) { S.kc[e.code || ''] = false; });
+  window.addEventListener('blur', function () { S.kc = {}; });
 }
 
 /* ---------- キャンバス描画 ---------- */
@@ -5785,9 +5923,7 @@ function moveVec() {
   var vx = S.joy.x, vy = S.joy.y;
   if (Math.hypot(vx, vy) < 0.15) {
     vx = 0; vy = 0;
-    var k = S.keys;
-    if (k.a || k.arrowleft) vx -= 1; if (k.d || k.arrowright) vx += 1;
-    if (k.w || k.arrowup) vy -= 1; if (k.s || k.arrowdown) vy += 1;
+    var km = keyMove(); vx = km[0]; vy = km[1];
   }
   return [vx, vy];
 }
@@ -5842,17 +5978,7 @@ function bindInput() {
   joy.addEventListener('pointerdown', function (e) { e.preventDefault(); S.joy.id = e.pointerId; try { joy.setPointerCapture(e.pointerId); } catch (x) {} setJoy(e); });
   joy.addEventListener('pointermove', function (e) { if (S.joy.id === e.pointerId) setJoy(e); });
   joy.addEventListener('pointerup', endJoy); joy.addEventListener('pointercancel', endJoy);
-  window.addEventListener('keydown', function (e) {
-    if (typing()) return;
-    var k = (e.key || '').toLowerCase();
-    S.keys[k] = true;
-    if (!S.mode || !S.state || S.state.phase !== 'play') return;
-    if (S.overlay && S.overlay !== 'role') return;
-    var map = { e: 0, r: 1, q: 2, f: 3, g: 4 };
-    if (k in map) { var a = S.actList && S.actList[map[k]]; if (a && a.ready) a.press(); e.preventDefault(); }
-  });
-  window.addEventListener('keyup', function (e) { S.keys[(e.key || '').toLowerCase()] = false; });
-  window.addEventListener('blur', function () { S.keys = {}; endJoy(); });
+  window.addEventListener('blur', function () { endJoy(); });
 }
 
 /* ---------- 行動ボタン ---------- */
@@ -5908,18 +6034,18 @@ function computeActions(st, me) {
   var near = S.nearInfo, R = E.ROLES[me.role], s = st.settings, now = tnow(), alive = me.alive;
   function cd(t, total) { var l = Math.max(0, t - now); return { left: l, ratio: total ? Math.min(1, l / total) : 0 }; }
   // 使う
-  // タスクのボタンの文字は「タスク」で統一(タスク名は小さく添える)
-  var useLabel = near.task >= 0 ? 'タスク' : near.table ? '緊急会議' : near.counter ? '人数確認' : '調べる';
-  list.push({ id: 'use', label: useLabel, big: true, color: 'var(--accent)', sub: near.task >= 0 ? E.TASKS[near.task].n : '', ready: near.task >= 0 || near.table || near.counter,
-    press: function () { if (near.task >= 0) openTask(near.task); else if (near.table) sendAct({ type: 'emergency' }); else if (near.counter) setOverlay('count'); } });
+  // タスクのボタンの文字は「タスク」で統一(タスク名は小さく添える)。停電の復旧・緊急事態の修理も、このボタンで行う(急ぎなので先に)
+  var rep = near.panel ? 'panel' : near.fix >= 0 ? 'fix' : '';
+  var repSub = rep === 'panel' ? '停電の復旧' : rep === 'fix' ? (st.crisis ? '緊急事態の修理' : '通信の復旧') : '';
+  var useLabel = rep || near.task >= 0 ? 'タスク' : near.table ? '緊急会議' : near.counter ? '人数確認' : '調べる';
+  list.push({ id: 'use', label: useLabel, big: true, color: 'var(--accent)', sub: rep ? repSub : near.task >= 0 ? E.TASKS[near.task].n : '', ready: !!rep || near.task >= 0 || near.table || near.counter,
+    press: function () { if (rep === 'panel') openPanel(); else if (rep === 'fix') openRepair(near.fix); else if (near.task >= 0) openTask(near.task); else if (near.table) sendAct({ type: 'emergency' }); else if (near.counter) setOverlay('count'); } });
   var G = E.GIM;
   if (alive && G.portals) list.push({ id: 'portal', label: '隠し扉', color: 'var(--neu)', ready: near.portal >= 0 && now >= (me.cp || 0), cd: cd(me.cp || 0, 2500).ratio, press: function () { sendAct({ type: 'portal' }); } });
-  if (alive && G.panel && teamOf(me) !== 'impostor') list.push({ id: 'fix', label: '復旧', color: 'var(--warn)', ready: !!near.panel, press: openPanel });
-  if (alive && teamOf(me) !== 'impostor' && E.M.crisis && (st.crisis || st.jamUntil > now)) list.push({ id: 'repair', label: '修理', color: 'var(--warn)', ready: near.fix >= 0, press: function () { openRepair(near.fix); } });
   if (alive) list.push({ id: 'report', label: '通報', color: 'var(--warn)', ready: near.body != null, press: function () { sendAct({ type: 'report', b: near.body }); } });
   if (!alive) return list;
   var tgtRange = s.killRange, tgt = null;
-  if (R.kill) {
+  if (R.kill || (R.wave && s.waveKill)) {
     tgt = nearestTarget(st, me, tgtRange, function (p) { return (R.anyKill || E.ROLES[p.role].team !== 'impostor') && !(R.bite && p.bt); });
     var c1 = cd(me.ck || 0, s.killCd * 1000);
     list.push({ id: 'kill', label: R.bite ? '噛む' : '襲撃', color: 'var(--imp)', ready: !!tgt && c1.left === 0, cd: c1.ratio, sub: c1.left ? Math.ceil(c1.left / 1000) + '秒' : '', press: function () { sendAct({ type: 'kill', t: tgt }); } });
@@ -5973,7 +6099,7 @@ function computeActions(st, me) {
     list.push({ id: 'douse', label: 'ガソリン', color: 'var(--neu)', sub: doused + '/' + others.length, ready: !!tgt && c6.left === 0, cd: c6.ratio, press: function () { sendAct({ type: 'douse', t: tgt }); } });
     list.push({ id: 'ignite', label: '点火', color: 'var(--imp)', ready: others.length > 0 && doused === others.length, press: function () { sendAct({ type: 'ignite' }); } });
   }
-  S.targetPid = (R.kill || me.role === 'sheriff' || me.role === 'guardian' || me.role === 'arsonist') ? tgt : null;
+  S.targetPid = (R.kill || (R.wave && s.waveKill) || me.role === 'sheriff' || me.role === 'guardian' || me.role === 'arsonist') ? tgt : null;
   return list;
 }
 function syncActionButtons(list) {
@@ -5981,7 +6107,7 @@ function syncActionButtons(list) {
   if (box.getAttribute('data-sig') !== sig) {
     box.setAttribute('data-sig', sig); clear(box);
     list.forEach(function (a, i) {
-      var b = h('button', { class: 'act' + (a.big ? ' big' : ''), type: 'button', 'data-id': a.id, style: '--c:' + a.color }, [h('span', { class: 'in' }, [h('span', { class: 'lb' }), h('small')])]);
+      var b = h('button', { class: 'act' + (a.big ? ' big' : ''), type: 'button', 'data-id': a.id, style: '--c:' + a.color }, [h('span', { class: 'in' }, [h('span', { class: 'lb' }), h('small')]), h('span', { class: 'kb' })]);
       b.addEventListener('pointerdown', function (e) {
         e.preventDefault();
         var cur = S.actList && S.actList.filter(function (x) { return x.id === a.id; })[0];
@@ -5998,6 +6124,7 @@ function syncActionButtons(list) {
     if (lb.textContent !== a.label) lb.textContent = a.label;
     var sub = a.sub || '';
     if (sm.textContent !== sub) sm.textContent = sub;
+    if (S.pc) { var kb = b.querySelector('.kb'), kt = kbHint(a.id); if (kb && kb.textContent !== kt) kb.textContent = kt; }
     b.classList.toggle('off', !a.ready);
     b.style.setProperty('--cd', String(a.cd || 0));
   });
@@ -6167,7 +6294,7 @@ function boot() {
   S.name = store('uso.name') || '';
   $('inp-name').value = S.name;
   var rm = store('uso.rot'); S.rot = rm === 'cw' || rm === 'ccw' ? rm : 'auto';
-  drawShip(); applyRot(); renderRotSeg(); bindInput(); bindUi(); bindSnd();
+  drawShip(); applyRot(); renderRotSeg(); bindInput(); bindUi(); bindSnd(); bindKeys();
   updateEntryStatus();
   initCaps().then(function () {
     if (S.standalone) { var m = /^#?([A-Za-z0-9]{4})$/.exec(location.hash || ''); if (m) $('inp-code').value = m[1].toUpperCase(); }
