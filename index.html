@@ -2800,17 +2800,32 @@ var SND = (function () {
     door: function (c, d, t) { tone(c, d, { f: 100, f2: 42, t: t, d: 0.5, v: 0.45 }); noise(c, d, { t: t, d: 0.3, v: 0.25, ft: 'lowpass', f: 1200, f2: 150 }); },
     vent: function (c, d, t) { noise(c, d, { t: t, d: 0.4, v: 0.3, ft: 'bandpass', f: 500, f2: 2200, q: 1.5, a: 0.05 }); tone(c, d, { f: 150, f2: 80, t: t + 0.15, d: 0.2, v: 0.25 }); },
     portal: function (c, d, t) { tone(c, d, { f: 300, f2: 1400, t: t, d: 0.35, v: 0.16 }); tone(c, d, { f: 1400, f2: 300, t: t + 0.3, d: 0.35, v: 0.14 }); },
-    wavecharge: function (c, d, t, o) { // ため: だんだん高くなる
-      var dur = o.dur || 3;
-      tone(c, d, { type: 'sawtooth', f: 70, f2: 880, t: t, d: dur, v: 0.2, lp: 1400, a: Math.min(0.4, dur * 0.3) });
-      tone(c, d, { type: 'sine', f: 140, f2: 1760, t: t, d: dur, v: 0.12, a: Math.min(0.4, dur * 0.3) });
-      noise(c, d, { t: t, d: dur, v: 0.06, ft: 'bandpass', f: 400, f2: 5000, q: 2, a: 0.5 });
+    wavelock: function (c, d, t) { // 波動砲のボタンを押した瞬間: ロックオン音
+      tone(c, d, { type: 'square', f: 1800, f2: 2600, t: t, d: 0.09, v: 0.12, lp: 5000 });
+      tone(c, d, { type: 'square', f: 2600, t: t + 0.1, d: 0.12, v: 0.1, lp: 5000 });
+      tone(c, d, { f: 120, f2: 70, t: t, d: 0.25, v: 0.3 });
     },
-    wavefire: function (c, d, t) { // 発射: どーん
-      noise(c, d, { t: t, d: 1.1, v: 0.55, ft: 'lowpass', f: 4500, f2: 150 });
-      tone(c, d, { type: 'sawtooth', f: 90, f2: 28, t: t, d: 1.0, v: 0.4, lp: 900 });
-      tone(c, d, { type: 'sine', f: 1500, f2: 120, t: t, d: 0.7, v: 0.22 });
-      tone(c, d, { f: 60, f2: 30, t: t, d: 1.0, v: 0.5 });
+    wavecharge: function (c, d, t, o) { // ため: うなりが高くなり、ピッピッという音がだんだん速くなる
+      var dur = o.dur || 3, a = Math.min(0.4, dur * 0.3);
+      tone(c, d, { type: 'sawtooth', f: 70, f2: 880, t: t, d: dur, v: 0.2, lp: 1400, a: a });
+      tone(c, d, { type: 'sine', f: 140, f2: 1760, t: t, d: dur, v: 0.12, a: a });
+      noise(c, d, { t: t, d: dur, v: 0.06, ft: 'bandpass', f: 400, f2: 5000, q: 2, a: 0.5 });
+      for (var x = 0.25, gap = 0.42; x < dur - 0.05; x += gap, gap = Math.max(0.07, gap * 0.8))
+        tone(c, d, { type: 'square', f: 1400 + 1800 * (x / dur), t: t + x, d: 0.05, v: 0.1, lp: 4500 });
+    },
+    wavefire: function (c, d, t) { // 発射: 破裂音 → どーん → ビームが空気を裂く余韻
+      noise(c, d, { t: t, d: 0.08, v: 0.6, ft: 'highpass', f: 1500 });
+      noise(c, d, { t: t, d: 1.2, v: 0.55, ft: 'lowpass', f: 4500, f2: 120 });
+      tone(c, d, { type: 'sawtooth', f: 95, f2: 26, t: t, d: 1.1, v: 0.4, lp: 900 });
+      tone(c, d, { type: 'sine', f: 1700, f2: 90, t: t, d: 0.75, v: 0.24 });
+      tone(c, d, { f: 60, f2: 28, t: t, d: 1.1, v: 0.5 });
+      noise(c, d, { t: t + 0.05, d: 1.0, v: 0.2, ft: 'bandpass', f: 500, f2: 5500, q: 1.4, a: 0.25 });
+      tone(c, d, { type: 'sawtooth', f: 440, f2: 1760, t: t + 0.05, d: 0.7, v: 0.1, lp: 3500, a: 0.1 });
+    },
+    wavehit: function (c, d, t) { // 波動砲に貫かれた
+      noise(c, d, { t: t, d: 0.7, v: 0.4, ft: 'lowpass', f: 5000, f2: 150 });
+      tone(c, d, { type: 'sawtooth', f: 1800, f2: 80, t: t, d: 0.5, v: 0.2, lp: 3000 });
+      tone(c, d, { f: 80, f2: 30, t: t, d: 0.8, v: 0.45 });
     },
     shield: function (c, d, t) { tone(c, d, { f: 700, f2: 1500, t: t, d: 0.35, v: 0.14 }); tone(c, d, { type: 'triangle', f: 1050, f2: 2250, t: t + 0.05, d: 0.4, v: 0.08 }); },
     shieldoff: function (c, d, t) { tone(c, d, { f: 1400, f2: 500, t: t, d: 0.3, v: 0.12 }); },
@@ -3229,7 +3244,7 @@ function hostTick(dt) {
 
 /* ---------- 行動の送信 ---------- */
 function sendAct(a) {
-  if (a.type === 'vent') SND.play('vent'); else if (a.type === 'portal') SND.play('portal');
+  if (a.type === 'vent') SND.play('vent'); else if (a.type === 'portal') SND.play('portal'); else if (a.type === 'wave') SND.play('wavelock');
   if (S.isHost && S.hostState) {
     var r = E.act(S.hostState, S.pid, a, hostCtx());
     touch();
@@ -5051,6 +5066,7 @@ function playKillFx(st, me) {
   $('fx-ks').textContent = mis ? '撃つべきでない相手を撃ってしまった(または撃たれた)' : kd.how === 'wave' && killer ? cname(killer) + 'の ' + killer.name + ' の波動砲に貫かれた' : kd.how === 'reflect' && killer ? cname(killer) + 'の ' + killer.name + ' のシールドに波動砲を跳ね返された' : killer ? cname(killer) + 'の ' + killer.name + (kd.how === 'shot' ? ' に撃たれた' : ' に倒された') : '倒された';
   showFx('fx-kill', 2800);
   SND.play('kill');
+  if (kd.how === 'wave') SND.play('wavehit', { vol: 0.9 });
   buzz([90, 50, 260]);
 }
 // 会議の開始: 遺体の通報か、緊急ボタンかを、全員に見せる
