@@ -1458,6 +1458,9 @@ function grid(o) {
     maskmaker: { n: '仮面師', team: 'impostor', tasks: false, threat: true, kill: true, mask: true, vent: true, sab: true,
       d: 'インポスター陣営。マップのどこにいても、(死んでいる人も含む)誰か1人の姿(色と名前)をコピーして、しばらくその人に成りすませる。', goal: '生き残りの数で、クルー側と並ぶか上回る。',
       abil: ['襲撃・ベント・妨害(インポスターと同じ)', '変装: 誰か1人(死んでいる人も、どれだけ遠くにいても)の色と名前をまねる。ほかの人からはその人に見える(仲間のインポスターには本当の姿が見える)。会議が始まると解ける'] },
+    sandworm: { n: 'サンドワーム', team: 'impostor', tasks: false, threat: true, kill: true, worm: true, vent: true, sab: true,
+      d: 'インポスター陣営。ダクトを地中のトンネルのようにたどって、ベントの中から近くの人を襲える。', goal: '生き残りの数で、クルー側と並ぶか上回る。',
+      abil: ['ベントの中から襲撃: ベントに入ったまま、そのベントの近くにいる1人を倒せる(襲撃できる距離は設定で決まる。倒しても、ベントの中にいるまま)。襲撃のボタンとクールダウンは、ベントの外と同じ(ベントの中でも、クールダウンは進む)', 'ベント(サンドワームだけ): 近くのベントとつながっていて、つながったベントをたどっていけば、マップのすべてのベントへ行ける(ほかの人は、決まった仲間のベントにしか行けない)', 'ベントの外では、インポスターと同じ襲撃・妨害']},
     cleaner: { n: 'クリーナー', team: 'impostor', tasks: false, threat: true, kill: true, clean: true, vent: true, sab: true,
       d: 'インポスター陣営。倒した相手の遺体を消して、事件をなかったことにできる。', goal: '生き残りの数で、クルー側と並ぶか上回る。',
       abil: ['襲撃・ベント・妨害(インポスターと同じ)', '掃除: 近くの遺体を消す。消えた遺体は通報できない(クールダウンあり)'] },
@@ -1495,7 +1498,7 @@ function grid(o) {
       d: '誰とも組まない単独の殺し屋。壁を貫通するビームで倒していく。', goal: 'インポスターがいない状態で、生き残りの半数以上を自分たちにする。',
       abil: ['波動砲: 向いている方向に、壁を貫通するビームを放つ。ためているあいだは動けない。触れた人は(インポスター陣営も)倒れる'] }
   };
-  var ROLE_ORDER = ['impostor', 'assassin', 'maskmaker', 'cleaner', 'sniper', 'wavecannon', 'vampire', 'accomplice', 'jackal', 'wavejackal', 'arsonist', 'jester', 'detective', 'sheriff', 'guardian', 'engineer', 'fortune', 'niceguesser', 'shielder'];
+  var ROLE_ORDER = ['impostor', 'assassin', 'maskmaker', 'cleaner', 'sandworm', 'sniper', 'wavecannon', 'vampire', 'accomplice', 'jackal', 'wavejackal', 'arsonist', 'jester', 'detective', 'sheriff', 'guardian', 'engineer', 'fortune', 'niceguesser', 'shielder'];
 
   // ---------- 設定 ----------
   var SETTING_DEFS = [
@@ -1504,6 +1507,7 @@ function grid(o) {
     { g: 'role', k: 'r_assassin', role: 'assassin', label: 'イビルゲッサー', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_maskmaker', role: 'maskmaker', label: '仮面師', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_cleaner', role: 'cleaner', label: 'クリーナー', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_sandworm', role: 'sandworm', label: 'サンドワーム', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_sniper', role: 'sniper', label: '狙撃手', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_accomplice', role: 'accomplice', label: '共犯者', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_wavecannon', role: 'wavecannon', label: '波動砲', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
@@ -1550,6 +1554,7 @@ function grid(o) {
     { g: 'abil', r: 'sniper', k: 'snipeCd', label: '狙撃のクールダウン', min: 10, max: 60, step: 5, def: 30, unit: '秒' },
     { g: 'abil', r: 'maskmaker', k: 'maskSec', label: '変装していられる時間', min: 10, max: 60, step: 5, def: 25, unit: '秒' },
     { g: 'abil', r: 'maskmaker', k: 'maskCd', label: '変装のクールダウン(変装が終わってから)', min: 10, max: 90, step: 5, def: 40, unit: '秒' },
+    { g: 'abil', r: 'sandworm', k: 'wormRange', label: 'サンドワームがベントの中から襲撃できる範囲(赤い輪)の大きさ(1=せまい 〜 5=広い)', min: 1, max: 5, step: 1, def: 3, unit: '段階' },
     { g: 'abil', r: 'cleaner', k: 'cleanCd', label: '掃除のクールダウン', min: 5, max: 60, step: 5, def: 20, unit: '秒' },
     { g: 'abil', r: 'detective', k: 'detectiveUses', label: '探偵の鑑識回数', min: 1, max: 5, step: 1, def: 2, unit: '回' },
     { g: 'abil', r: 'engineer', k: 'engineerUses', label: '技師のベント回数', min: 1, max: 8, step: 1, def: 4, unit: '回' },
@@ -1622,6 +1627,42 @@ function grid(o) {
       });
     });
   }
+  // ベントのつながり。ふつうは同じ系統(net)のベントどうしを自由に行き来できる。
+  // サンドワームだけは、近くのベントとだけつながっていて、つながりをたどっていくと、すべてのベントに行ける
+  var VLINKS = [];
+  function buildVentLinks() {
+    var n = VENTS.length, adj = [], i, j;
+    for (i = 0; i < n; i++) adj.push([]);
+    function d(a, b) { return Math.hypot(VENTS[a].x - VENTS[b].x, VENTS[a].y - VENTS[b].y); }
+    function link(a, b) { if (a !== b && adj[a].indexOf(b) < 0) { adj[a].push(b); adj[b].push(a); } }
+    for (i = 0; i < n; i++) {
+      var ord = []; for (j = 0; j < n; j++) if (j !== i) ord.push(j);
+      ord.sort(function (x, y) { return d(i, x) - d(i, y) || x - y; });
+      ord.slice(0, 2).forEach(function (j2) { link(i, j2); }); // いちばん近い2つと
+    }
+    for (;;) { // 離れ離れの組があれば、いちばん近い橋をかけて、全部をつなぐ
+      var comp = [], c = 0;
+      for (i = 0; i < n; i++) comp.push(-1);
+      for (i = 0; i < n; i++) if (comp[i] < 0) { var st = [i]; comp[i] = c; while (st.length) { var u = st.pop(); adj[u].forEach(function (w) { if (comp[w] < 0) { comp[w] = c; st.push(w); } }); } c++; }
+      if (c <= 1) break;
+      var ba = -1, bb = -1, bd = 1e9;
+      for (i = 0; i < n; i++) for (j = i + 1; j < n; j++) if (comp[i] !== comp[j] && d(i, j) < bd) { bd = d(i, j); ba = i; bb = j; }
+      link(ba, bb);
+    }
+    adj.forEach(function (l) { l.sort(function (x, y) { return x - y; }); });
+    VLINKS = adj; Engine.VLINKS = adj;
+  }
+  // ベントの中からの襲撃の範囲(赤い輪の半径)。設定は5段階
+  var WORM_DIST = [70, 100, 130, 170, 220];
+  function wormDist(s) { return WORM_DIST[Math.max(1, Math.min(5, (s.wormRange | 0) || 3)) - 1]; }
+  // role の人が、i 番のベントから移れるベントの番号
+  function ventTargets(role, i) {
+    var cur = VENTS[i], out = [];
+    if (!cur) return out;
+    if (ROLES[role] && ROLES[role].worm) return (VLINKS[i] || []).slice();
+    VENTS.forEach(function (v, k) { if (k !== i && v.net === cur.net) out.push(k); });
+    return out;
+  }
   function useMap(i) {
     var nm;
     if (i === 'lobby') nm = Maps.lobby; // 待機室(ゲーム開始前のロビー)。一覧のマップとは別に持っている
@@ -1630,7 +1671,7 @@ function grid(o) {
     mapIdx = i; M = nm;
     ROOMS = M.rooms; HALLS = M.halls; WORLD = M.world; TABLE = M.table; VENTS = M.vents; TASKS = M.tasks; GIM = M.gimmicks || {};
     RECTS = ROOMS.concat(HALLS);
-    buildGraph();
+    buildGraph(); buildVentLinks();
     Engine.M = M; Engine.mapIndex = i;
     Engine.ROOMS = ROOMS; Engine.HALLS = HALLS; Engine.WORLD = WORLD; Engine.TABLE = TABLE; Engine.VENTS = VENTS; Engine.TASKS = TASKS;
     Engine.GIM = GIM; Engine.NODES = NODES; Engine.EDGES = EDGES; Engine.ROOM_NODE = ROOM_NODE; Engine.ROOM_NODES = ROOM_NODES;
@@ -2016,7 +2057,7 @@ function grid(o) {
   // ベントの中にいるあいだ、インポスター陣営の役職のクールタイム(襲撃・波動砲・能力)は進まない。出たときに、入ったときの残りに戻す。
   // 妨害(cs・cq)は、インポスター共通なので進んでよい。
   function leaveVent(p, now) {
-    if (!p.iv || !p.iv.at || !ROLES[p.role] || ROLES[p.role].team !== 'impostor') return;
+    if (!p.iv || !p.iv.at || !ROLES[p.role] || ROLES[p.role].team !== 'impostor' || ROLES[p.role].worm) return; // (サンドワームは、ベントの中で襲撃するので、クールタイムは進む)
     var dur = Math.max(0, now - p.iv.at), at = p.iv.at;
     ['ck', 'cw', 'ca'].forEach(function (k) { if (p[k] > at) p[k] += dur; });
     p.iv.at = now;
@@ -2147,7 +2188,7 @@ function grid(o) {
     if (!p.alive) return { ok: false };
 
     // ベントの中: できるのは、ベントのあいだの移動と、外に出ることだけ。ベントの中の人には、だれも何もできない
-    if (p.iv && a.type !== 'vent' && a.type !== 'ventout') return { ok: false, err: 'invent' };
+    if (p.iv && a.type !== 'vent' && a.type !== 'ventout' && !(a.type === 'kill' && R && R.worm)) return { ok: false, err: 'invent' };
     if (T && T.iv && T.id !== pid && state.phase === 'play') return { ok: false, err: 'invent' };
 
     if (a.type === 'kill' || a.type === 'nkill') {
@@ -2156,7 +2197,7 @@ function grid(o) {
       if (nk ? !(R.bite && s.vampKill) : !(canNormalKill(p, s) || R.bite)) return { ok: false };
       if (!T || !T.alive || T.left || T.id === pid) return { ok: false };
       if (!canTarget(p, T)) return { ok: false };
-      if (!nearOk(ctx, pid, T.id, rng)) return { ok: false, err: 'far' };
+      if (!nearOk(ctx, pid, T.id, (R.worm && p.iv) ? wormDist(s) + 70 : rng)) return { ok: false, err: 'far' }; // ベントの中からは、設定の距離(+通信のずれ分)
       if (R.bite && !nk && T.bt) return { ok: false, err: 'bitten' };
       p.ck = now + s.killCd * 1000;
       if ((T.sh || 0) > now) {
@@ -2328,7 +2369,7 @@ function grid(o) {
       }
       if (!p.iv) return { ok: false };
       var cur = VENTS[p.iv.i], to = VENTS[a.to];
-      if (!cur || !to || cur === to || cur.net !== to.net) return { ok: false };
+      if (!cur || !to || cur === to || ventTargets(p.role, p.iv.i).indexOf(a.to | 0) < 0) return { ok: false };
       p.iv.i = a.to | 0;
       tp(p, to.x, to.y);
       return { ok: true };
@@ -2597,7 +2638,7 @@ function grid(o) {
 
   Object.assign(Engine, {
     COLORS: COLORS, MAX_PLAYERS: MAX_PLAYERS, TEAMS: TEAMS, ROLES: ROLES, ROLE_ORDER: ROLE_ORDER,
-    canNormalKill: canNormalKill, SNIPE_HIT: SNIPE_HIT,
+    canNormalKill: canNormalKill, SNIPE_HIT: SNIPE_HIT, ventTargets: ventTargets, wormDist: wormDist,
     SETTING_DEFS: SETTING_DEFS, TOGGLES: TOGGLES, defaultSettings: defaultSettings, clampSetting: clampSetting,
     MAPS: MAPS, BELT_SPEED: Maps.BELT_SPEED, useMap: useMap, setDyn: setDyn, canMove: canMove, canStand: canStand, walkable: walkable,
     closedRects: closedRects, nearestStand: nearestStand, gateClosed: gateClosed, gateWarn: gateWarn, fogAt: fogAt, beltAt: beltAt, portalNear: portalNear, hallNear: hallNear,
@@ -5337,6 +5378,11 @@ function roleNotes(role, s) {
     n.push('レティクルは、' + (s.snipeSee ? '他のプレイヤーにも見えます(狙っているのがばれます)。' : 'インポスター陣営と倒れた人にだけ見えます。'));
     n.push(s.sniperKill ? '狙撃のほかに、通常の襲撃(近くの1人を倒す)もできます。' : '通常の襲撃はできません(狙撃だけです)。');
   }
+  if (role === 'sandworm') {
+    n.push('ベントに入ったまま、「襲撃」で、そのベントを中心にした赤い輪(範囲は5段階中の ' + s.wormRange + ')の中にいる1人を倒せます。倒したあとも、ベントの中にいられます。襲撃のクールダウンは ' + s.killCd + ' 秒で、ベントの中でも進みます。');
+    n.push('ベントでの移動は、サンドワームだけ特別です。いまいるベントから三角のマークで行けるのは、「近くのベント」だけ。それをたどっていくと、マップのすべてのベントに着きます。');
+    n.push('「襲撃」のボタンとクールダウンは、ベントの中でも外でも同じです。ベントに入っているあいだも、クールダウンは進みます(出入りしても延びません)。');
+  }
   if (role === 'maskmaker') n.push('変装ボタンで、誰か(仲間も、すでに倒れた人も含む。どこにいても)を一覧から選べます。変装は ' + s.maskSec + ' 秒つづき、会議が始まると解けます。解けたあと(または自分で解いたあと) ' + s.maskCd + ' 秒は変装できません。');
   if (role === 'cleaner') n.push('掃除のクールダウンは ' + s.cleanCd + ' 秒です。遺体のそばで使うと、その遺体が消えます。');
   if (role === 'accomplice') n.push(s.accompliceKnown ? 'インポスター陣営の側もあなたの正体を知っています。' : 'インポスター陣営の側は、あなたの正体を知りません(あなただけが知っています)。インポスターに襲撃されることもあります。');
@@ -6508,14 +6554,16 @@ function drawWorld(c, st, me, vr, watching, ghost, now) {
   // 動く歩道
   (G.belts || []).forEach(function (b) { drawBelt(c, E.msOn('belts') ? { x: b.x, y: b.y, w: b.w, h: b.h, dx: -b.dx, dy: -b.dy } : b, now); });
   // ベント(ベントの中にいるあいだは、いるベントを光らせ、移れるベントに印をつける)
-  var iv = me && me.alive && me.iv ? me.iv.i : -1, ivNet = iv >= 0 && E.VENTS[iv] ? E.VENTS[iv].net : -1;
+  var iv = me && me.alive && me.iv ? me.iv.i : -1, ivTo = iv >= 0 ? E.ventTargets(me.role, iv) : [];
   E.VENTS.forEach(function (v, vi) {
     c.fillStyle = '#080c18'; c.fillRect(v.x - 20, v.y - 10, 40, 20);
     c.strokeStyle = vi === iv ? '#7dffb0' : '#3d4d7e'; c.lineWidth = 2; c.beginPath();
     for (var i = -12; i <= 12; i += 8) { c.moveTo(v.x + i, v.y - 7); c.lineTo(v.x + i, v.y + 7); }
     c.stroke();
-    if (vi === iv) { c.strokeStyle = 'rgba(125,255,176,' + (0.6 + 0.35 * Math.sin(now / 160)) + ')'; c.lineWidth = 3; c.strokeRect(v.x - 26, v.y - 16, 52, 32); label(c, 'ここ', v.x, v.y - 24, '#9dffc4'); }
-    else if (iv >= 0 && v.net === ivNet) { c.setLineDash([5, 4]); c.strokeStyle = 'rgba(255,214,120,.9)'; c.lineWidth = 2; c.strokeRect(v.x - 26, v.y - 16, 52, 32); c.setLineDash([]); var rr = E.ROOMS.filter(function (r) { return r.id === v.r; })[0]; label(c, rr ? rr.n : 'ベント', v.x, v.y - 24, '#ffe3a0'); }
+    if (vi === iv) { c.strokeStyle = 'rgba(125,255,176,' + (0.6 + 0.35 * Math.sin(now / 160)) + ')'; c.lineWidth = 3; c.strokeRect(v.x - 26, v.y - 16, 52, 32); label(c, 'ここ', v.x, v.y - 24, '#9dffc4');
+      if (me.role === 'sandworm' && S.state && S.state.settings) { c.save(); c.setLineDash([10, 8]); c.lineWidth = 3; c.strokeStyle = 'rgba(255,77,90,' + (0.5 + 0.25 * Math.sin(now / 200)) + ')'; c.fillStyle = 'rgba(255,77,90,.07)'; c.beginPath(); c.arc(v.x, v.y, E.wormDist(S.state.settings), 0, 6.2832); c.fill(); c.stroke(); c.restore(); } // 襲撃できる範囲
+    }
+    else if (iv >= 0 && ivTo.indexOf(vi) >= 0) { c.setLineDash([5, 4]); c.strokeStyle = 'rgba(255,214,120,.9)'; c.lineWidth = 2; c.strokeRect(v.x - 26, v.y - 16, 52, 32); c.setLineDash([]); var rr = E.ROOMS.filter(function (r) { return r.id === v.r; })[0]; label(c, rr ? rr.n : 'ベント', v.x, v.y - 24, '#ffe3a0'); }
   });
   // 緊急会議のテーブル
   c.fillStyle = '#4a3f6e'; ell(c, E.TABLE.x, E.TABLE.y, 74, 46); c.fill();
@@ -7091,8 +7139,9 @@ function computeActions(st, me) {
     var cv0 = E.VENTS[me.iv.i], vcol = R.team === 'impostor' ? 'var(--imp)' : 'var(--crew)';
     // 移れるベントの方向に、三角のマークを出す(押すとそのベントへ移る)
     var tg = [];
-    E.VENTS.forEach(function (v, i) {
-      if (!cv0 || i === me.iv.i || v.net !== cv0.net) return;
+    E.ventTargets(me.role, me.iv.i).forEach(function (i) {
+      var v = E.VENTS[i];
+      if (!cv0 || !v) return;
       var rn = E.ROOMS.filter(function (r) { return r.id === v.r; })[0];
       tg.push({ i: i, ang: Math.atan2(v.y - cv0.y, v.x - cv0.x), n: rn ? rn.n : 'ベント' });
     });
@@ -7103,6 +7152,11 @@ function computeActions(st, me) {
         list.push({ id: 'ventgo' + i, hidden: true, label: t.n, color: vcol, ready: true, tri: { dx: Math.cos(t.ang) * 112, dy: Math.sin(t.ang) * 112, rot: t.ang, n: t.n }, press: function () { sendAct({ type: 'vent', to: i }); } });
       })(t.i);
     });
+    if (R.worm) { // サンドワーム: ベントの中から、近くの1人を襲える
+      var wt = nearestTarget(st, me, E.wormDist(s), function (p) { return E.canTarget(me, p); }), wc = cd(me.ck || 0, s.killCd * 1000);
+      S.targetPid = wt;
+      list.push({ id: 'kill', label: '襲撃', color: 'var(--imp)', ready: !!wt && wc.left === 0, cd: wc.ratio, sub: wc.left ? Math.ceil(wc.left / 1000) + '秒' : (wt ? '' : '圏外'), press: function () { sendAct({ type: 'kill', t: wt }); } });
+    }
     list.push({ id: 'vent', label: '出る', sub: 'ここから外へ', big: true, color: vcol, ready: true, press: function () { sendAct({ type: 'ventout' }); } });
     return list;
   }
@@ -7310,7 +7364,7 @@ function updateHud(st, me) {
   }
   var bn = $('banner'), txt = '', alert = false;
   if (!me) txt = '観戦中(次の試合から参加できます)';
-  else if (me.alive && me.iv) txt = 'ベントの中です。三角のマークを押すと、その方向のベントへ移ります。「出る」で、いまいるベントから外に出ます';
+  else if (me.alive && me.iv) txt = me.role === 'sandworm' ? 'ベントの中です。赤い輪の中の人を「襲撃」できます。三角のマークを押すと、つながったベントへ移ります。「出る」で外に出ます' : 'ベントの中です。三角のマークを押すと、その方向のベントへ移ります。「出る」で、いまいるベントから外に出ます';
   else if (!me.alive) txt = 'あなたは死亡しました。幽霊として見守れます' + (me.tasks ? '。タスクは続けられます' : '');
   else if (st.crisis && E.M.crisis) {
     var left = Math.max(0, Math.ceil((st.crisis.until - tn) / 1000)), nfx = st.crisis.fixed.filter(function (v) { return v; }).length;
