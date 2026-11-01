@@ -1820,7 +1820,7 @@ function grid(o) {
     state.order.forEach(function (id) {
       var p = state.players[id];
       p.alive = true; p.left = false; p.notes = []; p.msgs = []; p.tp = null; p.kd = null;
-      ['ck', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'tasks', 'wv', 'wf', 'wn', 'sh', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc', 'iv', 'vx', 'dg', 'ak'].forEach(function (k) { delete p[k]; });
+      ['ck', 'cw', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'tasks', 'wv', 'wf', 'wn', 'sh', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc', 'iv', 'vx', 'dg', 'ak'].forEach(function (k) { delete p[k]; });
     });
     // タスクの割り当て: 全員共通 + 長いタスク(複数の場所) + 短いタスク。長いタスクは全体の半分まで
     var singles = [], longs = [];
@@ -1844,8 +1844,8 @@ function grid(o) {
         });
       }
       p.em = 0;
-      if (R.kill) p.ck = now + s.startCd * 1000; // 開始直後は何もできない時間が長いと、タスクし放題になるので、短めにできる
-      if (R.wave) p.ck = now + s.startCd * 1000;
+      if (R.kill || (R.wave && s.waveKill)) p.ck = now + s.startCd * 1000; // 開始直後は何もできない時間が長いと、タスクし放題になるので、短めにできる
+      if (R.wave) p.cw = now + s.startCd * 1000; // 波動砲のクールタイムは、通常の襲撃(ck)とは別
       if (R.sab) { p.cs = now + 15000; p.cq = now + 20000; }
       if (p.role === 'assassin') p.gs = s.assassinShots;
       if (p.role === 'sheriff') { p.u = s.sheriffShots; p.ca = now + 15000; }
@@ -2166,7 +2166,7 @@ function grid(o) {
     }
 
     if (a.type === 'wave') {
-      if (!R || !R.wave || now < (p.ck || 0) || p.wv) return { ok: false };
+      if (!R || !R.wave || now < (p.cw || 0) || p.wv) return { ok: false };
       var wp = ctx.pos(pid);
       if (!wp) return { ok: false };
       var wx = +a.dx, wy = +a.dy, wl = Math.hypot(wx, wy);
@@ -2326,7 +2326,7 @@ function grid(o) {
   // ためが終わったので、ビームを放つ。壁は貫通。シールダーに当たると跳ね返って、撃った本人が倒れる(そこでビームは止まる)
   function fireWave(state, ctx, p) {
     var w = p.wv, s = state.settings, now = ctx.now;
-    p.wv = null; p.ck = now + s.waveCd * 1000;
+    p.wv = null; p.cw = now + s.waveCd * 1000;
     var hits = waveHits(state, ctx, p, w), len = WAVE_LEN, refl = 0;
     for (var i = 0; i < hits.length; i++) {
       var q = hits[i].q;
@@ -2393,8 +2393,8 @@ function grid(o) {
       var sp = spawnPoint(i, al.length);
       tp(p, sp.x, sp.y);
       var R = ROLES[p.role];
-      if (R.kill) p.ck = now + s.killCd * 1000;
-      if (R.wave) p.ck = now + Math.min(s.waveCd, 25) * 1000;
+      if (R.kill || (R.wave && s.waveKill)) p.ck = now + s.killCd * 1000;
+      if (R.wave) p.cw = now + Math.min(s.waveCd, 25) * 1000;
       if (R.sab) { p.cs = now + 15000; p.cq = now + 12000; }
       if (p.role === 'shielder') p.ca = Math.max(p.ca || 0, now);
       if (p.role === 'sheriff' || p.role === 'sniper') p.ca = now + 10000;
@@ -2483,7 +2483,7 @@ function grid(o) {
     state.order.forEach(function (id) {
       var p = state.players[id];
       p.role = null; p.alive = true; p.left = false;
-      ['tasks', 'ck', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'notes', 'msgs', 'tp', 'kd', 'wv', 'wf', 'wn', 'sh', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc', 'iv', 'vx', 'dg', 'ak'].forEach(function (k) { delete p[k]; });
+      ['tasks', 'ck', 'cw', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'notes', 'msgs', 'tp', 'kd', 'wv', 'wf', 'wn', 'sh', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc', 'iv', 'vx', 'dg', 'ak'].forEach(function (k) { delete p[k]; });
     });
   }
 
@@ -2671,7 +2671,7 @@ function grid(o) {
         }
         else if (R2.wave) {
           var wd = Math.hypot(tpos.x - b.x, tpos.y - b.y);
-          if (now >= (p.ck || 0) && wd > 1 && wd <= 520) { api.act(b.id, { type: 'wave', dx: (tpos.x - b.x) / wd, dy: (tpos.y - b.y) / wd }); b.tgt = null; b.replan = 0; }
+          if (now >= (p.cw || 0) && wd > 1 && wd <= 520) { api.act(b.id, { type: 'wave', dx: (tpos.x - b.x) / wd, dy: (tpos.y - b.y) / wd }); b.tgt = null; b.replan = 0; }
         }
         else if (p.role === 'vampire' && !p.tu && s.vampireThrall && Math.hypot(tpos.x - b.x, tpos.y - b.y) <= s.killRange * 0.9 && rand() < 0.02) {
           api.act(b.id, { type: 'thrall', t: b.tgt }); b.tgt = null; b.replan = 0; // 眷属にする
@@ -5227,7 +5227,7 @@ function roleNotes(role, s) {
   if (E.ROLES[role].wave) {
     n.push('ビームは、動いた向きに飛びます(先に向きたい方向へ動いてから押してください)。ためるのに ' + s.waveCharge + ' 秒、撃ったあと ' + s.waveCd + ' 秒はクールタイムです。');
     n.push(s.waveAlly ? 'ビームは仲間にも当たります。' : 'ビームは仲間には当たりません。');
-    n.push(s.waveKill ? '波動砲のほかに、通常の襲撃(近くの1人を倒す)もできます。クールダウンは波動砲と共通です。' : '通常の襲撃はできません(波動砲だけです)。');
+    n.push(s.waveKill ? '波動砲のほかに、通常の襲撃(近くの1人を倒す)もできます。クールダウンは波動砲とは別々です(襲撃は ' + s.killCd + ' 秒、波動砲は ' + s.waveCd + ' 秒)。' : '通常の襲撃はできません(波動砲だけです)。');
   }
   if (role === 'detective') n.push('鑑識はゲーム中に ' + s.detectiveUses + ' 回まで。');
   if (role === 'engineer') n.push('ベントはゲーム中に ' + s.engineerUses + ' 回まで。');
@@ -6834,7 +6834,7 @@ function computeActions(st, me) {
     list.push({ id: 'shoot', label: '射撃', color: 'var(--imp)', sub: '残り' + (me.u || 0), ready: !!tgt && (me.u || 0) > 0 && c2.left === 0, cd: c2.ratio, press: function () { sendAct({ type: 'shoot', t: tgt }); } });
   }
   if (R.wave) {
-    var cw = cd(me.ck || 0, s.waveCd * 1000), charging = !!me.wv;
+    var cw = cd(me.cw || 0, s.waveCd * 1000), charging = !!me.wv;
     list.push({ id: 'wave', label: '波動砲', color: 'var(--imp)', sub: charging ? 'ため中' : cw.left ? Math.ceil(cw.left / 1000) + '秒' : '', ready: !charging && cw.left === 0, cd: cw.ratio,
       press: function () { var a = S.aim || { x: S.me.f === -1 ? -1 : 1, y: 0 }; sendAct({ type: 'wave', dx: a.x, dy: a.y }); } });
   }
