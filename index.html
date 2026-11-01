@@ -139,7 +139,14 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 .banner.alert { border-color: var(--imp); color: #ffd3da; }
 .joy { width: 132px; height: 132px; border-radius: 50%; border: 2px solid rgba(147, 169, 255, .5); background: rgba(13, 19, 34, .5); position: relative; touch-action: none; }
 .joy i { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; background: rgba(147, 169, 255, .55); border: 2px solid var(--accent); }
-.acts { display: flex; flex-wrap: wrap-reverse; gap: 10px; justify-content: flex-end; max-width: 68%; }
+.acts { display: flex; flex-direction: column-reverse; align-items: flex-end; gap: 10px; max-width: 72%; }
+.arow { display: flex; flex-direction: row-reverse; flex-wrap: wrap-reverse; justify-content: flex-start; align-items: flex-end; gap: 10px; }
+.ventarrows { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.vtri { position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px; padding: 0; border: 0; background: none; pointer-events: auto; touch-action: none; display: grid; place-items: center; cursor: pointer; }
+.vtri i { grid-area: 1 / 1; width: 46px; height: 46px; background: var(--c, var(--imp)); clip-path: polygon(100% 50%, 18% 4%, 18% 96%); filter: drop-shadow(0 0 7px var(--c, var(--imp))); animation: vtri 1s ease-in-out infinite; }
+.vtri small { grid-area: 1 / 1; align-self: end; margin-bottom: -16px; font-family: var(--font-b); font-size: 11px; font-weight: 700; white-space: nowrap; color: #fff; text-shadow: 0 1px 3px #000, 0 0 6px #000; }
+@keyframes vtri { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
+.vtri:active i { transform-origin: center; filter: brightness(1.5) drop-shadow(0 0 10px var(--c, var(--imp))); }
 .act {
   position: relative; width: 76px; height: 76px; border-radius: 50%; border: 3px solid var(--c, var(--accent)); background: rgba(23, 31, 56, .94); color: var(--fg);
   font-family: var(--font-d); font-size: 15px; line-height: 1.15; padding: 0; display: grid; place-items: center; text-align: center; overflow: hidden; touch-action: none;
@@ -313,6 +320,8 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 #app.short .joy { width: 112px; height: 112px; }
 #app.short .joy i { width: 48px; height: 48px; margin: -24px 0 0 -24px; }
 #app.short .hud.bot { padding-bottom: calc(10px + var(--sab)); }
+#app.short .acts { gap: 8px; }
+#app.short .arow { gap: 6px; }
 #app.short .act { width: 64px; height: 64px; font-size: 13px; }
 #app.short .act.big { width: 78px; height: 78px; font-size: 14px; }
 #app.short .act small { font-size: 9.5px; }
@@ -555,7 +564,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
         <details class="help">
           <summary>遊び方と操作</summary>
           <ul>
-            <li>左下のスティックで移動(PCはWASDか矢印キー)。右下のボタンでタスク・役職の能力・通報を行います。</li>
+            <li>左下のスティックで移動(PCはWASDか矢印キー)。右下の大きな「使う」ボタンは、近くにあるものに切り替わります(タスク・緊急会議・ベント・隠し扉など)。「通報」は遺体の近くだけに出ます。役職の能力のボタンは、その左の列に並びます。</li>
             <li>タスクはパズルや記憶ゲームです。2か所をまわる手順のタスクもあります。</li>
             <li>遺体を見つけて通報するか、テーブルで緊急会議を開くと、全員で話し合って投票します。</li>
             <li>視界は丸く狭い範囲だけです。インポスター側は「妨害」で、停電・通信妨害・緊急事態を起こせます。クルーは修理地点や配電盤で直します(停電は、配電盤で直されるまでずっと続きます)。</li>
@@ -619,6 +628,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     </div>
     <div id="tasklist" class="tasklist"></div>
     <div id="banner" class="banner" hidden></div>
+    <div id="ventarrows" class="ventarrows"></div>
     <div class="hud bot">
       <div id="joy" class="joy"><i id="joy-knob"></i></div>
       <div id="acts" class="acts"></div>
@@ -1320,6 +1330,39 @@ function grid(o) {
     m.sabn = SABN[m.id];
   });
 
+  /* ベントの分離: 「使う」ボタンは、タスク・修理・緊急ボタン・人数モニター・配電盤・ベントを1つにまとめている。近づいたものに切り替わるので、
+   * ベントがほかの物と近すぎて同時に触れないよう、ベントを同じ部屋の中でずらす(元の位置からいちばん近い、十分離れた場所へ) */
+  var VENT_GAP = 105;
+  function separateVents(m) {
+    var objs = [];
+    m.tasks.forEach(function (t) { t.steps.forEach(function (st) { objs.push([st.x, st.y]); }); });
+    objs.push([m.table.x, m.table.y]);
+    var G = m.gimmicks || {};
+    if (G.panel) objs.push([G.panel.x, G.panel.y]);
+    (G.portals || []).forEach(function (q) { objs.push([q.x, q.y]); });
+    if (m.crisis) m.crisis.points.forEach(function (q) { objs.push([q.x, q.y]); });
+    if (m.counter) objs.push([m.counter.x, m.counter.y]);
+    function gap(x, y, self) {
+      var d = 1e9;
+      objs.forEach(function (o) { d = Math.min(d, Math.hypot(o[0] - x, o[1] - y)); });
+      m.vents.forEach(function (v) { if (v !== self) d = Math.min(d, Math.hypot(v.x - x, v.y - y) + 25); });
+      return d;
+    }
+    m.vents.forEach(function (v) {
+      if (gap(v.x, v.y, v) >= VENT_GAP) return;
+      var room = m.rooms.filter(function (r) { return r.id === v.r; })[0], best = null, bs = 1e9;
+      for (var x = room.x + 45; x <= room.x + room.w - 45; x += 5) {
+        for (var y = room.y + 55; y <= room.y + room.h - 45; y += 5) {
+          if (gap(x, y, v) < VENT_GAP) continue;
+          var sc = Math.hypot(x - v.x, y - v.y);
+          if (sc < bs) { bs = sc; best = { x: x, y: y }; }
+        }
+      }
+      if (best) { v.x = best.x; v.y = best.y; }
+    });
+  }
+  [ship, mansion, lab, queen, castle, city].forEach(separateVents);
+
   [ship, mansion, lab, queen, castle, city].forEach(function (m) {
     var lk = LOOK[m.id]; m.theme = lk.theme; m.outer = lk.outer; m.deco = lk.deco; m.floors = lk.floors || {};
     if (lk.colors) m.rooms.forEach(function (r) { if (lk.colors[r.id]) r.c = lk.colors[r.id]; });
@@ -1385,9 +1428,9 @@ function grid(o) {
     sheriff: { n: 'シェリフ', team: 'crew', tasks: true, threat: false,
       d: '怪しい相手を撃てる。ただし撃った相手がインポスター陣営(設定によっては第三陣営も)でなければ自分が倒れる。', goal: 'クルーと同じ。',
       abil: ['射撃: 近くの1人を撃つ。倒せる相手なら倒す。違えば自分が死ぬ(弾数・クールダウンあり)'] },
-    sniper: { n: '狙撃手', team: 'crew', tasks: true, threat: false, snipe: true,
-      d: '遠くの相手を撃ち抜ける。ただし撃った相手がインポスター陣営(設定によっては第三陣営も)でなければ自分が倒れる。', goal: 'クルーと同じ。',
-      abil: ['狙撃: シェリフより遠くの1人を撃つ。倒せる相手なら倒す。違えば自分が死ぬ(弾数・クールダウンあり)'] },
+    sniper: { n: '狙撃手', team: 'impostor', tasks: false, threat: true, kill: true, snipe: true, vent: true, sab: true,
+      d: 'インポスター陣営。「狙撃」で霧が消えて全員の動きが見え、マップのどこにいる1人でも撃ち抜ける。', goal: 'インポスターと同じ。',
+      abil: ['狙撃: ボタンでレティクルが出る(そのあいだ自分は動けない)。霧がなくなって全員の動きが見え、レティクルはマップのどこへでも動かせる(画面はついていく)。1人に重ねて「発射」。仲間以外なら誰でも倒せる(弾数・クールダウンあり。レティクルの中に撃てる人がいないときは、撃てない)', '襲撃・ベント・妨害(インポスターと同じ。襲撃は設定でオフにもできる)'] },
     guardian: { n: '守護者', team: 'crew', tasks: true, threat: false,
       d: '近くの1人にバリアを張る。バリアは次の会議まで、襲撃を1回防ぐ。', goal: 'クルーと同じ。',
       abil: ['守護: 近くの1人を守る(1ラウンドに1回)'] },
@@ -1440,7 +1483,7 @@ function grid(o) {
       d: '誰とも組まない単独の殺し屋。壁を貫通するビームで倒していく。', goal: 'インポスターがいない状態で、生き残りの半数以上を自分たちにする。',
       abil: ['波動砲: 向いている方向に、壁を貫通するビームを放つ。ためているあいだは動けない。触れた人は(インポスター陣営も)倒れる'] }
   };
-  var ROLE_ORDER = ['impostor', 'assassin', 'maskmaker', 'cleaner', 'wavecannon', 'vampire', 'accomplice', 'jackal', 'wavejackal', 'arsonist', 'jester', 'detective', 'sheriff', 'sniper', 'guardian', 'engineer', 'fortune', 'niceguesser', 'shielder'];
+  var ROLE_ORDER = ['impostor', 'assassin', 'maskmaker', 'cleaner', 'sniper', 'wavecannon', 'vampire', 'accomplice', 'jackal', 'wavejackal', 'arsonist', 'jester', 'detective', 'sheriff', 'guardian', 'engineer', 'fortune', 'niceguesser', 'shielder'];
 
   // ---------- 設定 ----------
   var SETTING_DEFS = [
@@ -1449,6 +1492,7 @@ function grid(o) {
     { g: 'role', k: 'r_assassin', role: 'assassin', label: 'イビルゲッサー', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_maskmaker', role: 'maskmaker', label: '仮面師', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_cleaner', role: 'cleaner', label: 'クリーナー', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_sniper', role: 'sniper', label: '狙撃手', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_accomplice', role: 'accomplice', label: '共犯者', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_wavecannon', role: 'wavecannon', label: '波動砲', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_vampire', role: 'vampire', label: 'ヴァンパイア', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
@@ -1458,7 +1502,6 @@ function grid(o) {
     { g: 'role', k: 'r_jester', role: 'jester', label: 'ピエロ', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_detective', role: 'detective', label: '探偵', min: 0, max: MAX_PLAYERS, step: 1, def: 1, unit: '人' },
     { g: 'role', k: 'r_sheriff', role: 'sheriff', label: 'シェリフ', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
-    { g: 'role', k: 'r_sniper', role: 'sniper', label: '狙撃手', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_guardian', role: 'guardian', label: '守護者', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_engineer', role: 'engineer', label: '技師', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_fortune', role: 'fortune', label: '占い師', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
@@ -1493,7 +1536,6 @@ function grid(o) {
     { g: 'abil', r: 'sheriff', k: 'sheriffCd', label: 'シェリフの射撃クールダウン', min: 10, max: 60, step: 5, def: 25, unit: '秒' },
     { g: 'abil', r: 'sniper', k: 'snipeShots', label: '狙撃手の弾数(殺害できる回数)', min: 1, max: 5, step: 1, def: 1, unit: '発' },
     { g: 'abil', r: 'sniper', k: 'snipeCd', label: '狙撃のクールダウン', min: 10, max: 60, step: 5, def: 30, unit: '秒' },
-    { g: 'abil', r: 'sniper', k: 'snipeRange', label: '狙撃の届く距離', min: 120, max: 450, step: 10, def: 220, unit: '' },
     { g: 'abil', r: 'maskmaker', k: 'maskSec', label: '変装していられる時間', min: 10, max: 60, step: 5, def: 25, unit: '秒' },
     { g: 'abil', r: 'maskmaker', k: 'maskCd', label: '変装のクールダウン(変装が終わってから)', min: 10, max: 90, step: 5, def: 40, unit: '秒' },
     { g: 'abil', r: 'cleaner', k: 'cleanCd', label: '掃除のクールダウン', min: 5, max: 60, step: 5, def: 20, unit: '秒' },
@@ -1513,10 +1555,14 @@ function grid(o) {
     { k: 'anonVotes', label: '誰が誰に投票したかを隠す', def: false },
     { k: 'sheriffNeutral', r: 'sheriff', label: 'シェリフ: 第三陣営も撃って倒せる(オフなら撃っても倒せず、シェリフが倒れる)', def: true },
     { k: 'sheriffMisBoth', r: 'sheriff', label: 'シェリフ: クルー陣営を撃ったとき、相手も一緒に倒れる(オフなら自分だけ)', def: false },
-    { k: 'snipeNeutral', r: 'sniper', label: '狙撃手: 第三陣営も撃って倒せる(オフなら撃っても倒せず、狙撃手が倒れる)', def: true },
+    { k: 'sniperKill', r: 'sniper', label: '狙撃手: 狙撃のほかに、通常の襲撃(近くの1人を倒す)もできる', def: true },
+    { k: 'snipeNotice', r: 'sniper', label: '狙撃手: 狙撃で誰かが倒れたとき、全員に「誰かが狙撃された」と知らせる', def: true },
+    { k: 'snipeSee', r: 'sniper', label: '狙撃手: レティクル(照準)をほかのプレイヤーにも見せる(インポスター陣営には、オフでも常に見える)', def: true },
     { k: 'accompliceKnown', r: 'accomplice', label: '共犯者: インポスター陣営の側も共犯者の正体を知っている(オフなら共犯者だけが知っている)', def: false },
     { k: 'vampireThrall', r: 'vampire', label: 'ヴァンパイア: 眷属を作れる(オフなら噛みつくだけ)', def: true },
     { k: 'waveKill', r: ['wavecannon', 'wavejackal'], label: '波動砲: 通常の襲撃(近くの1人を倒す)もできる', def: false },
+    { k: 'vampKill', r: 'vampire', label: 'ヴァンパイア: 噛みつきのほかに、通常の襲撃(その場で倒す)もできる', def: false },
+    { k: 'assassinKill', r: 'assassin', label: 'イビルゲッサー: 通常の襲撃もできる(オフなら役職当てだけ)', def: true },
     { k: 'waveAlly', r: ['wavecannon', 'wavejackal'], label: '波動砲: 仲間(同じ陣営)にも当たる', def: true },
     { k: 'voiceProx', m: 'voice', label: 'ボイスチャット: ゲーム中は近くの人の声だけ聞こえる(オフなら常に全員)', def: true },
     { k: 'jamVoice', m: 'voice', label: '通信妨害のあいだ、クルー・第三陣営はボイスチャットが聞こえない(インポスター陣営には聞こえる)', def: true }
@@ -1820,7 +1866,7 @@ function grid(o) {
     state.order.forEach(function (id) {
       var p = state.players[id];
       p.alive = true; p.left = false; p.notes = []; p.msgs = []; p.tp = null; p.kd = null;
-      ['ck', 'cw', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'tasks', 'wv', 'wf', 'wn', 'sh', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc', 'iv', 'vx', 'dg', 'ak'].forEach(function (k) { delete p[k]; });
+      ['ck', 'cw', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'tasks', 'wv', 'wf', 'wn', 'sh', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc', 'iv', 'vx', 'ar', 'dg', 'ak'].forEach(function (k) { delete p[k]; });
     });
     // タスクの割り当て: 全員共通 + 長いタスク(複数の場所) + 短いタスク。長いタスクは全体の半分まで
     var singles = [], longs = [];
@@ -1830,7 +1876,7 @@ function grid(o) {
       var p = state.players[id];
       p.role = list[i] || 'crew';
       var R = ROLES[p.role];
-      if (R.tasks) {
+      if (R.tasks || R.team === 'impostor') { // インポスター陣営にも、ダミーのタスクを配る(進み具合には数えない: f)
         var pool = common.slice(), nLong = Math.min(s.longTasks, Math.floor(s.tasksPer / 2), longs.length);
         pool = pool.concat(shuffle(longs.slice(), rand).slice(0, nLong));
         var shorts = shuffle(singles.filter(function (k) { return common.indexOf(k) < 0; }), rand);
@@ -1839,12 +1885,13 @@ function grid(o) {
         pool = shuffle(pool, rand);
         p.tasks = pool.map(function (k) {
           var tk = { s: k, p: 0, done: false };
+          if (!R.tasks) tk.f = 1;
           if (TASKS[k].steps.some(function (x) { return x.k === 'codeShow'; })) tk.c = String(1000 + Math.floor(rand() * 9000));
           return tk;
         });
       }
       p.em = 0;
-      if (R.kill || (R.wave && s.waveKill)) p.ck = now + s.startCd * 1000; // 開始直後は何もできない時間が長いと、タスクし放題になるので、短めにできる
+      if (canNormalKill(p, s) || R.bite) p.ck = now + s.startCd * 1000; // 開始直後は何もできない時間が長いと、タスクし放題になるので、短めにできる
       if (R.wave) p.cw = now + s.startCd * 1000; // 波動砲のクールタイムは、通常の襲撃(ck)とは別
       if (R.sab) { p.cs = now + 15000; p.cq = now + 20000; }
       if (p.role === 'assassin') p.gs = s.assassinShots;
@@ -1875,7 +1922,7 @@ function grid(o) {
     state.order.forEach(function (id) {
       var p = state.players[id];
       if (!p || p.left || !p.tasks) return;
-      p.tasks.forEach(function (k) { var n = TASKS[k.s].steps.length; t += n; d += k.done ? n : Math.min(n, k.p || 0); });
+      p.tasks.forEach(function (k) { if (k.f) return; var n = TASKS[k.s].steps.length; t += n; d += k.done ? n : Math.min(n, k.p || 0); });
     });
     state.tasksTotal = t; state.tasksDone = d;
     if (!state.progSnap) state.progSnap = [0, t]; else state.progSnap[1] = t;
@@ -1945,9 +1992,27 @@ function grid(o) {
     return dist(pa, pb) <= range;
   }
   // by: 手を下した人のid(誤射なら null)、how: 'kill'(襲撃) / 'shot'(射撃) / 'misfire'(誤射)。倒された本人の画面で演出を出すために残す
+  // 通常の襲撃ができる役職か(特殊なキルをもつ役職は、設定で切り替わる)
+  function canNormalKill(p, s) {
+    var R = ROLES[p.role];
+    if (!R) return false;
+    if (R.wave) return !!s.waveKill;
+    if (p.role === 'assassin') return !!s.assassinKill;
+    if (p.role === 'sniper') return !!s.sniperKill;
+    return !!R.kill;
+  }
+  // ベントの中にいるあいだ、インポスター陣営の役職のクールタイム(襲撃・波動砲・能力)は進まない。出たときに、入ったときの残りに戻す。
+  // 妨害(cs・cq)は、インポスター共通なので進んでよい。
+  function leaveVent(p, now) {
+    if (!p.iv || !p.iv.at || !ROLES[p.role] || ROLES[p.role].team !== 'impostor') return;
+    var dur = Math.max(0, now - p.iv.at), at = p.iv.at;
+    ['ck', 'cw', 'ca'].forEach(function (k) { if (p[k] > at) p[k] += dur; });
+    p.iv.at = now;
+  }
+  var SNIPE_HIT = 46; // レティクルの中心から、この距離にいる人が狙われる
   function killBody(state, ctx, victim, by, how) {
     var pos = ctx.pos(victim.id) || { x: TABLE.x, y: TABLE.y };
-    victim.alive = false; victim.wv = null; victim.sh = 0; victim.dg = null; victim.iv = null;
+    victim.alive = false; victim.wv = null; victim.sh = 0; victim.dg = null; victim.iv = null; victim.ar = null; // (死ぬとベントの外へ。クールタイムは使わないので戻さない)
     victim.kd = { n: ((victim.kd && victim.kd.n) || 0) + 1, by: by || null, how: how || 'kill', at: ctx.now };
     var near = [];
     state.order.forEach(function (id) {
@@ -2032,10 +2097,11 @@ function grid(o) {
     }
 
     if (state.phase !== 'play') return { ok: false, err: 'phase' };
+    if (p.ar && a.type !== 'aim' && a.type !== 'snipe') return { ok: false, err: 'aiming' }; // 狙っている間は、ほかのことはできない
 
     if (a.type === 'task') {
       if (!p.tasks) return { ok: false };
-      if ((state.jamUntil || 0) > now) return { ok: false, err: 'jam' };
+      if ((state.jamUntil || 0) > now && ROLES[p.role].team !== 'impostor') return { ok: false, err: 'jam' }; // 通信妨害で止まるのはクルー側だけ
       var k = null;
       p.tasks.forEach(function (x) { if (x.s === a.s && !x.done) k = x; });
       if (!k) return { ok: false };
@@ -2072,12 +2138,14 @@ function grid(o) {
     if (p.iv && a.type !== 'vent' && a.type !== 'ventout') return { ok: false, err: 'invent' };
     if (T && T.iv && T.id !== pid && state.phase === 'play') return { ok: false, err: 'invent' };
 
-    if (a.type === 'kill') {
-      if (!R || !(R.kill || (R.wave && s.waveKill)) || now < (p.ck || 0)) return { ok: false };
+    if (a.type === 'kill' || a.type === 'nkill') {
+      var nk = a.type === 'nkill'; // ヴァンパイアの通常の襲撃(噛みつきとは別)
+      if (!R || now < (p.ck || 0)) return { ok: false };
+      if (nk ? !(R.bite && s.vampKill) : !(canNormalKill(p, s) || R.bite)) return { ok: false };
       if (!T || !T.alive || T.left || T.id === pid) return { ok: false };
       if (!canTarget(p, T)) return { ok: false };
       if (!nearOk(ctx, pid, T.id, rng)) return { ok: false, err: 'far' };
-      if (R.bite && T.bt) return { ok: false, err: 'bitten' };
+      if (R.bite && !nk && T.bt) return { ok: false, err: 'bitten' };
       p.ck = now + s.killCd * 1000;
       if ((T.sh || 0) > now) {
         pushMsg(T, 'シールドが襲撃を防いだ。');
@@ -2090,7 +2158,7 @@ function grid(o) {
         pushMsg(p, '襲撃は何かに阻まれた。');
         return { ok: true, blocked: true };
       }
-      if (R.bite) { // ヴァンパイア: 噛みつき。倒れるのは、設定の時間がたってから
+      if (R.bite && !nk) { // ヴァンパイア: 噛みつき。倒れるのは、設定の時間がたってから
         var bp0 = ctx.pos(T.id) || { x: TABLE.x, y: TABLE.y }, bx = Math.round(bp0.x), by0 = Math.round(bp0.y);
         T.bt = { by: pid, at: now, until: now + s.vampireDelay * 1000, x: bx, y: by0, tr: [[bx, by0]] };
         pushMsg(p, COLORS[T.color].name + 'の' + T.name + 'に噛みついた。' + s.vampireDelay + '秒後に倒れる。');
@@ -2115,16 +2183,45 @@ function grid(o) {
       return { ok: true };
     }
 
-    if (a.type === 'shoot' || a.type === 'snipe') { // シェリフの射撃 / 狙撃手の狙撃(遠くまで届く。外した側が倒れるのは同じ)
+    if (a.type === 'aim') { // 狙撃手: レティクルを出す・動かす・しまう
+      if (p.role !== 'sniper' || state.phase !== 'play' || p.iv) return { ok: false };
+      if (!a.on) { p.ar = null; return { ok: true, off: true }; }
+      var sp = ctx.pos(pid);
+      if (!sp) return { ok: false };
+      if (!p.ar && (!(p.u > 0) || now < (p.ca || 0))) return { ok: false };
+      var ax = +a.x, ay = +a.y;
+      if (!isFinite(ax) || !isFinite(ay)) { ax = sp.x; ay = sp.y; }
+      ax = Math.max(0, Math.min(WORLD.w, ax)); ay = Math.max(0, Math.min(WORLD.h, ay));
+      p.ar = { x: Math.round(ax), y: Math.round(ay) };
+      return { ok: true };
+    }
+
+    if (a.type === 'shoot' || a.type === 'snipe') { // シェリフの射撃 / 狙撃手の狙撃(レティクルの下にいる1人を撃つ。外した側が倒れるのは同じ)
       var sn = a.type === 'snipe';
       if (p.role !== (sn ? 'sniper' : 'sheriff') || !(p.u > 0) || now < (p.ca || 0)) return { ok: false };
-      if (!T || !T.alive || T.left || T.id === pid) return { ok: false };
-      if (!nearOk(ctx, pid, T.id, sn ? s.snipeRange : rng)) return { ok: false, err: 'far' };
+      if (sn) {
+        if (!p.ar) return { ok: false, err: 'noaim' };
+        var best = null, bd = SNIPE_HIT;
+        state.order.forEach(function (id) {
+          var q = state.players[id];
+          if (!q || id === pid || !q.alive || q.left || q.iv || ROLES[q.role].team === 'impostor') return; // 仲間(インポスター陣営)は撃てない
+          var qp = ctx.pos(id); if (!qp) return;
+          var dd = Math.hypot(qp.x - p.ar.x, qp.y - p.ar.y);
+          if (dd <= bd) { bd = dd; best = q; }
+        });
+        if (!best) return { ok: false, err: 'notarget' }; // レティクルの中に撃てる人がいないときは、撃てない(弾は減らず、狙ったまま)
+        T = best;
+      } else {
+        if (!T || !T.alive || T.left || T.id === pid) return { ok: false };
+        if (!nearOk(ctx, pid, T.id, rng)) return { ok: false, err: 'far' };
+      }
       p.u--; p.ca = now + (sn ? s.snipeCd : s.sheriffCd) * 1000;
+      if (sn) p.ar = null;
       if ((T.sh || 0) > now) { pushMsg(T, 'シールドが' + (sn ? '狙撃' : '射撃') + 'を防いだ。'); pushMsg(p, '弾は何かに阻まれた。'); return { ok: true, blocked: true }; }
       if (T.shield) { T.shield = false; pushMsg(p, '弾は何かに阻まれた。'); return { ok: true, blocked: true }; }
       var tt = ROLES[T.role].team;
-      if (tt === 'impostor' || (tt === 'neutral' && (sn ? s.snipeNeutral : s.sheriffNeutral))) { killBody(state, ctx, T, pid, 'shot'); pushMsg(p, T.name + 'を倒した。'); }
+      if (sn || tt === 'impostor' || (tt === 'neutral' && s.sheriffNeutral)) { killBody(state, ctx, T, pid, 'shot'); pushMsg(p, T.name + 'を倒した。');
+        if (sn && s.snipeNotice) state.order.forEach(function (id) { var q = state.players[id]; if (q && !q.left && id !== pid) pushMsg(q, '誰かが狙撃された!'); }); }
       else {
         // 外れ: 撃った本人が倒れる。シェリフがクルー陣営を撃ったとき、設定によっては相手も倒れる
         if (!sn && tt === 'crew' && s.sheriffMisBoth) killBody(state, ctx, T, null, 'misfire');
@@ -2204,7 +2301,7 @@ function grid(o) {
       var vt, vpp = ctx.pos(pid);
       if (a.type === 'ventout') {
         if (!p.iv) return { ok: false };
-        vt = VENTS[p.iv.i]; p.iv = null; p.vx = now + 1200;
+        leaveVent(p, now); vt = VENTS[p.iv.i]; p.iv = null; p.vx = now + 1200;
         if (vt) { var ex = nearestStand(vt.x, vt.y, 14); tp(p, ex.x, ex.y); } // ベントの真上に出る(万一立てない場所なら、いちばん近い立てる場所)
         return { ok: true };
       }
@@ -2214,7 +2311,7 @@ function grid(o) {
         vt = VENTS[a.to];
         if (!vt || !vpp || dist(vpp, vt) > 120) return { ok: false, err: 'far' };
         if (p.role === 'engineer') p.u--;
-        p.iv = { i: a.to | 0 };
+        p.iv = { i: a.to | 0, at: now };
         tp(p, vt.x, vt.y);
         return { ok: true };
       }
@@ -2355,7 +2452,7 @@ function grid(o) {
     if (state.crisis && !state.crisis.pause) state.crisis.pause = Math.max(1000, state.crisis.until - now);
     state.order.forEach(function (id) {
       var p = state.players[id];
-      p.gm = 0; p.shield = false; p.ws = 0; p.wv = null; p.sh = 0; p.iv = null; // 会議が始まると、ベントの中の人も外に出される
+      leaveVent(p, now); p.gm = 0; p.shield = false; p.ws = 0; p.wv = null; p.sh = 0; p.iv = null; p.ar = null; // 会議が始まると、ベントの中の人も外に出される
       if (p.dg) { p.dg = null; if (p.role === 'maskmaker') p.ca = now + s.maskCd * 1000; } // 会議が始まると、変装は解ける
       if (p.bt && p.bt.until) { p.bt.rem = Math.max(1000, p.bt.until - now); p.bt.until = 0; } // 噛まれた人の時間は、会議のあいだ止まる
       if (p.role === 'guardian') { p.gu = false; p.gt = null; }
@@ -2393,7 +2490,7 @@ function grid(o) {
       var sp = spawnPoint(i, al.length);
       tp(p, sp.x, sp.y);
       var R = ROLES[p.role];
-      if (R.kill || (R.wave && s.waveKill)) p.ck = now + s.killCd * 1000;
+      if (canNormalKill(p, s) || R.bite) p.ck = now + s.killCd * 1000;
       if (R.wave) p.cw = now + Math.min(s.waveCd, 25) * 1000;
       if (R.sab) { p.cs = now + 15000; p.cq = now + 12000; }
       if (p.role === 'shielder') p.ca = Math.max(p.ca || 0, now);
@@ -2470,7 +2567,7 @@ function grid(o) {
       if (state.phase === 'lobby') return removePlayer(state, pid);
       p.left = true; return true;
     }
-    p.left = true; p.alive = false; p.iv = null;
+    p.left = true; p.alive = false; p.iv = null; p.ar = null;
     if (state.meeting && state.meeting.votes) delete state.meeting.votes[pid];
     recalcTasks(state);
     checkWin(state, ctx.now);
@@ -2483,12 +2580,13 @@ function grid(o) {
     state.order.forEach(function (id) {
       var p = state.players[id];
       p.role = null; p.alive = true; p.left = false;
-      ['tasks', 'ck', 'cw', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'notes', 'msgs', 'tp', 'kd', 'wv', 'wf', 'wn', 'sh', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc', 'iv', 'vx', 'dg', 'ak'].forEach(function (k) { delete p[k]; });
+      ['tasks', 'ck', 'cw', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'notes', 'msgs', 'tp', 'kd', 'wv', 'wf', 'wn', 'sh', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc', 'iv', 'vx', 'ar', 'dg', 'ak'].forEach(function (k) { delete p[k]; });
     });
   }
 
   Object.assign(Engine, {
     COLORS: COLORS, MAX_PLAYERS: MAX_PLAYERS, TEAMS: TEAMS, ROLES: ROLES, ROLE_ORDER: ROLE_ORDER,
+    canNormalKill: canNormalKill, SNIPE_HIT: SNIPE_HIT,
     SETTING_DEFS: SETTING_DEFS, TOGGLES: TOGGLES, defaultSettings: defaultSettings, clampSetting: clampSetting,
     MAPS: MAPS, BELT_SPEED: Maps.BELT_SPEED, useMap: useMap, setDyn: setDyn, canMove: canMove, canStand: canStand, walkable: walkable,
     closedRects: closedRects, nearestStand: nearestStand, gateClosed: gateClosed, gateWarn: gateWarn, fogAt: fogAt, beltAt: beltAt, portalNear: portalNear, hallNear: hallNear,
@@ -2645,7 +2743,7 @@ function grid(o) {
         if (Math.hypot(cbd.x - b.x, cbd.y - b.y) < 160) { api.act(b.id, { type: 'clean', b: cbd.id }); break; }
       }
     }
-    if (R2.kill || R2.wave) {
+    if (E.canNormalKill(p, s) || R2.bite || R2.wave) {
       // 狩り: 近い獲物へ向かい、目撃者が少なければ襲撃
       b.replan -= dt;
       if (!b.tgt || b.replan <= 0) {
@@ -2676,7 +2774,7 @@ function grid(o) {
         else if (p.role === 'vampire' && !p.tu && s.vampireThrall && Math.hypot(tpos.x - b.x, tpos.y - b.y) <= s.killRange * 0.9 && rand() < 0.02) {
           api.act(b.id, { type: 'thrall', t: b.tgt }); b.tgt = null; b.replan = 0; // 眷属にする
         }
-        else if (R2.kill && now >= (p.ck || 0) && Math.hypot(tpos.x - b.x, tpos.y - b.y) <= s.killRange * 0.9) {
+        else if ((E.canNormalKill(p, s) || R2.bite) && now >= (p.ck || 0) && Math.hypot(tpos.x - b.x, tpos.y - b.y) <= s.killRange * 0.9) {
           var witnesses = 0;
           state.order.forEach(function (id) {
             var q = state.players[id];
@@ -3395,6 +3493,7 @@ var S = {
   acts: [], actSeq: 0, chat: [], chatSeen: {}, chatMsg: null, chatSeq: 0, lastChatSent: 0,
   writing: false, dirty: false, writeErr: null, lastSig: '', lastPresenceAt: 0,
   uiRev: -1, cardRound: 0, lastTpKey: '', seenMsg: 0, msgRound: 0,
+  ret: null, retAt: 0, retSent: 0,
   track: null, kc: {}, joy: { x: 0, y: 0, id: null }, tab: 'crew', overlay: null, task: null, targetPid: null, nearInfo: null,
   online: false, capsReady: false, lastFrame: 0, lastHostTick: 0
 };
@@ -3493,6 +3592,7 @@ function sendPresence(force) {
   var patch = {
     p: S.pid, n: S.name, x: Math.round(S.me.x), y: Math.round(S.me.y), f: S.me.f, w: S.me.w ? 1 : 0,
     j: S.joined ? 1 : 0, h: S.canHost ? 1 : 0, vi: S.vcId || null,
+    r: S.ret ? [Math.round(S.ret.x), Math.round(S.ret.y)] : null,
     a: S.acts.length ? S.acts : null, c: S.chatMsg || null, b: S.isHost && Object.keys(S.bots).length ? botRows() : null
   };
   var sig = JSON.stringify(patch);
@@ -3595,12 +3695,12 @@ async function electionTick() {
 
 /* ---------- ホストの処理 ---------- */
 function cleanAct(x) {
-  var types = ['task', 'report', 'emergency', 'kill', 'shoot', 'guard', 'inspect', 'vent', 'sab', 'douse', 'ignite', 'vote', 'assassinate', 'fortune', 'nicekill', 'shield', 'wave', 'seal', 'fixlights', 'portal', 'ventin', 'ventout', 'fixcrisis', 'thrall', 'setcolor', 'snipe', 'disguise', 'clean'];
+  var types = ['aim', 'nkill', 'task', 'report', 'emergency', 'kill', 'shoot', 'guard', 'inspect', 'vent', 'sab', 'douse', 'ignite', 'vote', 'assassinate', 'fortune', 'nicekill', 'shield', 'wave', 'seal', 'fixlights', 'portal', 'ventin', 'ventout', 'fixcrisis', 'thrall', 'setcolor', 'snipe', 'disguise', 'clean'];
   if (!x || types.indexOf(x.type) < 0) return null;
   var a = { type: x.type };
   if (typeof x.t === 'string' && x.t.length <= 48) a.t = x.t;
   if (typeof x.r === 'string' && x.r.length <= 16) a.r = x.r;
-  ['s', 'st', 'b', 'to', 'dx', 'dy', 'c'].forEach(function (k) { if (typeof x[k] === 'number' && isFinite(x[k])) a[k] = x[k]; });
+  ['s', 'st', 'b', 'to', 'dx', 'dy', 'c', 'x', 'y', 'on'].forEach(function (k) { if (typeof x[k] === 'number' && isFinite(x[k])) a[k] = x[k]; });
   return a;
 }
 function hostPoll() {
@@ -3632,6 +3732,13 @@ function hostPoll() {
     if (now - S.lastSeen[pid] >= limit) { if (E.markLeft(st, pid, ctx)) changed = true; }
   });
 
+  // 狙撃手のレティクルの動き(行動より先に反映する)
+  Object.keys(S.peerMap).forEach(function (pid) {
+    var rp = st.players[pid], rr = S.peerMap[pid].d.r;
+    if (rp && rp.ar && Array.isArray(rr) && typeof rr[0] === 'number' && typeof rr[1] === 'number') {
+      if (Math.abs(rp.ar.x - rr[0]) > 1 || Math.abs(rp.ar.y - rr[1]) > 1) { var ra = E.act(st, pid, { type: 'aim', on: 1, x: rr[0], y: rr[1] }, ctx); if (ra && ra.ok) changed = true; }
+    }
+  });
   // 行動の受付
   Object.keys(S.peerMap).forEach(function (pid) {
     var arr = S.peerMap[pid].d.a;
@@ -5213,10 +5320,11 @@ function roleNotes(role, s) {
     n.push(s.sheriffMisBoth ? 'クルー陣営を撃つと、相手とあなたの両方が倒れます。' : 'クルー陣営を撃つと、あなただけが倒れます。');
   }
   if (role === 'sniper') {
-    n.push('弾は ' + s.snipeShots + ' 発。届く距離は ' + s.snipeRange + '(シェリフは ' + s.killRange + ' ほど)。撃ったあと ' + s.snipeCd + ' 秒は撃てません。');
-    n.push('視界の外にいる相手は狙えません。狙う相手には黄色い輪がつきます。');
-    n.push(s.snipeNeutral ? '第三陣営も撃って倒せます。' : '第三陣営は撃っても倒せず、あなたが倒れます。');
-    n.push('インポスター陣営と第三陣営以外(クルー陣営)を撃つと、あなただけが倒れます。');
+    n.push('弾は ' + s.snipeShots + ' 発。「狙撃」を押すと、レティクル(照準)が出ます。そのあいだ、あなたは動けません。霧や隠れた通路がなくなって全員の動きが見え、レティクルはマップのどこへでも動かせます(画面端に近づくと画面がついていきます)。1人に重ねて「発射」。撃ったあと ' + s.snipeCd + ' 秒は狙えません。');
+    n.push('仲間(インポスター陣営)以外なら、誰でも倒せます。レティクルの中に撃てる人がいないときは、「発射」は押せません(弾は減りません)。');
+    n.push(s.snipeNotice ? '誰かが狙撃で倒れると、全員に「誰かが狙撃された」と知らされます。' : '狙撃で誰かが倒れても、知らせは出ません(遺体は残ります)。');
+    n.push('レティクルは、' + (s.snipeSee ? '他のプレイヤーにも見えます(狙っているのがばれます)。' : 'インポスター陣営と倒れた人にだけ見えます。'));
+    n.push(s.sniperKill ? '狙撃のほかに、通常の襲撃(近くの1人を倒す)もできます。' : '通常の襲撃はできません(狙撃だけです)。');
   }
   if (role === 'maskmaker') n.push('変装は ' + s.maskSec + ' 秒つづき、会議が始まると解けます。解けたあと(または自分で解いたあと) ' + s.maskCd + ' 秒は変装できません。');
   if (role === 'cleaner') n.push('掃除のクールダウンは ' + s.cleanCd + ' 秒です。遺体のそばで使うと、その遺体が消えます。');
@@ -5236,9 +5344,11 @@ function roleNotes(role, s) {
     n.push('噛んだ相手は ' + s.vampireDelay + ' 秒後に、その場所で倒れます。会議のあいだは時間が止まります。');
     n.push('倒れたあと、次の会議が終わると、噛まれた地点からの足跡がみんなに見えます。次の会議で消えます。');
     n.push(s.vampireThrall ? '眷属化は、非インポスターの1人にだけ、ゲーム中1回できます。' : '眷属化はできません(噛みつくだけ)。');
+    n.push(s.vampKill ? '噛みつきのほかに、通常の襲撃(その場で倒す)もできます。クールダウンは噛みつきと共通です。' : '通常の襲撃はできません(噛みつきだけです)。');
   }
+  if (role === 'assassin') n.push(s.assassinKill ? '通常の襲撃もできます(役職当てのほかに)。' : '通常の襲撃はできません(役職当てだけです)。');
   if (role === 'thrall') n.push('視界は、停電のときと同じに狭くなります。仲間のうちわかるのはヴァンパイアだけです。');
-  if (E.ROLES[role].kill || (E.ROLES[role].wave && s.waveKill)) n.push((E.ROLES[role].bite ? '噛みつき' : '襲撃') + 'のクールダウンは ' + s.killCd + ' 秒です(ゲーム開始の直後だけ ' + s.startCd + ' 秒)。');
+  if (E.canNormalKill({ role: role }, s) || E.ROLES[role].bite) n.push((E.ROLES[role].bite ? '噛みつき' : '襲撃') + 'のクールダウンは ' + s.killCd + ' 秒です(ゲーム開始の直後だけ ' + s.startCd + ' 秒)。');
   return n;
 }
 function showRoleCard() {
@@ -5255,7 +5365,7 @@ function showRoleCard() {
   if (R.abil.length) box.appendChild(h('div', {}, [h('div', { class: 'lbl', text: 'できること' }), h('ul', {}, R.abil.map(function (t) { return h('li', { text: t }); }))]));
   var notes = roleNotes(me.role, st.settings);
   if (notes.length) box.appendChild(h('div', {}, [h('div', { class: 'lbl', text: 'このゲームの設定' }), h('ul', {}, notes.map(function (t) { return h('li', { text: t }); }))]));
-  if (!R.tasks) box.appendChild(h('p', { class: 'small mute', text: 'あなたにタスクはありません。' }));
+  if (!R.tasks) box.appendChild(h('p', { class: 'small mute', text: R.team === 'impostor' ? 'ダミーのタスクがあります。やってもクルーのタスクの進み具合には数えません(クルーに紛れるために使えます)。ベントの中にいるあいだ、襲撃・能力のクールタイムは進みません(妨害は進みます)。' : 'あなたにタスクはありません。' }));
   if (R.team === 'impostor') {
     var mates = st.order.filter(function (id) { return E.knowsAlly(me, st.players[id]); });
     box.appendChild(h('div', {}, [h('div', { class: 'lbl', text: '仲間' }),
@@ -5886,12 +5996,12 @@ function bindSnd() {
  * 行動ボタンは「グループ」ごとにキーを割り当てる。グループの中で、ボタンがあって押せるものを上から順に1つ押す。
  * キーは e.code(物理キー)で覚えるので、日本語入力がオンでも、キー配列が違っても同じキーで動く。保存はこの端末だけ。 */
 var KEY_GROUPS = [
-  { id: 'use', n: 'タスク・使う(緊急会議・修復・人数確認)', def: 'KeyE', acts: ['use'] },
+  { id: 'use', n: 'タスク・使う(緊急会議・修復・人数確認・隠し扉・ベント)', def: 'KeyE', acts: ['use'] },
   { id: 'report', n: '通報', def: 'KeyR', acts: ['report'] },
-  { id: 'attack', n: '襲撃・噛む・波動砲・射撃・狙撃', def: 'KeyQ', acts: ['kill', 'wave', 'shoot', 'snipe'] },
-  { id: 'skill', n: '役職の能力(シールド・守護・鑑識・ガソリン・眷属化・変装・掃除・隠し扉)', def: 'KeyF', acts: ['shield', 'guard', 'inspect', 'douse', 'thrall', 'disguise', 'clean', 'portal'] },
+  { id: 'attack', n: '襲撃・噛む・波動砲・射撃・狙撃', def: 'KeyQ', acts: ['kill', 'wave', 'shoot', 'snipe', 'snipefire'] },
+  { id: 'skill', n: '役職の能力(シールド・守護・鑑識・ガソリン・眷属化・変装・掃除)', def: 'KeyF', acts: ['shield', 'guard', 'inspect', 'douse', 'thrall', 'disguise', 'clean', 'portal'] },
   { id: 'skill2', n: '点火', def: 'KeyG', acts: ['ignite'] },
-  { id: 'vent', n: 'ベント', def: 'KeyV', acts: ['vent'] },
+  { id: 'vent', n: 'ベントに入る・出る', def: 'KeyV', acts: ['vent'] },
   { id: 'sab', n: '妨害(マップを開く)', def: 'KeyX', acts: ['sab'] },
   { id: 'seal', n: '隔壁', def: 'KeyC', acts: ['seal'] },
   { id: 'map', n: 'マップを開く・閉じる', def: 'KeyM', acts: [] },
@@ -5935,6 +6045,10 @@ function kbPress(g) {
   if (g.id === 'map') { if (S.overlay === 'map') { S.mapFromMeeting = false; setOverlay(null); } else if (!S.overlay) setOverlay('map'); return true; }
   var list = (S.actList || []).filter(function (a) { return g.acts.indexOf(a.id) >= 0; });
   for (var i = 0; i < list.length; i++) if (list[i].ready) { list[i].press(); return true; }
+  if (g.id === 'vent') { // ベントに入るのは「使う」ボタン。ベントのキーでも入れる
+    var u = (S.actList || []).filter(function (a) { return a.id === 'use' && a.kind === 'vent'; })[0];
+    if (u) { if (u.ready) u.press(); return true; }
+  }
   return !!list.length;
 }
 function kbEscape() {
@@ -5942,6 +6056,7 @@ function kbEscape() {
   if (!$('ov-keys').hidden) { $('ov-keys').hidden = true; return true; }
   if (!$('ov-sound').hidden) { $('ov-sound').hidden = true; return true; }
   if (S.lobbyPanel) { closeLobbyPanel(); return true; }
+  if (S.ret && !S.overlay) { endAim(); return true; } // 狙撃のレティクルをしまう
   var o = S.overlay;
   if (o === 'task') { closeTask(); setOverlay(null); return true; }
   if (o === 'map') { S.mapFromMeeting = false; setOverlay(null); return true; }
@@ -6006,7 +6121,7 @@ function bindKeys() {
 
 /* ---------- キャンバス描画 ---------- */
 var cv = $('cv'), g2 = cv.getContext('2d'), fogCv = document.createElement('canvas'), fogX = fogCv.getContext('2d');
-var VW = 360, VH = 640, DPR = 1, SCALE = 1;
+var VW = 360, VH = 640, DPR = 1, SCALE = 1, VSC = 1; // VSC: いまの表示の倍率(SCALE と同じ)
 /* 画面の向き: 'auto'(端末のまま) / 'cw' / 'ccw'(アプリ全体を90度回して横向き表示にする) */
 function viewSize() {
   var w = window.innerWidth || 360, hh = window.innerHeight || 640;
@@ -6107,7 +6222,8 @@ function drawBlob(c, x, y, hex, f, ph, alpha, ghost, dead) {
   c.restore();
 }
 function label(c, text, x, y, color) {
-  c.font = '700 12px "Zen Maru Gothic", sans-serif'; c.textAlign = 'center'; c.lineWidth = 3.5; c.strokeStyle = 'rgba(6,9,20,.95)'; c.lineJoin = 'round';
+  var kl = Math.min(2.4, Math.max(1, 1 / (S.zoom || 1))); // 引いて見ているときは、名前も大きく
+  c.font = '700 ' + (12 * kl).toFixed(1) + 'px "Zen Maru Gothic", sans-serif'; c.textAlign = 'center'; c.lineWidth = 3.5; c.strokeStyle = 'rgba(6,9,20,.95)'; c.lineJoin = 'round';
   c.strokeText(text, x, y); c.fillStyle = color || '#e9eef9'; c.fillText(text, x, y);
 }
 function visionOf(st, me) {
@@ -6219,7 +6335,6 @@ function drawBeams(c, st, now) {
       c.lineCap = 'round';
       c.strokeStyle = 'rgba(255,70,90,' + (0.25 + 0.3 * k + pul * 0.3) + ')'; c.lineWidth = 6 + k * 10; c.setLineDash([22, 14]);
       c.beginPath(); c.moveTo(w.x, w.y); c.lineTo(w.x + w.dx * L, w.y + w.dy * L); c.stroke(); c.setLineDash([]);
-      c.fillStyle = 'rgba(255,90,100,' + (0.35 + 0.4 * k) + ')'; c.beginPath(); c.arc(w.x, w.y, 18 + 22 * k, 0, 6.2832); c.fill();
       c.restore();
     }
     if (p.wf && tn - p.wf.at < 750) {
@@ -6235,6 +6350,119 @@ function drawBeams(c, st, now) {
     }
   });
 }
+// 波動砲のため中に構える、巨大なレールガン(ためるほどコイルが光り、砲口にエネルギーがたまる。放ったあとは反動で後ろへ下がる)
+function drawRailgun(c, p, v, now, st) {
+  var tn = tnow(), w = p.wv || p.wf, firing = !p.wv;
+  if (!w) return;
+  var dx = w.dx, dy = w.dy, ang = Math.atan2(dy, dx);
+  var total = Math.max(1, (st.settings.waveCharge || 3) * 1000);
+  var k = firing ? 1 : Math.max(0, Math.min(1, 1 - Math.max(0, p.wv.fire - tn) / total));
+  var rec = firing ? Math.max(0, 1 - (tn - p.wf.at) / 480) : 0; // 発射直後の反動
+  var raise = p.wv ? Math.min(1, (tn - (p.wv.fire - total)) / 350) : 1; // 構える動き(最初の0.35秒)
+  var pul = 0.5 + 0.5 * Math.sin(now / 55);
+  c.save();
+  c.translate(v.x + 6 * (dx < 0 ? -1 : 1), v.y + 7); c.rotate(ang); if (dx < 0) c.scale(1, -1); c.scale(1.3, 1.3); // 巨大なレールガン
+  var back = -26 * rec - 30 * (1 - raise), L = 168; // 砲身の長さ
+  c.translate(back, 0);
+  // 影
+  c.fillStyle = 'rgba(0,0,0,.28)'; c.beginPath(); c.ellipse(60, 18, 96, 9, 0, 0, 6.2832); c.fill();
+  // レール(上下2本)
+  var rg = c.createLinearGradient(0, -12, 0, 12); rg.addColorStop(0, '#8d9bbd'); rg.addColorStop(0.5, '#3a4466'); rg.addColorStop(1, '#1a2036');
+  c.fillStyle = rg; c.fillRect(26, -13, L - 26, 8); c.fillRect(26, 5, L - 26, 8);
+  c.fillStyle = 'rgba(190,215,255,.55)'; c.fillRect(26, -13, L - 26, 1.6); c.fillRect(26, 5, L - 26, 1.6);
+  // 砲身の中のエネルギー(ためるほど強く光る)
+  var eg = c.createLinearGradient(26, 0, L, 0); eg.addColorStop(0, 'rgba(120,200,255,' + (0.1 + 0.5 * k) + ')'); eg.addColorStop(1, 'rgba(255,255,255,' + (0.2 + 0.8 * k) + ')');
+  c.fillStyle = eg; c.fillRect(26, -5, L - 26, 10);
+  // コイル(根元から順に光る)
+  for (var i = 0; i < 6; i++) {
+    var cx = 42 + i * 20, on = k > (i + 0.5) / 6, glow = on ? 0.55 + 0.45 * pul : 0.12;
+    c.fillStyle = '#242c49'; c.fillRect(cx - 4, -17, 8, 34);
+    c.fillStyle = on ? 'rgba(120,220,255,' + glow + ')' : 'rgba(80,110,160,.45)'; c.fillRect(cx - 2.5, -17, 5, 34);
+    if (on) { c.fillStyle = 'rgba(160,230,255,' + 0.25 * glow + ')'; c.beginPath(); c.arc(cx, 0, 20, 0, 6.2832); c.fill(); }
+  }
+  // 本体(銃身の根元・グリップ側)
+  var bg = c.createLinearGradient(0, -20, 0, 20); bg.addColorStop(0, '#59648a'); bg.addColorStop(0.55, '#2b3452'); bg.addColorStop(1, '#161b2e');
+  c.fillStyle = bg; c.beginPath(); c.moveTo(-26, -12); c.lineTo(28, -18); c.lineTo(34, -18); c.lineTo(34, 18); c.lineTo(28, 18); c.lineTo(-26, 14); c.closePath(); c.fill();
+  c.strokeStyle = 'rgba(200,220,255,.45)'; c.lineWidth = 1.5; c.stroke();
+  // 動力部(チャージ量のメーター)
+  c.fillStyle = '#0c1020'; c.fillRect(-16, -8, 36, 12);
+  c.fillStyle = k > 0.85 ? 'rgba(255,90,100,' + (0.6 + 0.4 * pul) + ')' : 'rgba(110,210,255,.95)'; c.fillRect(-14.5, -6.5, 33 * k, 9);
+  c.fillStyle = 'rgba(255,255,255,.25)'; c.fillRect(-14.5, -6.5, 33 * k, 3);
+  // 砲口のエネルギー球と、レールの間を走る放電
+  var mr = 5 + 20 * k * (firing ? 0.6 : 1) + (firing ? 16 * rec : 0);
+  var mg = c.createRadialGradient(L + 4, 0, 1, L + 4, 0, mr * 2.2);
+  mg.addColorStop(0, 'rgba(255,255,255,' + (0.6 + 0.4 * k) + ')'); mg.addColorStop(0.35, 'rgba(120,210,255,' + (0.5 + 0.4 * k) + ')'); mg.addColorStop(1, 'rgba(80,150,255,0)');
+  c.fillStyle = mg; c.beginPath(); c.arc(L + 4, 0, mr * 2.2, 0, 6.2832); c.fill();
+  if (k > 0.25 || firing) {
+    c.strokeStyle = 'rgba(190,240,255,' + (0.5 + 0.5 * pul) + ')'; c.lineWidth = 2; c.beginPath();
+    var seed = Math.floor(now / 60);
+    for (var j = 0; j < 7; j++) { var ux = 60 + j * 17, uy = ((seed * 7 + j * 13) % 9 - 4) * (0.5 + k); if (j === 0) c.moveTo(26, 0); c.lineTo(ux, uy); }
+    c.lineTo(L, 0); c.stroke();
+  }
+  if (firing && rec > 0.4) { c.fillStyle = 'rgba(255,255,255,' + rec + ')'; c.beginPath(); c.arc(L + 6, 0, 26 * rec, 0, 6.2832); c.fill(); }
+  c.restore();
+}
+// 狙撃手のレティクル(照準): 本人は動かして狙う。ほかの人には設定で見える(インポスター陣営と、倒れた人には常に見える)
+// レティクルが画面の中で動ける範囲(ボタンに重ならないところまで)。これより外へ行こうとすると、画面がついていく
+function retBox() { return { hw: Math.max(60, VW / 2 / SCALE * 0.66), up: Math.max(40, (VH / 2 - 80) / SCALE), dn: Math.max(40, (VH / 2 - 150) / SCALE) }; }
+// カメラの中心は、ふだんは自分。狙撃中は、レティクルを画面の中に収めるように動く
+function camStep(dt) {
+  if (!S.cam) S.cam = { x: S.me.x, y: S.me.y };
+  if (S.zoom == null) S.zoom = 1;
+  if (S.ret) { // 狙撃中: 視点の倍率はそのまま。レティクルが画面の端に近づくと、画面がレティクルについていく(マップ全体を狙える)
+    S.camFree = true; S.zoom = 1;
+    var bx = retBox(), tx = Math.max(S.ret.x - bx.hw, Math.min(S.ret.x + bx.hw, S.cam.x)), ty = Math.max(S.ret.y - bx.dn, Math.min(S.ret.y + bx.up, S.cam.y));
+    var kk = 1 - Math.exp(-dt * 12); S.cam.x += (tx - S.cam.x) * kk; S.cam.y += (ty - S.cam.y) * kk;
+    return;
+  }
+  if (S.camFree) { // レティクルをしまったら、なめらかに自分のところへ戻る
+    var k2 = 1 - Math.exp(-dt * 10); S.cam.x += (S.me.x - S.cam.x) * k2; S.cam.y += (S.me.y - S.cam.y) * k2; S.zoom += (1 - S.zoom) * k2;
+    if (Math.hypot(S.me.x - S.cam.x, S.me.y - S.cam.y) < 3 && Math.abs(1 - S.zoom) < 0.01) { S.camFree = false; S.zoom = 1; }
+    return;
+  }
+  S.cam.x = S.me.x; S.cam.y = S.me.y; S.zoom = 1;
+}
+function drawReticles(c, st, me, now) {
+  var seeAll = !me || !me.alive || E.ROLES[me.role].team === 'impostor' || !!st.settings.snipeSee;
+  var kz = Math.max(1, 1 / (S.zoom || 1)); // 引いて見ているときは、線や印を太く・大きくして、見失わないようにする
+  if (S.ret) { // 狙撃中: 全員の位置に印をつける(仲間は青、撃てる相手は白)
+    st.order.forEach(function (id) {
+      var p = st.players[id]; if (!p || p.left || !p.alive || id === S.pid || p.iv) return;
+      var v = S.vis[id]; if (!v) return;
+      var ally = E.ROLES[p.role].team === 'impostor';
+      c.save(); c.translate(v.x, v.y); c.strokeStyle = ally ? 'rgba(120,170,255,.85)' : 'rgba(255,255,255,.85)'; c.lineWidth = 2 * kz;
+      c.beginPath(); c.arc(0, 0, 13 * kz, 0, 6.2832); c.stroke(); c.restore();
+    });
+  }
+  st.order.forEach(function (id) {
+    var p = st.players[id];
+    if (!p || p.left || !p.alive) return;
+    var mine = id === S.pid && !!S.ret, pt = mine ? S.ret : p.ar;
+    if (!pt) return;
+    if (!mine && !seeAll) return;
+    var v = S.vis[id] || (id === S.pid ? S.me : null);
+    var locked = mine ? !!reticleTarget(st) : false, pul = 0.5 + 0.5 * Math.sin(now / (locked ? 60 : 160));
+    var col = locked ? '255,70,80' : (mine ? '255,200,90' : '255,90,110');
+    c.save();
+    if (v) { // 照準のレーザー
+      c.strokeStyle = 'rgba(' + col + ',' + (mine ? 0.35 : 0.22) + ')'; c.lineWidth = 2 * kz; c.setLineDash([7 * kz, 9 * kz]); c.lineDashOffset = -now / 40;
+      c.beginPath(); c.moveTo(v.x, v.y - 6); c.lineTo(pt.x, pt.y); c.stroke(); c.setLineDash([]);
+    }
+    var R = E.SNIPE_HIT;
+    c.translate(pt.x, pt.y);
+    c.strokeStyle = 'rgba(' + col + ',' + (0.75 + 0.25 * pul) + ')'; c.lineWidth = 3 * kz;
+    c.beginPath(); c.arc(0, 0, R, 0, 6.2832); c.stroke();
+    c.lineWidth = 1.6 * kz; c.strokeStyle = 'rgba(' + col + ',.55)'; c.beginPath(); c.arc(0, 0, R * 0.62, 0, 6.2832); c.stroke();
+    c.lineWidth = 3 * kz; c.strokeStyle = 'rgba(' + col + ',.95)'; c.beginPath();
+    [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) { c.moveTo(d[0] * (R * 0.3), d[1] * (R * 0.3)); c.lineTo(d[0] * (R + 22 * kz), d[1] * (R + 22 * kz)); });
+    c.stroke();
+    c.fillStyle = 'rgba(' + col + ',1)'; c.beginPath(); c.arc(0, 0, 3.2 * kz, 0, 6.2832); c.fill();
+    var gl = c.createRadialGradient(0, 0, 2, 0, 0, R * 1.5); gl.addColorStop(0, 'rgba(' + col + ',' + (locked ? 0.28 : 0.12) + ')'); gl.addColorStop(1, 'rgba(' + col + ',0)');
+    c.fillStyle = gl; c.beginPath(); c.arc(0, 0, R * 1.5, 0, 6.2832); c.fill();
+    if (locked) { c.rotate(now / 500); c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 2 * kz; for (var q = 0; q < 4; q++) { c.rotate(1.5708); c.beginPath(); c.moveTo(R + 6, -6 * kz); c.lineTo(R + 6, 6 * kz); c.stroke(); } }
+    c.restore();
+  });
+}
 function drawFog(c, z, now) {
   c.save(); c.beginPath(); c.rect(z.x, z.y, z.w, z.h); c.clip();
   c.fillStyle = 'rgba(150,170,190,' + (0.1 + (1 - z.f) * 0.16) + ')'; c.fillRect(z.x, z.y, z.w, z.h);
@@ -6248,7 +6476,7 @@ function drawFog(c, z, now) {
 }
 function drawWorld(c, st, me, vr, watching, ghost, now) {
   var RECTS = E.ROOMS.concat(E.HALLS), G = E.GIM, tn = tnow(), th = themeOf(E.M), fl = E.M.floors || {};
-  drawOuter(c, E.M, now, S.me.x - VW / SCALE, S.me.y - VH / SCALE, S.me.x + VW / SCALE, S.me.y + VH / SCALE);
+  drawOuter(c, E.M, now, S.cam.x - VW / VSC, S.cam.y - VH / VSC, S.cam.x + VW / VSC, S.cam.y + VH / VSC);
   c.fillStyle = th.wall;
   RECTS.forEach(function (o) { c.fillRect(o.x - 14, o.y - 14, o.w + 28, o.h + 28); });
   E.HALLS.forEach(function (o) { c.fillStyle = th.hall; c.fillRect(o.x, o.y, o.w, o.h); });
@@ -6256,7 +6484,7 @@ function drawWorld(c, st, me, vr, watching, ghost, now) {
     c.fillStyle = o.c || '#2d3862'; c.fillRect(o.x, o.y, o.w, o.h);
     drawFloor(c, o, th, fl[o.id]);
   });
-  drawDecor(c, E.M, th, now, S.me.x - VW / SCALE, S.me.y - VH / SCALE, S.me.x + VW / SCALE, S.me.y + VH / SCALE);
+  drawDecor(c, E.M, th, now, S.cam.x - VW / VSC, S.cam.y - VH / VSC, S.cam.x + VW / VSC, S.cam.y + VH / VSC);
   // 動く歩道
   (G.belts || []).forEach(function (b) { drawBelt(c, E.msOn('belts') ? { x: b.x, y: b.y, w: b.w, h: b.h, dx: -b.dx, dy: -b.dy } : b, now); });
   // ベント(ベントの中にいるあいだは、いるベントを光らせ、移れるベントに印をつける)
@@ -6390,7 +6618,7 @@ function drawLobbyProps(c, st, now) {
 }
 function renderLobbyScene(c, st, now) {
   c.save();
-  c.translate(VW / 2 - S.me.x * SCALE, VH / 2 - S.me.y * SCALE); c.scale(SCALE, SCALE);
+  c.translate(VW / 2 - S.cam.x * VSC, VH / 2 - S.cam.y * VSC); c.scale(VSC, VSC);
   drawWorld(c, st, myPlayer(), 9999, false, false, now);
   var list = [];
   st.order.forEach(function (id) {
@@ -6506,19 +6734,21 @@ function hiddenAt(x, y) {
 }
 function render(dt) {
   var c = g2, now = performance.now();
+  if (!S.cam) S.cam = { x: S.me.x, y: S.me.y };
+  VSC = SCALE * (S.zoom || 1);
   c.setTransform(DPR, 0, 0, DPR, 0, 0);
   c.fillStyle = outerBg(E.M); c.fillRect(0, 0, VW, VH);
   var st = S.state;
   if (!S.mode || !st) return;
   if (st.phase === 'lobby') { renderLobbyScene(c, st, now); return; }
   var me = myPlayer(), ghost = !me || !me.alive, watching = false;
-  var vr = visionOf(st, me);
-  if (!ghost && st.phase === 'play') occCompute(vr); else { OCC.hid = null; OCC.cells = null; OCC.key = ''; } // 幽霊は、全部見える
+  var vr = S.ret ? 99999 : visionOf(st, me); // 狙撃中は、霧も隠れた通路もなくなり、画面の中の全員が見える
+  if (!ghost && st.phase === 'play' && !S.ret) occCompute(vr); else { OCC.hid = null; OCC.cells = null; OCC.key = ''; } // 幽霊は、全部見える
   c.save();
-  c.translate(VW / 2 - S.me.x * SCALE, VH / 2 - S.me.y * SCALE); c.scale(SCALE, SCALE);
+  c.translate(VW / 2 - S.cam.x * VSC, VH / 2 - S.cam.y * VSC); c.scale(VSC, VSC);
   drawWorld(c, st, me, vr, watching, ghost, now);
 
-  var seeAll = ghost || watching;
+  var seeAll = ghost || watching || !!S.ret;
   function visible(x, y) { return seeAll || (Math.hypot(x - S.me.x, y - S.me.y) <= vr + 12 && !hiddenAt(x, y)); }
   // 遺体
   drawTrails(c, st, visible, now);
@@ -6557,6 +6787,7 @@ function render(dt) {
     var bitTimer = (me && me.role === 'vampire' && p.alive && p.bt && p.bt.by === S.pid && p.bt.until) ? Math.max(0, Math.ceil((p.bt.until - tnow()) / 1000)) : -1;
     if (S.targetPid === o.id) { c.strokeStyle = '#ffd24d'; c.lineWidth = 3; ell(c, v.x, v.y + 18, 24, 10); c.stroke(); }
     drawBlob(c, v.x, v.y, C[shown.color].hex, v.f || 1, v.ph || 0, isGhost ? 0.45 : 1, isGhost, false);
+    if (p.alive && (p.wv || (p.wf && tnow() - p.wf.at < 480))) drawRailgun(c, p, v, now, st); // 波動砲: ためている間、巨大なレールガンを構える
     if (p.alive && (p.sh || 0) > tnow()) drawShieldBubble(c, v.x, v.y, now);
     label(c, shown.name, v.x, v.y - 34, ally ? '#ff8c9b' : (o.id === S.pid ? '#ffffff' : '#e9eef9'));
     if (dgOn && seeReal) { var dgt = E.shownAs(st, p, tnow()); label(c, '変装中: ' + dgt.name + ' ' + Math.max(0, Math.ceil((p.dg.until - tnow()) / 1000)) + '秒', v.x, v.y - 52, '#ffd24d'); }
@@ -6567,24 +6798,28 @@ function render(dt) {
   c.restore();
 
   // 視界(霧)
-  if (me && me.alive && !watching) {
+  if (me && me.alive && !watching && !S.ret) {
     var fx = fogX;
     fx.setTransform(1, 0, 0, 1, 0, 0); fx.globalCompositeOperation = 'source-over'; fx.clearRect(0, 0, fogCv.width, fogCv.height);
     fx.fillStyle = themeOf(E.M).fog; fx.fillRect(0, 0, fogCv.width, fogCv.height);
     fx.globalCompositeOperation = 'destination-out';
-    var cx = VW / 2 * DPR, cy = VH / 2 * DPR, rr = vr * SCALE * DPR;
+    var cx = (VW / 2 + (S.me.x - S.cam.x) * VSC) * DPR, cy = (VH / 2 + (S.me.y - S.cam.y) * VSC) * DPR, rr = vr * VSC * DPR;
     var gr = fx.createRadialGradient(cx, cy, rr * 0.6, cx, cy, rr);
     gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
     fx.fillStyle = gr; fx.beginPath(); fx.arc(cx, cy, rr, 0, 6.2832); fx.fill();
     if (OCC.cells) { // 閉じた通路の向こうは、霧で隠す(穴を開けたあとに、もう一度ぬりつぶす)
       fx.globalCompositeOperation = 'source-over'; fx.fillStyle = themeOf(E.M).fog;
-      var cs = OCC_G * SCALE * DPR + 1, ox = (VW / 2 - S.me.x * SCALE) * DPR, oy = (VH / 2 - S.me.y * SCALE) * DPR;
-      OCC.cells.forEach(function (id) { var cx = id % OCC.cw, cy = (id - cx) / OCC.cw; fx.fillRect(ox + cx * OCC_G * SCALE * DPR, oy + cy * OCC_G * SCALE * DPR, cs, cs); });
+      var cs = OCC_G * VSC * DPR + 1, ox = (VW / 2 - S.cam.x * VSC) * DPR, oy = (VH / 2 - S.cam.y * VSC) * DPR;
+      OCC.cells.forEach(function (id) { var cx = id % OCC.cw, cy = (id - cx) / OCC.cw; fx.fillRect(ox + cx * OCC_G * VSC * DPR, oy + cy * OCC_G * VSC * DPR, cs, cs); });
     }
     c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(fogCv, 0, 0); c.setTransform(DPR, 0, 0, DPR, 0, 0);
   } else if (me && !me.alive) {
     c.fillStyle = 'rgba(40,50,120,.14)'; c.fillRect(0, 0, VW, VH);
   }
+  // レティクルは霧の上に描く(霧の外でも、レティクルは見える)
+  c.save(); c.translate(VW / 2 - S.cam.x * VSC, VH / 2 - S.cam.y * VSC); c.scale(VSC, VSC);
+  drawReticles(c, st, me, now);
+  c.restore();
   drawBeacons(c, st, now);
   drawTrack(c, st, now);
 }
@@ -6601,7 +6836,7 @@ function trackTarget(st, me) {
 function drawTrack(c, st, now) {
   var tg = trackTarget(st, myPlayer());
   if (!tg) return;
-  var sx = VW / 2 + (tg.x - S.me.x) * SCALE, sy = VH / 2 + (tg.y - S.me.y) * SCALE, mg = 56;
+  var sx = VW / 2 + (tg.x - S.cam.x) * VSC, sy = VH / 2 + (tg.y - S.cam.y) * VSC, mg = 56;
   var col = '#ffd24d', bob = 4 * Math.sin(now / 160);
   c.save(); c.lineJoin = 'round'; c.font = '700 12px "Zen Maru Gothic", sans-serif'; c.textAlign = 'center';
   if (sx > 20 && sx < VW - 20 && sy > mg && sy < VH - 20) {
@@ -6634,7 +6869,7 @@ function drawBeacons(c, st, now) {
   var mg = 56;
   pts.forEach(function (pt) {
     var i = pt.i;
-    var sx = VW / 2 + (pt.x - S.me.x) * SCALE, sy = VH / 2 + (pt.y - S.me.y) * SCALE;
+    var sx = VW / 2 + (pt.x - S.cam.x) * VSC, sy = VH / 2 + (pt.y - S.cam.y) * VSC;
     if (sx > 20 && sx < VW - 20 && sy > mg && sy < VH - 20) return;
     var ang = Math.atan2(sy - VH / 2, sx - VW / 2), ex = VW / 2 - 30, ey = VH / 2 - 52;
     var k = Math.min(Math.abs(ex / (Math.cos(ang) || 1e-6)), Math.abs(ey / (Math.sin(ang) || 1e-6)));
@@ -6665,6 +6900,45 @@ function stepVis(dt) {
 
 /* ---------- 入力と移動 ---------- */
 function typing() { var a = document.activeElement; return !!(a && (a.tagName === 'INPUT' || a.tagName === 'SELECT' || a.tagName === 'TEXTAREA')); }
+var RET_SPEED = 620; // レティクルが動く速さ(1秒あたり。広いマップでは速くなる)
+// レティクルの下にいる、いちばん近い1人(見えている人だけ)
+function reticleTarget(st) {
+  if (!S.ret) return null;
+  var best = null, bd = E.SNIPE_HIT; // 狙撃中は画面の中の全員が見えているので、誰でも捕捉できる(仲間は撃てない)
+  st.order.forEach(function (id) {
+    var p = st.players[id];
+    if (!p || id === S.pid || !p.alive || p.left || p.iv) return;
+    var v = S.vis[id]; if (!v) return;
+    if (E.ROLES[p.role].team === 'impostor') return;
+    var d = Math.hypot(v.x - S.ret.x, v.y - S.ret.y);
+    if (d <= bd) { bd = d; best = id; }
+  });
+  return best;
+}
+function startAim() {
+  S.ret = { x: S.me.x, y: S.me.y }; S.retAt = Date.now(); S.retSent = 0;
+  S.joy.x = 0; S.joy.y = 0; SND.play('wavelock', { vol: 0.8 });
+  sendAct({ type: 'aim', on: 1, x: Math.round(S.ret.x), y: Math.round(S.ret.y) });
+}
+function endAim() {
+  if (!S.ret) return;
+  S.ret = null;
+  sendAct({ type: 'aim', on: 0 });
+}
+function fireSnipe() {
+  var st = S.state; if (!S.ret || !st || !reticleTarget(st)) return; // レティクルの中に撃てる人がいないときは、撃てない
+  sendAct({ type: 'aim', on: 1, x: Math.round(S.ret.x), y: Math.round(S.ret.y) });
+  sendAct({ type: 'snipe' }); SND.play('wavefire', { vol: 0.55 });
+  S.ret = null;
+}
+// レティクルの状態の見張り(ホストが取り消した・撃った・倒された、など)と、ホストへの位置の送信
+function reticleTick(st, me) {
+  var ts = Date.now();
+  if (!S.ret) return;
+  if (!me || !me.alive || me.role !== 'sniper' || st.phase !== 'play') { S.ret = null; return; }
+  if (!me.ar && ts - S.retAt > 1500) { S.ret = null; return; }
+  if (S.isHost && ts - S.retSent > 90) { S.retSent = ts; E.act(S.hostState, S.pid, { type: 'aim', on: 1, x: Math.round(S.ret.x), y: Math.round(S.ret.y) }, hostCtx()); touch(); }
+}
 function moveVec() {
   var vx = S.joy.x, vy = S.joy.y;
   if (Math.hypot(vx, vy) < 0.15) {
@@ -6689,6 +6963,16 @@ function moveMe(dt) {
   var ox = S.me.x, oy = S.me.y;
   // 向き(波動砲を撃つ方向)。動こうとした方向を覚えておく
   if (len >= 0.2) { S.aim = { x: v[0] / len, y: v[1] / len }; }
+  // 狙撃のレティクルを出している間は、自分は動けず、操作でレティクルが動く
+  if (!ghost && me && S.ret) {
+    var rv0 = v[0], rv1 = v[1];
+    if (len >= 0.12) {
+      if (len > 1) { rv0 /= len; rv1 /= len; }
+      S.ret.x += rv0 * RET_SPEED * dt; S.ret.y += rv1 * RET_SPEED * dt;
+    }
+    S.ret.x = Math.max(0, Math.min(E.WORLD.w, S.ret.x)); S.ret.y = Math.max(0, Math.min(E.WORLD.h, S.ret.y)); // マップのどこへでも動かせる(画面がついていく)
+    S.me.w = 0; return;
+  }
   // シールド展開中・波動砲のため中は動けない
   if (!ghost && me && (me.wv || (me.sh || 0) > tnow())) { S.me.w = 0; return; }
   if (len >= 0.12) {
@@ -6736,14 +7020,14 @@ function nearest(list, from, range) {
   return best;
 }
 function computeNear(st, me) {
-  var near = { task: -1, step: 0, table: false, vent: -1, body: null, portal: -1, panel: false, hall: -1, fix: -1, counter: false };
+  var near = { task: -1, step: 0, table: false, vent: -1, body: null, portal: -1, panel: false, hall: -1, fix: -1, counter: false, d: {} }; // d: それぞれまでの距離(「使う」ボタンは、いちばん近いものに切り替わる)
   if (!me) return near;
   var G = E.GIM, now = tnow(), jamOn = st.jamUntil > now;
   if (me.alive && teamOf(me) !== 'impostor' && E.M.crisis && (st.crisis || jamOn)) {
     var fb = nearest(E.M.crisis.points.map(function (q, i) { return { x: q.x, y: q.y, i: i }; }).filter(function (q) { return !(st.crisis && st.crisis.fixed[q.i]); }), S.me, 110);
-    if (fb) near.fix = fb.i;
+    if (fb) { near.fix = fb.i; near.d.fix = Math.hypot(fb.x - S.me.x, fb.y - S.me.y); }
   }
-  if (me.tasks && !jamOn) {
+  if (me.tasks && !(jamOn && teamOf(me) !== 'impostor')) {
     var cands = [];
     me.tasks.forEach(function (t) {
       if (t.done) return;
@@ -6751,17 +7035,17 @@ function computeNear(st, me) {
       if (stp) cands.push({ x: stp.x, y: stp.y, s: t.s, st: t.p || 0 });
     });
     var best = nearest(cands, S.me, 85);
-    if (best) { near.task = best.s; near.step = best.st; }
+    if (best) { near.task = best.s; near.step = best.st; near.d.task = Math.hypot(best.x - S.me.x, best.y - S.me.y); }
   }
-  if (me.alive && E.dist(S.me, E.TABLE) <= 120 && (me.em || 0) < st.settings.emergencyN && tnow() - st.roundStart >= 8000) near.table = true;
+  if (me.alive && E.dist(S.me, E.TABLE) <= 120 && (me.em || 0) < st.settings.emergencyN && tnow() - st.roundStart >= 8000) { near.table = true; near.d.table = E.dist(S.me, E.TABLE); }
   var vi = nearest(E.VENTS.map(function (v, i) { return { x: v.x, y: v.y, i: i }; }), S.me, 90);
-  if (vi) near.vent = vi.i;
+  if (vi) { near.vent = vi.i; near.d.vent = Math.hypot(vi.x - S.me.x, vi.y - S.me.y); }
   var bb = nearest(st.bodies.map(function (b) { return { x: b.x, y: b.y, id: b.id }; }), S.me, 150);
   if (bb) near.body = bb.id;
-  if (me.alive && G.portals) near.portal = E.portalNear(S.me.x, S.me.y, 100);
-  if (me.alive && E.M.counter && !(jamOn && teamOf(me) !== 'impostor') && E.dist(S.me, E.M.counter) <= 100) near.counter = true;
+  if (me.alive && G.portals) { near.portal = E.portalNear(S.me.x, S.me.y, 100); if (near.portal >= 0) near.d.portal = Math.hypot(G.portals[near.portal].x - S.me.x, G.portals[near.portal].y - S.me.y); }
+  if (me.alive && E.M.counter && !(jamOn && teamOf(me) !== 'impostor') && E.dist(S.me, E.M.counter) <= 100) { near.counter = true; near.d.counter = E.dist(S.me, E.M.counter); }
   if (!near.counter && S.overlay === 'count') setOverlay(null); // 離れたら(通信妨害・倒れたときも)見えなくなる
-  if (me.alive && G.panel && st.blackoutUntil > now && teamOf(me) !== 'impostor' && E.dist(S.me, G.panel) <= 110) near.panel = true;
+  if (me.alive && G.panel && st.blackoutUntil > now && teamOf(me) !== 'impostor' && E.dist(S.me, G.panel) <= 110) { near.panel = true; near.d.panel = E.dist(S.me, G.panel); }
   if (me.alive && G.doors) near.hall = E.hallNear(S.me.x, S.me.y, 140);
   return near;
 }
@@ -6785,31 +7069,68 @@ function computeActions(st, me) {
   // ベントの中: 行き先のベント(視点を移す)と、外に出るボタンだけを出す
   if (alive && me.iv) {
     var cv0 = E.VENTS[me.iv.i], vcol = R.team === 'impostor' ? 'var(--imp)' : 'var(--crew)';
+    // 移れるベントの方向に、三角のマークを出す(押すとそのベントへ移る)
+    var tg = [];
     E.VENTS.forEach(function (v, i) {
       if (!cv0 || i === me.iv.i || v.net !== cv0.net) return;
       var rn = E.ROOMS.filter(function (r) { return r.id === v.r; })[0];
-      list.push({ id: 'ventgo' + i, label: rn ? rn.n : 'ベント', sub: '視点を移す', color: vcol, ready: true, press: function () { sendAct({ type: 'vent', to: i }); } });
+      tg.push({ i: i, ang: Math.atan2(v.y - cv0.y, v.x - cv0.x), n: rn ? rn.n : 'ベント' });
+    });
+    tg.sort(function (x, y) { return x.ang - y.ang; });
+    for (var q = 1; q < tg.length; q++) if (tg[q].ang - tg[q - 1].ang < 0.6) tg[q].ang = tg[q - 1].ang + 0.6; // 同じ方向のものは、少しずらす
+    tg.forEach(function (t) {
+      (function (i) {
+        list.push({ id: 'ventgo' + i, hidden: true, label: t.n, color: vcol, ready: true, tri: { dx: Math.cos(t.ang) * 112, dy: Math.sin(t.ang) * 112, rot: t.ang, n: t.n }, press: function () { sendAct({ type: 'vent', to: i }); } });
+      })(t.i);
     });
     list.push({ id: 'vent', label: '出る', sub: 'ここから外へ', big: true, color: vcol, ready: true, press: function () { sendAct({ type: 'ventout' }); } });
     return list;
   }
   function cd(t, total) { var l = Math.max(0, t - now); return { left: l, ratio: total ? Math.min(1, l / total) : 0 }; }
-  // 使う
-  // タスクのボタンの文字は「タスク」で統一(タスク名は小さく添える)。停電の復旧・緊急事態の修理も、このボタンで行う(急ぎなので先に)
-  var rep = near.panel ? 'panel' : near.fix >= 0 ? 'fix' : '';
-  var repSub = rep === 'panel' ? '停電の復旧' : rep === 'fix' ? (st.crisis ? '緊急事態の修理' : '通信の復旧') : '';
-  var useLabel = rep || near.task >= 0 ? 'タスク' : near.table ? '緊急会議' : near.counter ? '人数確認' : '調べる';
-  list.push({ id: 'use', label: useLabel, big: true, color: 'var(--accent)', sub: rep ? repSub : near.task >= 0 ? E.TASKS[near.task].n : '', ready: !!rep || near.task >= 0 || near.table || near.counter,
-    press: function () { if (rep === 'panel') openPanel(); else if (rep === 'fix') openRepair(near.fix); else if (near.task >= 0) openTask(near.task); else if (near.table) sendAct({ type: 'emergency' }); else if (near.counter) setOverlay('count'); } });
-  var G = E.GIM;
-  if (alive && G.portals) list.push({ id: 'portal', label: '隠し扉', color: 'var(--neu)', ready: near.portal >= 0 && now >= (me.cp || 0), cd: cd(me.cp || 0, 2500).ratio, press: function () { sendAct({ type: 'portal' }); } });
-  if (alive) list.push({ id: 'report', label: '通報', color: 'var(--warn)', ready: near.body != null, press: function () { sendAct({ type: 'report', b: near.body }); } });
+  // 狙撃のレティクルを出している間は、発射ややめるのボタンだけ(ほかの操作はできない)
+  if (alive && S.ret && me.role === 'sniper') {
+    var rtg0 = reticleTarget(st);
+    S.targetPid = rtg0;
+    return [
+      { id: 'snipefire', label: '発射', color: 'var(--imp)', sub: rtg0 ? '捕捉' : '狙う相手なし', ready: !!rtg0, big: true, press: function () { fireSnipe(); } },
+      { id: 'snipecancel', label: 'やめる', color: 'var(--warn)', ready: true, press: function () { endAim(); } }
+    ];
+  }
+  // 使う(Among Us と同じ: 1つのボタンが、近くにあるものに応じて切り替わる)
+  // 停電の復旧・緊急事態の修理は急ぎなので先に。そのほかは、いちばん近いものを使う。
+  var G = E.GIM, ventRole = alive && (R.vent || me.role === 'engineer');
+  var ventOk = ventRole && near.vent >= 0 && now >= (me.vx || 0) && (me.role !== 'engineer' || (me.u || 0) > 0);
+  var ventCol = R.team === 'impostor' ? 'var(--imp)' : 'var(--crew)', ventSub = me.role === 'engineer' ? '残り' + (me.u || 0) : '';
+  var portalOk = alive && G.portals && near.portal >= 0 && now >= (me.cp || 0);
+  var useItem;
+  if (near.panel || near.fix >= 0) {
+    var rep = near.panel ? 'panel' : 'fix';
+    useItem = { label: 'タスク', sub: rep === 'panel' ? '停電の復旧' : (st.crisis ? '緊急事態の修理' : '通信の復旧'), color: 'var(--accent)', ready: true, press: function () { if (rep === 'panel') openPanel(); else openRepair(near.fix); } };
+  } else {
+    var cands = [];
+    if (near.task >= 0) cands.push({ d: near.d.task, o: 1, it: { label: 'タスク', sub: E.TASKS[near.task].n, color: 'var(--accent)', press: function () { openTask(near.task); } } });
+    if (near.table) cands.push({ d: near.d.table, o: 2, it: { label: '緊急会議', color: 'var(--accent)', press: function () { sendAct({ type: 'emergency' }); } } });
+    if (near.counter) cands.push({ d: near.d.counter, o: 3, it: { label: '人数確認', color: 'var(--accent)', press: function () { setOverlay('count'); } } });
+    if (portalOk) cands.push({ d: near.d.portal, o: 4, it: { label: '隠し扉', color: 'var(--neu)', press: function () { sendAct({ type: 'portal' }); } } });
+    if (ventOk) cands.push({ d: near.d.vent, o: 5, it: { kind: 'vent', label: 'ベント', sub: ventSub, color: ventCol, press: function () { sendAct({ type: 'ventin', to: near.vent }); } } });
+    cands.sort(function (x, y) { return x.d - y.d || x.o - y.o; });
+    if (cands.length) useItem = Object.assign({ ready: true }, cands[0].it);
+    else if (ventRole && near.vent >= 0) useItem = { kind: 'vent', label: 'ベント', sub: ventSub, color: ventCol, ready: false, press: function () {} };
+    else useItem = { label: '調べる', color: 'var(--accent)', ready: false, press: function () {} };
+  }
+  useItem.id = 'use'; useItem.big = true; list.push(useItem);
+  if (alive && near.body != null) list.push({ id: 'report', label: '通報', color: 'var(--warn)', ready: true, press: function () { sendAct({ type: 'report', b: near.body }); } }); // 遺体の近くだけ出る
   if (!alive) return list;
   var tgtRange = s.killRange, tgt = null;
-  if (R.kill || (R.wave && s.waveKill)) {
+  var canKillN = E.canNormalKill(me, s);
+  if (canKillN) {
     tgt = nearestTarget(st, me, tgtRange, function (p) { return E.canTarget(me, p) && !(R.bite && p.bt); });
     var c1 = cd(me.ck || 0, s.killCd * 1000);
     list.push({ id: 'kill', label: R.bite ? '噛む' : '襲撃', color: 'var(--imp)', ready: !!tgt && c1.left === 0, cd: c1.ratio, sub: c1.left ? Math.ceil(c1.left / 1000) + '秒' : '', press: function () { sendAct({ type: 'kill', t: tgt }); } });
+    if (R.bite && s.vampKill) {
+      var tgtN = nearestTarget(st, me, tgtRange, function (p) { return E.canTarget(me, p); });
+      list.push({ id: 'nkill', label: '襲撃', color: 'var(--imp)', ready: !!tgtN && c1.left === 0, cd: c1.ratio, sub: c1.left ? Math.ceil(c1.left / 1000) + '秒' : '', press: function () { sendAct({ type: 'nkill', t: tgtN }); } });
+    }
   }
   if (me.role === 'vampire' && s.vampireThrall) {
     var tt = nearestTarget(st, me, tgtRange + 40, function (p) { return E.ROLES[p.role].team !== 'impostor'; });
@@ -6824,9 +7145,14 @@ function computeActions(st, me) {
     list.push({ id: 'clean', label: '掃除', color: 'var(--imp)', sub: ccl.left ? Math.ceil(ccl.left / 1000) + '秒' : '', ready: near.body != null && ccl.left === 0, cd: ccl.ratio, press: function () { sendAct({ type: 'clean', b: near.body }); } });
   }
   if (me.role === 'sniper') {
-    tgt = nearestTarget(st, me, s.snipeRange);
     var cs2 = cd(me.ca || 0, s.snipeCd * 1000);
-    list.push({ id: 'snipe', label: '狙撃', color: 'var(--imp)', sub: '残り' + (me.u || 0), ready: !!tgt && (me.u || 0) > 0 && cs2.left === 0, cd: cs2.ratio, press: function () { sendAct({ type: 'snipe', t: tgt }); } });
+    if (S.ret) { // レティクルで狙っている間
+      var rtg = reticleTarget(st);
+      list.push({ id: 'snipefire', label: '発射', color: 'var(--imp)', sub: rtg ? '捕捉' : '', ready: true, press: function () { fireSnipe(); } });
+      list.push({ id: 'snipecancel', label: 'やめる', color: 'var(--warn)', ready: true, press: function () { endAim(); } });
+    } else {
+      list.push({ id: 'snipe', label: '狙撃', color: 'var(--imp)', sub: cs2.left ? Math.ceil(cs2.left / 1000) + '秒' : '残り' + (me.u || 0), ready: (me.u || 0) > 0 && cs2.left === 0, cd: cs2.ratio, press: function () { startAim(); } });
+    }
   }
   if (me.role === 'sheriff') {
     tgt = nearestTarget(st, me, tgtRange);
@@ -6850,9 +7176,6 @@ function computeActions(st, me) {
     var c3 = cd(me.ca || 0, 5000);
     list.push({ id: 'inspect', label: '鑑識', color: 'var(--crew)', sub: '残り' + (me.u || 0), ready: near.body != null && (me.u || 0) > 0 && c3.left === 0, cd: c3.ratio, press: function () { sendAct({ type: 'inspect', b: near.body }); } });
   }
-  if (R.vent || me.role === 'engineer') {
-    list.push({ id: 'vent', label: 'ベント', color: R.team === 'impostor' ? 'var(--imp)' : 'var(--crew)', sub: me.role === 'engineer' ? '残り' + (me.u || 0) : '', ready: near.vent >= 0 && tnow() >= (me.vx || 0) && (me.role !== 'engineer' || (me.u || 0) > 0), press: function () { sendAct({ type: 'ventin', to: near.vent }); } });
-  }
   if (R.sab) {
     var c5 = cd(me.cs || 0, s.sabCd * 1000);
     list.push({ id: 'sab', label: '妨害', color: 'var(--imp)', ready: c5.left === 0 && !E.sabActive(st, now), cd: c5.ratio, sub: c5.left ? Math.ceil(c5.left / 1000) + '秒' : (E.sabActive(st, now) ? '発動中' : ''), press: openSab });
@@ -6869,26 +7192,45 @@ function computeActions(st, me) {
     list.push({ id: 'douse', label: 'ガソリン', color: 'var(--neu)', sub: doused + '/' + others.length, ready: !!tgt && c6.left === 0, cd: c6.ratio, press: function () { sendAct({ type: 'douse', t: tgt }); } });
     list.push({ id: 'ignite', label: '点火', color: 'var(--imp)', ready: others.length > 0 && doused === others.length, press: function () { sendAct({ type: 'ignite' }); } });
   }
-  S.targetPid = (R.kill || (R.wave && s.waveKill) || me.role === 'sheriff' || me.role === 'sniper' || me.role === 'guardian' || me.role === 'arsonist') ? tgt : null;
+  S.targetPid = (canKillN || me.role === 'sheriff' || me.role === 'guardian' || me.role === 'arsonist') ? tgt : (S.ret ? reticleTarget(st) : null);
   return list;
 }
-function syncActionButtons(list) {
-  var box = $('acts'), sig = list.map(function (a) { return a.id; }).join(',');
+// 右下のボタン。基本の操作(使う・通報・ベントから出る)は下の段、役職のボタンは、その上の2段目に横一列に並べる。
+// 役職ボタンが多いとき(通報を除いて4つ以上)だけ2段にする。少ないときは1段に並べる。
+var ACT_COMMON = { use: 1, report: 1, vent: 1 };
+function syncVentArrows(items) {
+  var box = $('ventarrows'); if (!box) return;
+  var sig = items.map(function (a) { return a.id; }).join(',');
+  if (box.getAttribute('data-sig') === sig) return;
+  box.setAttribute('data-sig', sig); clear(box);
+  items.forEach(function (a, ix) {
+    var b = h('button', { class: 'vtri', type: 'button', 'data-id': a.id, style: 'left:calc(50% + ' + a.tri.dx.toFixed(0) + 'px);top:calc(50% + ' + a.tri.dy.toFixed(0) + 'px);--c:' + a.color }, [h('i', { style: 'transform:rotate(' + a.tri.rot.toFixed(3) + 'rad)' }), h('small', { text: (S.pc ? (ix + 1) + ' ' : '') + a.tri.n })]);
+    b.addEventListener('pointerdown', function (e) { e.preventDefault(); var cur = S.actList && S.actList.filter(function (x) { return x.id === a.id; })[0]; if (cur && cur.ready) cur.press(); });
+    box.appendChild(b);
+  });
+}
+function syncActionButtons(full) {
+  var list = full.filter(function (a) { return !a.hidden; });
+  syncVentArrows(full.filter(function (a) { return a.tri; }));
+  var box = $('acts'), two = list.filter(function (a) { return a.id !== 'report'; }).length >= 4;
+  var ord = list.slice().sort(function (x, y) { var ox = x.id === 'use' ? 0 : x.id === 'report' ? 1 : 2, oy = y.id === 'use' ? 0 : y.id === 'report' ? 1 : 2; return ox - oy; });
+  var sig = (two ? '2' : '1') + ord.map(function (a) { return a.id; }).join(',');
   if (box.getAttribute('data-sig') !== sig) {
     box.setAttribute('data-sig', sig); clear(box);
-    list.forEach(function (a, i) {
+    var c1 = h('div', { class: 'arow' }), c2 = two ? h('div', { class: 'arow' }) : null;
+    ord.forEach(function (a) {
       var b = h('button', { class: 'act' + (a.big ? ' big' : ''), type: 'button', 'data-id': a.id, style: '--c:' + a.color }, [h('span', { class: 'in' }, [h('span', { class: 'lb' }), h('small')]), h('span', { class: 'kb' })]);
       b.addEventListener('pointerdown', function (e) {
         e.preventDefault();
         var cur = S.actList && S.actList.filter(function (x) { return x.id === a.id; })[0];
         if (cur && cur.ready) cur.press();
       });
-      box.appendChild(b);
+      (two && !ACT_COMMON[a.id] ? c2 : c1).appendChild(b);
     });
+    box.appendChild(c1); if (c2) box.appendChild(c2);
   }
   list.forEach(function (a) {
-    var b = null;
-    for (var i = 0; i < box.children.length; i++) if (box.children[i].getAttribute('data-id') === a.id) b = box.children[i];
+    var b = box.querySelector('[data-id="' + a.id + '"]');
     if (!b) return;
     var lb = b.querySelector('.lb'), sm = b.querySelector('small');
     if (lb.textContent !== a.label) lb.textContent = a.label;
@@ -6948,7 +7290,7 @@ function updateHud(st, me) {
   }
   var bn = $('banner'), txt = '', alert = false;
   if (!me) txt = '観戦中(次の試合から参加できます)';
-  else if (me.alive && me.iv) txt = 'ベントの中です。ボタンで別のベントへ視点を移せます。「出る」で、いまいるベントから外に出ます';
+  else if (me.alive && me.iv) txt = 'ベントの中です。三角のマークを押すと、その方向のベントへ移ります。「出る」で、いまいるベントから外に出ます';
   else if (!me.alive) txt = 'あなたは死亡しました。幽霊として見守れます' + (me.tasks ? '。タスクは続けられます' : '');
   else if (st.crisis && E.M.crisis) {
     var left = Math.max(0, Math.ceil((st.crisis.until - tn) / 1000)), nfx = st.crisis.fixed.filter(function (v) { return v; }).length;
@@ -6964,6 +7306,7 @@ function updateHud(st, me) {
   }
   else if (st.blackoutUntil > tn && teamOf(me) === 'impostor') { txt = '停電を起こしている(直されるまで続く)'; }
   else if (st.blackoutUntil > tn && teamOf(me) === 'crew') { var pr = E.GIM.panel && E.roomAt(E.GIM.panel.x, E.GIM.panel.y); txt = '停電中! 視界が狭いまま。' + (pr ? pr.n + 'の' : '') + '配電盤で復旧しよう'; alert = true; }
+  else if (S.ret) { txt = 'レティクルを動かして狙う(動けません)。相手に重ねて「発射」'; }
   else if (me.wv) { txt = '波動砲をためています…動けません'; }
   else if ((me.sh || 0) > tn) { txt = 'シールド展開中…動けません'; }
   if (txt) { bn.hidden = false; if (bn.textContent !== txt) bn.textContent = txt; bn.className = 'banner' + (alert ? ' alert' : ''); } else bn.hidden = true;
@@ -6982,7 +7325,7 @@ function frame(ts) {
   $('s-game').classList.toggle('lobbymode', inLobby);
   if (inLobby) {
     lobbyPlace(st);
-    moveMe(dt); stepVis(dt);
+    moveMe(dt); stepVis(dt); S.cam = { x: S.me.x, y: S.me.y }; S.zoom = 1;
     S.nearInfo = lobbyNear(); S.actList = computeLobbyActions(st); S.targetPid = null;
     syncActionButtons(S.actList);
     updateLobbyHud(st);
@@ -6990,7 +7333,7 @@ function frame(ts) {
     if (!S.lastPresence || ts - S.lastPresence > 80) { S.lastPresence = ts; sendPresence(false); }
   } else if (S.mode && st) {
     S.placed = false;
-    moveMe(dt); stepVis(dt);
+    moveMe(dt); stepVis(dt); reticleTick(st, me); camStep(dt);
     if (st.phase === 'play') {
       S.nearInfo = computeNear(st, me);
       S.actList = computeActions(st, me);
