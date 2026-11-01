@@ -146,8 +146,8 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 .arow { display: flex; flex-direction: row-reverse; flex-wrap: wrap-reverse; justify-content: flex-start; align-items: flex-end; gap: 10px; }
 .ventarrows { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
 .vtri { position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px; padding: 0; border: 0; background: none; pointer-events: auto; touch-action: none; display: grid; place-items: center; cursor: pointer; }
-.vtri i { grid-area: 1 / 1; width: 46px; height: 46px; background: var(--c, var(--imp)); clip-path: polygon(100% 50%, 18% 4%, 18% 96%); filter: drop-shadow(0 0 7px var(--c, var(--imp))); animation: vtri 1s ease-in-out infinite; }
-.vtri small { grid-area: 1 / 1; align-self: end; margin-bottom: -16px; font-family: var(--font-b); font-size: 11px; font-weight: 700; white-space: nowrap; color: #fff; text-shadow: 0 1px 3px #000, 0 0 6px #000; }
+.vtri i { grid-area: 1 / 1; width: 60px; height: 34px; background: linear-gradient(90deg, var(--c, var(--imp)) 40%, #fff 100%); clip-path: polygon(100% 50%, 0 0, 0 100%); filter: drop-shadow(0 0 7px var(--c, var(--imp))); animation: vtri 1s ease-in-out infinite; }
+.vtri small { grid-area: 1 / 1; align-self: end; margin-bottom: -26px; font-family: var(--font-b); font-size: 11px; font-weight: 700; white-space: nowrap; color: #fff; text-shadow: 0 1px 3px #000, 0 0 6px #000; }
 @keyframes vtri { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
 .vtri:active i { transform-origin: center; filter: brightness(1.5) drop-shadow(0 0 10px var(--c, var(--imp))); }
 .act {
