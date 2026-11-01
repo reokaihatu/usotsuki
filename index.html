@@ -494,6 +494,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 .lobchip, #btn-lobpanel, #btn-setview { display: none; }
 .lobbymode .lobchip { display: block; align-self: center; padding: 6px 12px; border-radius: 10px; background: rgba(13, 19, 34, .86); border: 1px solid var(--line); font-weight: 700; font-size: 13px; white-space: pre; }
 .lobbymode #btn-lobpanel, .lobbymode #btn-setview { display: inline-flex; align-items: center; }
+.lobbymode .hbtn.lv-btn { display: none; }
 .lobbymode #btn-role, .lobbymode .prog, .lobbymode #btn-roles, .lobbymode #btn-map, .lobbymode #tasklist { display: none; }
 .color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 10px; }
 .colcard { display: grid; justify-items: center; gap: 2px; padding: 8px 4px 6px; border-radius: 12px; border: 2px solid var(--line); background: var(--panel); font-size: 12px; font-weight: 700; }
@@ -510,6 +511,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 .sv-row b.sub { font-weight: 600; font-size: 13px; }
 .sv-row b.on { color: var(--ok); }
 .sv-row b.off { color: var(--mute); }
+.lv-btn.ask { background: var(--imp); color: #26060c; border-color: transparent; }
 
 </style>
 </head>
@@ -613,7 +615,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     <div class="hud top">
       <div id="lob-chip" class="lobchip"></div><button id="btn-role" class="rolechip" type="button"><small id="rc-team"></small><span id="rc-name"></span></button>
       <div class="prog" id="prog"><div class="bar"><i id="prog-fill"></i></div><span id="prog-text"></span></div>
-      <div class="hgroup"><button id="btn-snd-g" class="hbtn snd-btn" type="button">音</button><button id="btn-keys-g" class="hbtn" type="button" hidden>キー</button><button id="btn-mic" class="hbtn" type="button" hidden>マイクON</button><button id="btn-vol" class="hbtn" type="button" hidden>音量</button><button id="btn-setview" class="hbtn" type="button">いまの設定</button><button id="btn-lobpanel" class="hbtn" type="button">参加者・設定</button><button id="btn-roles" class="hbtn" type="button">役職一覧</button><button id="btn-map" class="hbtn" type="button">マップ</button></div>
+      <div class="hgroup"><button id="btn-snd-g" class="hbtn snd-btn" type="button">音</button><button id="btn-keys-g" class="hbtn" type="button" hidden>キー</button><button id="btn-mic" class="hbtn" type="button" hidden>マイクON</button><button id="btn-vol" class="hbtn" type="button" hidden>音量</button><button id="btn-setview" class="hbtn" type="button">いまの設定</button><button id="btn-lobpanel" class="hbtn" type="button">参加者・設定</button><button id="btn-roles" class="hbtn" type="button">役職一覧</button><button class="hbtn lv-btn" type="button">退室</button><button id="btn-map" class="hbtn" type="button">マップ</button></div>
     </div>
     <div id="tasklist" class="tasklist"></div>
     <div id="banner" class="banner" hidden></div>
@@ -749,7 +751,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     <div class="box meet">
       <div class="game-head mt-head">
         <div><h2 id="mt-title" style="font-size:28px"></h2><p id="mt-sub" class="small mute"></p></div>
-        <div class="mt-right"><button id="btn-snd-m" class="btn small snd-btn" type="button">音</button><button id="btn-mt-mic" class="btn small" type="button" hidden>マイクON</button><button id="btn-mt-vol" class="btn small" type="button" hidden>音量</button><button id="btn-mt-roles" class="btn small" type="button">役職一覧</button><button id="btn-mt-map" class="btn small" type="button">マップ</button><div style="text-align:right"><div id="mt-stage" class="small mute"></div><div id="mt-timer" class="timer"></div></div></div>
+        <div class="mt-right"><button id="btn-snd-m" class="btn small snd-btn" type="button">音</button><button id="btn-mt-mic" class="btn small" type="button" hidden>マイクON</button><button id="btn-mt-vol" class="btn small" type="button" hidden>音量</button><button id="btn-mt-roles" class="btn small" type="button">役職一覧</button><button class="btn small lv-btn" type="button">退室</button><button id="btn-mt-map" class="btn small" type="button">マップ</button><div style="text-align:right"><div id="mt-stage" class="small mute"></div><div id="mt-timer" class="timer"></div></div></div>
       </div>
       <div class="mt-main">
         <div id="mt-me" class="small mute"></div>
@@ -5563,6 +5565,22 @@ function renderOver() {
   var ctl = $('over-ctl'); clear(ctl);
   if (S.isHost) ctl.appendChild(h('button', { class: 'btn primary block', type: 'button', text: 'ロビーに戻る', onclick: function () { E.backToLobby(S.hostState); S.cardRound = 0; touch(); } }));
   else ctl.appendChild(h('p', { class: 'mute', style: 'text-align:center', text: 'ホストがロビーに戻すのを待っています…' }));
+  ctl.appendChild(h('button', { class: 'btn small block lv-btn' + (leaveAsking() ? ' ask' : ''), type: 'button', text: leaveBtnLabel() }));
+}
+
+/* ---------- ゲーム中の退室(2回押して実行。誤タップ防止) ---------- */
+function leaveAsking() { return !!S.leaveAskAt && Date.now() - S.leaveAskAt < 4000; }
+function leaveBtnLabel() { return leaveAsking() ? '本当に退室?' : '退室'; }
+function refreshLeaveBtns() {
+  var ask = leaveAsking();
+  Array.prototype.forEach.call(document.querySelectorAll('.lv-btn'), function (b) { b.textContent = ask ? '本当に退室?' : '退室'; b.classList.toggle('ask', ask); });
+}
+function leaveClick() {
+  if (leaveAsking()) { S.leaveAskAt = 0; refreshLeaveBtns(); leaveRoom(); renderUI(); return; }
+  S.leaveAskAt = Date.now(); refreshLeaveBtns();
+  var st = S.state, others = st ? st.order.filter(function (id) { return id !== S.pid && st.players[id] && !st.players[id].bot && !st.players[id].left; }).length : 0;
+  toast(S.isHost && others > 0 && S.mode === 'online' ? 'もう一度押すと退室します。あなたはホストなので、ほかの人に引き継がれます(切り替わるまで数秒かかります)' : 'もう一度押すと退室します。ゲームから外れ、倒れた扱いになります');
+  setTimeout(refreshLeaveBtns, 4100);
 }
 
 /* ---------- 待機室: いまの設定の確認(だれでも見られる・読むだけ) ---------- */
@@ -6412,6 +6430,62 @@ function updateLobbyHud(st) {
   var bn = $('banner');
   if (txt) { bn.hidden = false; if (bn.textContent !== txt) bn.textContent = txt; bn.className = 'banner'; } else bn.hidden = true;
 }
+/* ---------- 閉じた通路の向こうは見えない ---------- */
+// 隔壁・ゲートが閉まっているあいだ、そこを通ってしか見えなかった場所(隣の部屋など)を隠す。
+// 「閉じた封鎖を無視すれば歩いてつながる」のに「封鎖を考えるとつながらない」マスが、隠すマス。壁ごしの見え方は、これまでどおり。
+var OCC = { map: '', cw: 0, ch: 0, ok: null, key: '', hid: null, cells: null }, OCC_G = 16;
+function occBuild() {
+  var W = E.WORLD, cw = Math.ceil(W.w / OCC_G), ch = Math.ceil(W.h / OCC_G), ok = new Uint8Array(cw * ch);
+  for (var y = 0; y < ch; y++) for (var x = 0; x < cw; x++) ok[y * cw + x] = E.walkable(x * OCC_G + OCC_G / 2, y * OCC_G + OCC_G / 2, 0) ? 1 : 0;
+  OCC.map = E.M.id; OCC.cw = cw; OCC.ch = ch; OCC.ok = ok; OCC.key = '';
+}
+function occCompute(vr) {
+  var cr = E.closedRects();
+  if (!cr.length || !vr || vr > 5000) { OCC.hid = null; OCC.cells = null; OCC.key = ''; return null; }
+  for (var i = 0; i < cr.length; i++) if (S.me.x >= cr[i].x - 4 && S.me.x <= cr[i].x + cr[i].w + 4 && S.me.y >= cr[i].y - 4 && S.me.y <= cr[i].y + cr[i].h + 4) { OCC.hid = null; OCC.cells = null; OCC.key = ''; return null; } // 封鎖の中にいるときは隠さない
+  if (OCC.map !== E.M.id) occBuild();
+  var mx = Math.floor(S.me.x / OCC_G), my = Math.floor(S.me.y / OCC_G);
+  var key = E.M.id + '|' + mx + ',' + my + '|' + Math.round(vr / 10) + '|' + cr.map(function (q) { return q.x + ',' + q.y + ',' + q.w + ',' + q.h; }).join(';');
+  if (key === OCC.key) return OCC.hid;
+  var cw = OCC.cw, ch = OCC.ch, ok = OCC.ok, R = vr + 60, R2 = R * R, hf = OCC_G / 2;
+  function inClosed(cx, cy) {
+    var px = cx * OCC_G + hf, py = cy * OCC_G + hf;
+    for (var j = 0; j < cr.length; j++) { var q = cr[j]; if (px > q.x - hf && px < q.x + q.w + hf && py > q.y - hf && py < q.y + q.h + hf) return true; }
+    return false;
+  }
+  function flood(blocked) {
+    var seen = new Uint8Array(cw * ch), stack = [my * cw + mx];
+    if (mx < 0 || my < 0 || mx >= cw || my >= ch) return seen;
+    seen[stack[0]] = 1;
+    while (stack.length) {
+      var id = stack.pop(), cx = id % cw, cy = (id - cx) / cw;
+      for (var d = 0; d < 4; d++) {
+        var nx = cx + (d === 0 ? 1 : d === 1 ? -1 : 0), ny = cy + (d === 2 ? 1 : d === 3 ? -1 : 0);
+        if (nx < 0 || ny < 0 || nx >= cw || ny >= ch) continue;
+        var nid = ny * cw + nx;
+        if (seen[nid] || !ok[nid]) continue;
+        var dx = nx * OCC_G + hf - S.me.x, dy = ny * OCC_G + hf - S.me.y;
+        if (dx * dx + dy * dy > R2) continue;
+        if (blocked && inClosed(nx, ny)) continue;
+        seen[nid] = 1; stack.push(nid);
+      }
+    }
+    return seen;
+  }
+  var open = flood(false), shut = flood(true), hid = new Uint8Array(cw * ch), cells = [];
+  for (var k = 0; k < hid.length; k++) {
+    if (open[k] && !shut[k] && !inClosed(k % cw, Math.floor(k / cw))) { hid[k] = 1; cells.push(k); }
+  }
+  OCC.key = key; OCC.hid = cells.length ? hid : null; OCC.cells = cells.length ? cells : null;
+  return OCC.hid;
+}
+function hiddenAt(x, y) {
+  var hid = OCC.hid;
+  if (!hid) return false;
+  var cx = Math.floor(x / OCC_G), cy = Math.floor(y / OCC_G);
+  if (cx < 0 || cy < 0 || cx >= OCC.cw || cy >= OCC.ch) return false;
+  return hid[cy * OCC.cw + cx] === 1;
+}
 function render(dt) {
   var c = g2, now = performance.now();
   c.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -6421,12 +6495,13 @@ function render(dt) {
   if (st.phase === 'lobby') { renderLobbyScene(c, st, now); return; }
   var me = myPlayer(), ghost = !me || !me.alive, watching = false;
   var vr = visionOf(st, me);
+  if (!ghost && st.phase === 'play') occCompute(vr); else { OCC.hid = null; OCC.cells = null; OCC.key = ''; } // 幽霊は、全部見える
   c.save();
   c.translate(VW / 2 - S.me.x * SCALE, VH / 2 - S.me.y * SCALE); c.scale(SCALE, SCALE);
   drawWorld(c, st, me, vr, watching, ghost, now);
 
   var seeAll = ghost || watching;
-  function visible(x, y) { return seeAll || Math.hypot(x - S.me.x, y - S.me.y) <= vr + 12; }
+  function visible(x, y) { return seeAll || (Math.hypot(x - S.me.x, y - S.me.y) <= vr + 12 && !hiddenAt(x, y)); }
   // 遺体
   drawTrails(c, st, visible, now);
   st.bodies.forEach(function (b) {
@@ -6482,6 +6557,11 @@ function render(dt) {
     var gr = fx.createRadialGradient(cx, cy, rr * 0.6, cx, cy, rr);
     gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
     fx.fillStyle = gr; fx.beginPath(); fx.arc(cx, cy, rr, 0, 6.2832); fx.fill();
+    if (OCC.cells) { // 閉じた通路の向こうは、霧で隠す(穴を開けたあとに、もう一度ぬりつぶす)
+      fx.globalCompositeOperation = 'source-over'; fx.fillStyle = themeOf(E.M).fog;
+      var cs = OCC_G * SCALE * DPR + 1, ox = (VW / 2 - S.me.x * SCALE) * DPR, oy = (VH / 2 - S.me.y * SCALE) * DPR;
+      OCC.cells.forEach(function (id) { var cx = id % OCC.cw, cy = (id - cx) / OCC.cw; fx.fillRect(ox + cx * OCC_G * SCALE * DPR, oy + cy * OCC_G * SCALE * DPR, cs, cs); });
+    }
     c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(fogCv, 0, 0); c.setTransform(DPR, 0, 0, DPR, 0, 0);
   } else if (me && !me.alive) {
     c.fillStyle = 'rgba(40,50,120,.14)'; c.fillRect(0, 0, VW, VH);
@@ -6671,6 +6751,7 @@ function nearestTarget(st, me, range, filter) {
     if (!p || id === S.pid || !p.alive || p.left) return;
     if (filter && !filter(p)) return;
     var v = S.vis[id]; if (!v) return;
+    if (hiddenAt(v.x, v.y)) return; // 閉じた通路の向こうの相手は、狙えない
     cands.push({ x: v.x, y: v.y, id: id });
   });
   var b = nearest(cands, S.me, range);
@@ -6949,6 +7030,7 @@ function bindUi() {
   $('btn-fillbot').addEventListener('click', function () { var st = S.hostState; if (!st) return; while (st.order.length < 4) { var before = st.order.length; addBot(); if (st.order.length === before) break; } });
   $('btn-start').addEventListener('click', lobbyStart);
   $('btn-lobby-x').addEventListener('click', closeLobbyPanel);
+  document.addEventListener('click', function (e) { var b = e.target && e.target.closest ? e.target.closest('.lv-btn') : null; if (b) leaveClick(); });
   $('btn-lobpanel').addEventListener('click', openLobbyPanel);
   $('btn-color-x').addEventListener('click', function () { setOverlay(null); });
   $('btn-setview').addEventListener('click', openSetView);
