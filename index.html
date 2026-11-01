@@ -414,11 +414,6 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 
 /* 人数モニター・会議の能力パネル・波動砲/シールドの表示 */
 #ov-count { z-index: 61; }
-#ov-cam { z-index: 61; }
-.count-list { display: flex; flex-wrap: wrap; gap: 6px; }
-.count-list .cn { border: 1px solid var(--line, #2b365f); border-radius: 10px; padding: 4px 10px; font-size: 13px; background: rgba(255, 255, 255, .04); }
-.count-list .cn b { margin-left: 6px; color: #ffd24d; font-size: 15px; }
-.count-list .cn.zero { opacity: .45; }
 .skill-panel { border: 1px solid var(--crew); border-radius: 12px; padding: 12px; display: grid; gap: 8px; background: rgba(79, 184, 166, .08); }
 .skill-panel.fort { border-color: var(--neu); background: rgba(169, 139, 255, .08); }
 .skill-panel .row { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -496,15 +491,25 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 
 /* ---------- 待機室(歩き回れるロビー) ---------- */
 #s-lobby { position: fixed; inset: 0; z-index: 45; overflow-y: auto; background: var(--bg); }
-.lobchip, #btn-lobpanel { display: none; }
+.lobchip, #btn-lobpanel, #btn-setview { display: none; }
 .lobbymode .lobchip { display: block; align-self: center; padding: 6px 12px; border-radius: 10px; background: rgba(13, 19, 34, .86); border: 1px solid var(--line); font-weight: 700; font-size: 13px; white-space: pre; }
-.lobbymode #btn-lobpanel { display: inline-flex; align-items: center; }
+.lobbymode #btn-lobpanel, .lobbymode #btn-setview { display: inline-flex; align-items: center; }
 .lobbymode #btn-role, .lobbymode .prog, .lobbymode #btn-roles, .lobbymode #btn-map, .lobbymode #tasklist { display: none; }
 .color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 10px; }
 .colcard { display: grid; justify-items: center; gap: 2px; padding: 8px 4px 6px; border-radius: 12px; border: 2px solid var(--line); background: var(--panel); font-size: 12px; font-weight: 700; }
 .colcard.on { border-color: var(--accent); background: var(--panel2); }
 .colcard[disabled] { opacity: .45; cursor: not-allowed; }
 .colcard canvas { width: 72px; height: 84px; }
+.setview { display: grid; gap: 14px; }
+.sv-sec { display: grid; gap: 2px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.sv-sec h3 { font-size: 17px; margin-bottom: 4px; }
+.sv-row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-top: 1px solid rgba(147, 169, 255, .12); font-size: 14px; }
+.sv-row:first-of-type { border-top: 0; }
+.sv-row .k { color: var(--mute); min-width: 0; }
+.sv-row b { text-align: right; white-space: nowrap; }
+.sv-row b.sub { font-weight: 600; font-size: 13px; }
+.sv-row b.on { color: var(--ok); }
+.sv-row b.off { color: var(--mute); }
 
 </style>
 </head>
@@ -608,7 +613,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     <div class="hud top">
       <div id="lob-chip" class="lobchip"></div><button id="btn-role" class="rolechip" type="button"><small id="rc-team"></small><span id="rc-name"></span></button>
       <div class="prog" id="prog"><div class="bar"><i id="prog-fill"></i></div><span id="prog-text"></span></div>
-      <div class="hgroup"><button id="btn-snd-g" class="hbtn snd-btn" type="button">音</button><button id="btn-keys-g" class="hbtn" type="button" hidden>キー</button><button id="btn-mic" class="hbtn" type="button" hidden>マイクON</button><button id="btn-vol" class="hbtn" type="button" hidden>音量</button><button id="btn-lobpanel" class="hbtn" type="button">参加者・設定</button><button id="btn-roles" class="hbtn" type="button">役職一覧</button><button id="btn-map" class="hbtn" type="button">マップ</button></div>
+      <div class="hgroup"><button id="btn-snd-g" class="hbtn snd-btn" type="button">音</button><button id="btn-keys-g" class="hbtn" type="button" hidden>キー</button><button id="btn-mic" class="hbtn" type="button" hidden>マイクON</button><button id="btn-vol" class="hbtn" type="button" hidden>音量</button><button id="btn-setview" class="hbtn" type="button">いまの設定</button><button id="btn-lobpanel" class="hbtn" type="button">参加者・設定</button><button id="btn-roles" class="hbtn" type="button">役職一覧</button><button id="btn-map" class="hbtn" type="button">マップ</button></div>
     </div>
     <div id="tasklist" class="tasklist"></div>
     <div id="banner" class="banner" hidden></div>
@@ -707,17 +712,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     <div class="box map-box">
       <div class="game-head"><h2 style="font-size:24px">人数モニター</h2><button id="btn-count-x" class="btn small" type="button">閉じる</button></div>
       <canvas id="cv-count" class="mapbox" width="800" height="500"></canvas>
-      <p class="small mute" id="count-note">部屋ごとの、いまの人数です。遺体も1人として数えます。通路にいる人は数えません。</p>
-      <div id="count-list" class="count-list"></div>
-    </div>
-  </div>
-
-  <!-- 監視カメラ -->
-  <div id="ov-cam" class="ov" hidden>
-    <div class="box map-box">
-      <div class="game-head"><h2 style="font-size:24px">監視カメラ</h2><button id="btn-cam-x" class="btn small" type="button">閉じる</button></div>
-      <canvas id="cv-cam" class="mapbox" width="800" height="500"></canvas>
-      <p class="small mute" id="cam-note">部屋ごとの、いまの様子です。人のマークの数だけがわかります(だれなのか、生きているのか遺体なのかもわかりません)。通路にいる人は映りません。</p>
+      <p class="small mute" id="count-note">部屋ごとの、いまの様子です。モニターの前に留まっているあいだだけ見えます。人のマークの数だけがわかります(だれなのか、生きているのか遺体なのかもわかりません)。通路にいる人は映りません。</p>
     </div>
   </div>
 
@@ -727,6 +722,15 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
       <div class="game-head"><h2 style="font-size:24px">着替え</h2><button id="btn-color-x" class="btn small" type="button">閉じる</button></div>
       <p class="small mute">キャラクターの色を選べます。ほかの人が使っている色は選べません。</p>
       <div id="color-grid" class="color-grid"></div>
+    </div>
+  </div>
+
+  <!-- 待機室: いまの設定の確認 -->
+  <div id="ov-setview" class="ov solid" hidden>
+    <div class="box">
+      <div class="game-head"><h2 style="font-size:24px">いまのゲーム設定</h2><button id="btn-setview-x" class="btn small" type="button">閉じる</button></div>
+      <p class="small mute">ホストが決めた設定です(ホストが変えると、ここもすぐ変わります)。</p>
+      <div id="setview-body" class="setview"></div>
     </div>
   </div>
 
@@ -1280,10 +1284,8 @@ function grid(o) {
       deco: { twrw: 'tower', gal: 'gallery', thr: 'throne', arm: 'armory', twre: 'tower', lib: 'library', hall: 'ballroom', cy: 'garden', chap: 'chapel', bed: 'bedroom', lab: 'alchemy', kit: 'kitchen', din: 'dining', gh: 'greenhouse', cel: 'dungeon', wine: 'cellar', ent: 'hallway', stb: 'stable', gar: 'garden' } },
     city: { outer: 'cavern', theme: 'dark', deco: { rec: 'reception', bio: 'lab', ctl: 'server', frz: 'cold', wst: 'waste', sp1: 'corridor', sto: 'storage', gen: 'electric', fac: 'factory', lab2: 'lab', arc: 'archive', sp2: 'corridor', hang: 'dock', qua: 'medical', srv: 'server', hyd: 'greenhouse', rea: 'reactor' } }
   };
-  /* 人数モニター: 部屋ごとの人数(遺体も1人)を確認できる端末。指定した部屋の中で、ほかの物から最も離れた場所に置く。 */
+  /* 人数モニター: 前に留まっているあいだだけ、部屋ごとの人数(遺体も1人)が人のマークで見える端末。指定した部屋の中で、ほかの物から最も離れた場所に置く。 */
   var COUNTER_ROOM = { ship: 'com', mansion: 'stu', lab: 'ctl', queen: 'bri', castle: 'gal', city: 'ctl' };
-  /* 監視カメラ: 人数モニターとは別の部屋に置く */
-  var CAMERA_ROOM = { ship: 'cmd', mansion: 'ent', lab: 'sec', queen: 'cap', castle: 'hall', city: 'srv' };
   function counterSpot(m, roomId) {
     var room = m.rooms.filter(function (r) { return r.id === roomId; })[0], objs = [];
     m.tasks.forEach(function (t) { t.steps.forEach(function (st) { objs.push([st.x, st.y]); }); });
@@ -1321,7 +1323,6 @@ function grid(o) {
   });
   [ship, mansion, lab, queen, castle, city].forEach(function (m) {
     m.counter = counterSpot(m, COUNTER_ROOM[m.id]);
-    m.camera = counterSpot(m, CAMERA_ROOM[m.id]); // 監視カメラ: この前に留まっているあいだだけ、全員の位置が見える
     m.sabn = SABN[m.id];
   });
 
@@ -1416,10 +1417,10 @@ function grid(o) {
       abil: ['インポスター陣営の正体がわかる(インポスター側は、設定しだいで共犯者の正体を知らない)', 'ベント・妨害(インポスターと同じ)', 'タスクはなく、襲撃もできない。投票でクルーを誘導して勝利を目指す'] },
     vampire: { n: 'ヴァンパイア', team: 'impostor', tasks: false, threat: true, kill: true, bite: true, vent: true, sab: true,
       d: 'インポスター陣営。噛みついた相手は、時間がたってから倒れる。非インポスターを1人だけ「眷属」にできる。', goal: '生き残りの数で、クルー側と並ぶか上回る。',
-      abil: ['噛みつき: 近くの1人に噛みつく。相手は設定の秒数のあと、その場で倒れる(遺体が現れる)', '眷属化: 非インポスターの1人を眷属にする(ゲーム中1回)', 'ベント・妨害(インポスターと同じ)', '人数モニター・監視カメラに映らず、緊急事態の修理もできない'] },
+      abil: ['噛みつき: 近くの1人に噛みつく。相手は設定の秒数のあと、その場で倒れる(遺体が現れる)', '眷属化: 非インポスターの1人を眷属にする(ゲーム中1回)', 'ベント・妨害(インポスターと同じ)', '人数モニターに映らず、緊急事態の修理もできない'] },
     thrall: { n: '眷属', team: 'impostor', tasks: false, threat: true, kill: true,
       d: 'ヴァンパイアに眷属にされた。襲撃できるようになったが、視界は停電のときと同じに狭くなる。', goal: 'インポスター陣営と同じ。生き残りの数で、クルー側と並ぶか上回る。',
-      abil: ['襲撃: 近くの1人を倒す', 'わかる仲間はヴァンパイアだけ(ほかのインポスターは見分けられない)', '人数モニター・監視カメラに映らず、緊急事態の修理もできない'] },
+      abil: ['襲撃: 近くの1人を倒す', 'わかる仲間はヴァンパイアだけ(ほかのインポスターは見分けられない)', '人数モニターに映らず、緊急事態の修理もできない'] },
     jackal: { n: 'ジャッカル', team: 'neutral', tasks: false, threat: true, kill: true, anyKill: true, jk: true,
       d: '誰とも組まない単独の殺し屋。', goal: 'インポスターがいない状態で、生き残りの半数以上を自分たちにする。',
       abil: ['襲撃: 近くの1人を倒す(インポスター陣営も対象)'] },
@@ -5272,12 +5273,12 @@ function applyOverlays() {
   var meet = inGame && meetingShown(st), over = inGame && st.phase === 'over' && !meet;
   $('ov-meeting').hidden = !meet; $('ov-over').hidden = !over;
   $('ov-color').hidden = !(S.mode && st && st.phase === 'lobby' && S.overlay === 'color');
+  $('ov-setview').hidden = !(S.mode && st && st.phase === 'lobby' && S.overlay === 'setview');
   $('ov-role').hidden = !(inGame && S.overlay === 'role' && !meet && !over);
   $('ov-task').hidden = !(inGame && S.overlay === 'task' && st.phase === 'play');
   $('ov-vent').hidden = !(inGame && S.overlay === 'vent' && st.phase === 'play');
   $('ov-map').hidden = !(inGame && S.overlay === 'map');
   $('ov-count').hidden = !(inGame && S.overlay === 'count' && st.phase === 'play');
-  $('ov-cam').hidden = !(inGame && S.overlay === 'cam' && st.phase === 'play');
   $('ov-roles').hidden = !(inGame && S.overlay === 'roles' && !over);
   $('ov-sab').hidden = !(inGame && S.overlay === 'sab' && st.phase === 'play');
   if (S.overlay === 'task' && st && st.phase !== 'play') closeTask();
@@ -5286,7 +5287,7 @@ function applyOverlays() {
     if (over || (meet && !S.mapFromMeeting) || (!meet && S.mapFromMeeting)) { S.overlay = null; $('ov-map').hidden = true; }
     if (!meet) S.mapFromMeeting = false;
   } else if (S.overlay && S.overlay !== 'role' && !(S.overlay === 'roles' && meet) && (meet || over)) S.overlay = null;
-  if ((S.overlay === 'count' || S.overlay === 'cam') && st && st.phase !== 'play') S.overlay = null;
+  if (S.overlay === 'count' && st && st.phase !== 'play') S.overlay = null;
 }
 /* ---------- 妨害の選択(インポスター側) ---------- */
 // 妨害の発動地点: 修理する場所(配電盤・修理地点)に、発動ボタンを置く。2か所を直す緊急事態は、片方(1番目)だけに置き、もう片方は通信妨害にあてる
@@ -5393,35 +5394,12 @@ function drawMapOverlay() {
 }
 
 /* ---------- 人数モニター ---------- */
-// 部屋ごとの人数(遺体も1人)。開いているあいだ、毎フレーム更新する
-function drawCountOverlay() {
-  var st = S.state, u = E.M.scale || 1;
-  if (!st) return;
-  var cnt = E.roomCounts(st, getPos), total = 0;
-  drawMapThumb($('cv-count'), E.M, { names: true, table: false, fs: 28, after: function (c) {
-    E.ROOMS.forEach(function (r) {
-      var n = cnt[r.id] || 0; total += n;
-      var cx = r.x + r.w / 2, cy = r.y + r.h / 2 - 26 * u, rad = 24 * u;
-      c.fillStyle = n ? '#ffd24d' : 'rgba(16,23,43,.55)'; c.beginPath(); c.arc(cx, cy, rad, 0, 6.2832); c.fill();
-      c.fillStyle = n ? '#10172b' : '#93a0c4'; c.font = '700 ' + 30 * u + 'px sans-serif'; c.textAlign = 'center'; c.fillText(String(n), cx, cy + 10 * u);
-    });
-    if (E.M.counter) { c.strokeStyle = '#5fd08a'; c.lineWidth = 6 * u; c.beginPath(); c.arc(E.M.counter.x, E.M.counter.y, 20 * u, 0, 6.2832); c.stroke(); }
-  } });
-  var sig = E.ROOMS.map(function (r) { return r.id + ':' + (cnt[r.id] || 0); }).join(',');
-  var box = $('count-list');
-  if (box.getAttribute('data-sig') !== sig) {
-    box.setAttribute('data-sig', sig); clear(box);
-    E.ROOMS.forEach(function (r) { var n = cnt[r.id] || 0; box.appendChild(h('span', { class: 'cn' + (n ? '' : ' zero') }, [r.n, h('b', { text: n + '人' })])); });
-  }
-}
-
-/* ---------- 監視カメラ ---------- */
 // 部屋ごとに、人のマークを並べる(だれなのか、生きているのか遺体なのかも区別がつかない)。開いているあいだ、毎フレーム更新する
-function drawCamOverlay() {
+function drawCountOverlay() {
   var st = S.state, u0 = E.M.scale || 1;
   if (!st) return;
   var cnt = E.roomCounts(st, getPos);
-  drawMapThumb($('cv-cam'), E.M, { names: true, table: false, fs: 22, after: function (c) {
+  drawMapThumb($('cv-count'), E.M, { names: true, table: false, fs: 22, after: function (c) {
     E.ROOMS.forEach(function (r) {
       var n = cnt[r.id] || 0, cx = r.x + r.w / 2;
       if (!n) return;
@@ -5440,7 +5418,7 @@ function drawCamOverlay() {
         c.beginPath(); c.moveTo(x - 10 * u, y + 15 * u); c.lineTo(x - 7 * u, y + 3 * u); c.lineTo(x + 7 * u, y + 3 * u); c.lineTo(x + 10 * u, y + 15 * u); c.closePath(); c.fill();
       }
     });
-    if (E.M.camera) { c.strokeStyle = '#7fb0ff'; c.lineWidth = 6 * u0; c.beginPath(); c.arc(E.M.camera.x, E.M.camera.y, 20 * u0, 0, 6.2832); c.stroke(); }
+    if (E.M.counter) { c.strokeStyle = '#7fb0ff'; c.lineWidth = 6 * u0; c.beginPath(); c.arc(E.M.counter.x, E.M.counter.y, 20 * u0, 0, 6.2832); c.stroke(); }
   } });
 }
 
@@ -5587,6 +5565,44 @@ function renderOver() {
   else ctl.appendChild(h('p', { class: 'mute', style: 'text-align:center', text: 'ホストがロビーに戻すのを待っています…' }));
 }
 
+/* ---------- 待機室: いまの設定の確認(だれでも見られる・読むだけ) ---------- */
+function openSetView() { S.overlay = 'setview'; renderSetView(S.state); applyOverlays(); }
+function renderSetView(st) {
+  var box = $('setview-body');
+  if (!st || !st.settings) return;
+  E.useMap(st.settings.map | 0); // 設定の項目は、選んでいるゲームのマップに合わせて出す
+  try {
+    clear(box);
+    var s = st.settings, n = st.order.length, c = E.roleCounts(s), M = E.MAPS[s.map | 0], sum = 0, imp = 0, neu = 0;
+    Object.keys(c).forEach(function (r) { sum += c[r]; var tm = E.ROLES[r].team; if (tm === 'impostor') imp += c[r]; else if (tm === 'neutral') neu += c[r]; });
+    function sec(title, rows, note) {
+      var d = h('div', { class: 'sv-sec' }, [h('h3', { text: title })]);
+      if (note) d.appendChild(h('p', { class: 'small mute', text: note }));
+      rows.forEach(function (r) { d.appendChild(h('div', { class: 'sv-row' }, [h('span', { class: 'k', text: r[0] }), h('b', { class: r[2] || '', text: r[1] })])); });
+      box.appendChild(d);
+    }
+    function val(d) { return s[d.k] + (d.unit || ''); }
+    function tog(d) { return [d.label, s[d.k] ? 'オン' : 'オフ', s[d.k] ? 'on' : 'off']; }
+    sec('マップ・人数', [['マップ', M.n], ['いまの参加者', n + '人'], ['クルー陣営', Math.max(0, n - imp - neu) + '人'], ['インポスター陣営', imp + '人'], ['第三陣営', neu + '人']], M.d);
+    // 役職(1人以上の役職と、その役職だけの設定)
+    var roleRows = [];
+    E.ROLE_ORDER.forEach(function (r) {
+      var cnt = c[r] | 0; if (!cnt) return;
+      var R = E.ROLES[r];
+      roleRows.push([R.n + '(' + E.TEAMS[R.team].name + ')', cnt + '人']);
+      E.SETTING_DEFS.filter(function (d) { return d.g === 'abil' && d.r && [].concat(d.r).indexOf(r) >= 0; }).forEach(function (d) { roleRows.push(['　' + d.label, val(d), 'sub']); });
+      E.TOGGLES.filter(function (d) { return d.r && [].concat(d.r).indexOf(r) >= 0; }).forEach(function (d) { var t = tog(d); roleRows.push(['　' + t[0], t[1], 'sub ' + t[2]]); });
+    });
+    if (n - sum > 0) roleRows.unshift(['クルー(役職なし)', Math.max(0, n - sum) + '人']);
+    sec('役職', roleRows.length ? roleRows : [['役職', 'なし']]);
+    sec('タスク', E.SETTING_DEFS.filter(function (d) { return d.g === 'task' && d.k !== 'progMode'; }).map(function (d) { return [d.label, val(d)]; }).concat([['タスク進度の表示', PROG_OPTS[s.progMode | 0][1]]]));
+    var rules = E.SETTING_DEFS.filter(function (d) { return d.g === 'rule' && (!d.m || (d.m === 'doors' ? !!(E.GIM && E.GIM.doors) : d.m === 'voice' ? !!S.standalone : d.m === 'mapsab' ? E.mapSabs().length > 0 : d.m === E.M.id)); }).map(function (d) { return [d.label, val(d)]; });
+    E.TOGGLES.filter(function (d) { return !d.r && (d.m !== 'voice' || S.standalone); }).forEach(function (d) { rules.push(tog(d)); });
+    sec('ルール', rules);
+    if (E.isMelee(st)) box.appendChild(h('p', { class: 'small mute', text: '乱戦ルール: 危険な陣営が半数以上います。人数が並んでも終わらず、相手を全滅させた陣営が勝ちます。' }));
+  } finally { syncMap(st); }
+}
+
 /* ---------- 待機室: 設定パネルと着替え ---------- */
 function openLobbyPanel() { S.lobbyPanel = true; S.joy.x = 0; S.joy.y = 0; S.uiRev = -1; var el = $('s-lobby'); if (el) el.scrollTop = 0; }
 function closeLobbyPanel() { S.lobbyPanel = false; S.uiRev = -1; }
@@ -5617,13 +5633,14 @@ function renderUI() {
   var st = S.state, me = myPlayer();
   if (typeof vcRender === 'function') vcRender();
   var inLobby = !!(S.mode && st && st.phase === 'lobby');
-  if (!inLobby) { S.lobbyPanel = false; if (S.overlay === 'color') S.overlay = null; }
+  if (!inLobby) { S.lobbyPanel = false; if (S.overlay === 'color' || S.overlay === 'setview') S.overlay = null; }
   var shut = inLobby && S.mode === 'online' && st.locked && !st.players[S.pid]; // 締め切られて入れない人には、理由を見せる
   var showPanel = !!S.mode && (!st || (inLobby && (!!S.lobbyPanel || shut))), showGame = !!S.mode && !!st;
   $('s-entry').hidden = !!S.mode; $('s-lobby').hidden = !showPanel; $('s-game').hidden = !showGame;
   if (!S.mode) updateEntryStatus();
   if (showPanel) renderLobby(st);
   if (inLobby && S.overlay === 'color') renderColor(st);
+  if (inLobby && S.overlay === 'setview') renderSetView(st);
   if (showGame && !inLobby) {
     if (me && me.role && (S.cardRound !== st.round || S.cardRc !== (me.rc || 0)) && st.phase === 'play') { S.cardRound = st.round; S.cardRc = me.rc || 0; showRoleCard(); }
     if (!S.hintShown && VH > VW * 1.1) { S.hintShown = true; toast('横向きにすると広く見渡せて遊びやすくなります。縦のまま固定されるときは、入室画面の「画面の向き」で横向き表示にできます。'); }
@@ -5900,7 +5917,7 @@ function kbEscape() {
   var o = S.overlay;
   if (o === 'task') { closeTask(); setOverlay(null); return true; }
   if (o === 'map') { S.mapFromMeeting = false; setOverlay(null); return true; }
-  if (o === 'sab' || o === 'vent' || o === 'count' || o === 'cam' || o === 'roles' || o === 'color') { setOverlay(null); return true; }
+  if (o === 'sab' || o === 'vent' || o === 'count' || o === 'roles' || o === 'color' || o === 'setview') { setOverlay(null); return true; }
   return false;
 }
 function kbConflict(code, except) { for (var i = 0; i < KEY_GROUPS.length; i++) if (KEY_GROUPS[i].id !== except && KB.map[KEY_GROUPS[i].id] === code) return KEY_GROUPS[i]; return null; }
@@ -6224,26 +6241,14 @@ function drawWorld(c, st, me, vr, watching, ghost, now) {
   if (E.M.stations) drawLobbyProps(c, st, now);
   // 人数モニター
   if (E.M.counter) {
-    var ct = E.M.counter, cu = S.nearInfo && S.nearInfo.counter;
+    var ct = E.M.counter, cu = S.nearInfo && S.nearInfo.counter, cw = cu && S.overlay === 'count';
     c.fillStyle = '#10172b'; c.fillRect(ct.x - 30, ct.y - 22, 60, 44);
     c.fillStyle = cu ? '#5fd08a' : '#2f5a63'; c.fillRect(ct.x - 24, ct.y - 16, 48, 26);
     for (var cq = 0; cq < 4; cq++) { c.fillStyle = '#10172b'; c.fillRect(ct.x - 18 + cq * 11, ct.y - 10 + (cq % 2) * 4, 7, 14 - (cq % 2) * 4); }
     c.fillStyle = '#10172b'; c.fillRect(ct.x - 24, ct.y + 13, 48, 4);
+    if (cw) { c.fillStyle = '#ff6a6f'; c.beginPath(); c.arc(ct.x + 20, ct.y + 15, 3 + Math.sin(now / 140), 0, 6.2832); c.fill(); } // 見ているあいだ、録画中の赤い点
     if (cu) { c.strokeStyle = 'rgba(95,208,138,' + (0.5 + 0.4 * Math.sin(now / 200)) + ')'; c.lineWidth = 3; c.strokeRect(ct.x - 36, ct.y - 28, 72, 56); }
     label(c, '人数モニター', ct.x, ct.y - 36, cu ? '#9be8b4' : '#8fb7c0');
-  }
-  // 監視カメラ(この前に留まっているあいだだけ、全員の位置が見える)
-  if (E.M.camera) {
-    var cm = E.M.camera, cn = S.nearInfo && S.nearInfo.camera, con = cn && S.overlay === 'cam';
-    c.fillStyle = '#10172b'; c.fillRect(cm.x - 38, cm.y - 24, 76, 48);
-    for (var mq = 0; mq < 3; mq++) {
-      c.fillStyle = con ? '#7fb0ff' : '#2b3a63'; c.fillRect(cm.x - 33 + mq * 24, cm.y - 19, 20, 16);
-      c.fillStyle = con ? '#10172b' : '#4a5d93'; c.fillRect(cm.x - 28 + mq * 24, cm.y - 14, 4 + mq, 4); c.fillRect(cm.x - 24 + mq * 24, cm.y - 10, 5, 3);
-    }
-    c.fillStyle = '#10172b'; c.fillRect(cm.x - 33, cm.y + 6, 66, 12);
-    c.fillStyle = con ? '#ff6a6f' : '#6b2b33'; c.beginPath(); c.arc(cm.x + 26, cm.y + 12, 3 + (con ? Math.sin(now / 140) : 0), 0, 6.2832); c.fill(); // 録画中の赤い点
-    if (cn) { c.strokeStyle = 'rgba(127,176,255,' + (0.5 + 0.4 * Math.sin(now / 200)) + ')'; c.lineWidth = 3; c.strokeRect(cm.x - 44, cm.y - 30, 88, 60); }
-    label(c, '監視カメラ', cm.x, cm.y - 40, cn ? '#a9c9ff' : '#8fa6d6');
   }
   // 配電盤(宇宙船)
   if (G.panel) {
@@ -6386,7 +6391,7 @@ function computeLobbyActions(st) {
   var id = S.nearInfo && S.nearInfo.station, isH = !!(S.isHost && S.mode), list = [];
   var lab = id === 'wardrobe' ? '着替え' : id === 'config' ? (isH ? '設定' : '設定を見る') : id === 'launch' ? '発進' : '調べる';
   list.push({ id: 'use', label: lab, big: true, color: id === 'launch' ? 'var(--imp)' : 'var(--accent)', sub: id === 'launch' && !isH ? 'ホストだけ' : '', ready: !!id && (id !== 'launch' || isH),
-    press: function () { if (id === 'wardrobe') openColor(); else if (id === 'config') openLobbyPanel(); else if (id === 'launch') lobbyStart(); } });
+    press: function () { if (id === 'wardrobe') openColor(); else if (id === 'config') { if (isH) openLobbyPanel(); else openSetView(); } else if (id === 'launch') lobbyStart(); } });
   return list;
 }
 // 待機室の入口: 自分の入り口の位置に立つ
@@ -6400,7 +6405,7 @@ function lobbyPlace(st) {
 function updateLobbyHud(st) {
   var isH = !!(S.isHost && S.mode), near = S.nearInfo && S.nearInfo.station, txt = '';
   if (near === 'wardrobe') txt = '鏡の前です。ボタンでキャラクターの色を変えられます';
-  else if (near === 'config') txt = isH ? 'ゲームの設定やマップを変えられます' : 'ゲームの設定を見られます(変えられるのはホストだけ)';
+  else if (near === 'config') txt = isH ? 'ゲームの設定やマップを変えられます' : 'いまのゲームの設定を見られます(変えられるのはホストだけ)';
   else if (near === 'launch') txt = isH ? 'ボタンでゲームを開始します' : 'ゲームを始めるのはホストです';
   var ch = $('lob-chip'), t = (S.roomCode ? '部屋コード ' + S.roomCode + '  ' : '') + st.order.length + '人';
   if (ch.textContent !== t) ch.textContent = t;
@@ -6630,7 +6635,7 @@ function nearest(list, from, range) {
   return best;
 }
 function computeNear(st, me) {
-  var near = { task: -1, step: 0, table: false, vent: -1, body: null, portal: -1, panel: false, hall: -1, fix: -1, counter: false, camera: false };
+  var near = { task: -1, step: 0, table: false, vent: -1, body: null, portal: -1, panel: false, hall: -1, fix: -1, counter: false };
   if (!me) return near;
   var G = E.GIM, now = tnow(), jamOn = st.jamUntil > now;
   if (me.alive && teamOf(me) !== 'impostor' && E.M.crisis && (st.crisis || jamOn)) {
@@ -6653,9 +6658,8 @@ function computeNear(st, me) {
   var bb = nearest(st.bodies.map(function (b) { return { x: b.x, y: b.y, id: b.id }; }), S.me, 150);
   if (bb) near.body = bb.id;
   if (me.alive && G.portals) near.portal = E.portalNear(S.me.x, S.me.y, 100);
-  if (me.alive && E.M.counter && !(jamOn && teamOf(me) !== 'impostor') && E.dist(S.me, E.M.counter) <= 110) near.counter = true;
-  if (me.alive && E.M.camera && !(jamOn && teamOf(me) !== 'impostor') && E.dist(S.me, E.M.camera) <= 90) near.camera = true;
-  if (!near.camera && S.overlay === 'cam') setOverlay(null); // 離れたら(通信妨害・倒れたときも)監視は終わる
+  if (me.alive && E.M.counter && !(jamOn && teamOf(me) !== 'impostor') && E.dist(S.me, E.M.counter) <= 100) near.counter = true;
+  if (!near.counter && S.overlay === 'count') setOverlay(null); // 離れたら(通信妨害・倒れたときも)見えなくなる
   if (me.alive && G.panel && st.blackoutUntil > now && teamOf(me) !== 'impostor' && E.dist(S.me, G.panel) <= 110) near.panel = true;
   if (me.alive && G.doors) near.hall = E.hallNear(S.me.x, S.me.y, 140);
   return near;
@@ -6681,9 +6685,9 @@ function computeActions(st, me) {
   // タスクのボタンの文字は「タスク」で統一(タスク名は小さく添える)。停電の復旧・緊急事態の修理も、このボタンで行う(急ぎなので先に)
   var rep = near.panel ? 'panel' : near.fix >= 0 ? 'fix' : '';
   var repSub = rep === 'panel' ? '停電の復旧' : rep === 'fix' ? (st.crisis ? '緊急事態の修理' : '通信の復旧') : '';
-  var useLabel = rep || near.task >= 0 ? 'タスク' : near.table ? '緊急会議' : near.counter ? '人数確認' : near.camera ? '監視' : '調べる';
-  list.push({ id: 'use', label: useLabel, big: true, color: 'var(--accent)', sub: rep ? repSub : near.task >= 0 ? E.TASKS[near.task].n : '', ready: !!rep || near.task >= 0 || near.table || near.counter || near.camera,
-    press: function () { if (rep === 'panel') openPanel(); else if (rep === 'fix') openRepair(near.fix); else if (near.task >= 0) openTask(near.task); else if (near.table) sendAct({ type: 'emergency' }); else if (near.counter) setOverlay('count'); else if (near.camera) setOverlay('cam'); } });
+  var useLabel = rep || near.task >= 0 ? 'タスク' : near.table ? '緊急会議' : near.counter ? '人数確認' : '調べる';
+  list.push({ id: 'use', label: useLabel, big: true, color: 'var(--accent)', sub: rep ? repSub : near.task >= 0 ? E.TASKS[near.task].n : '', ready: !!rep || near.task >= 0 || near.table || near.counter,
+    press: function () { if (rep === 'panel') openPanel(); else if (rep === 'fix') openRepair(near.fix); else if (near.task >= 0) openTask(near.task); else if (near.table) sendAct({ type: 'emergency' }); else if (near.counter) setOverlay('count'); } });
   var G = E.GIM;
   if (alive && G.portals) list.push({ id: 'portal', label: '隠し扉', color: 'var(--neu)', ready: near.portal >= 0 && now >= (me.cp || 0), cd: cd(me.cp || 0, 2500).ratio, press: function () { sendAct({ type: 'portal' }); } });
   if (alive) list.push({ id: 'report', label: '通報', color: 'var(--warn)', ready: near.body != null, press: function () { sendAct({ type: 'report', b: near.body }); } });
@@ -6883,7 +6887,6 @@ function frame(ts) {
     if (S.overlay === 'map') drawMapOverlay();
     if (S.overlay === 'sab') drawSabOverlay();
     if (S.overlay === 'count') drawCountOverlay();
-    if (S.overlay === 'cam') drawCamOverlay();
     if (!$('ov-meeting').hidden) { updateMeetingTimer(); if (S.chatDirty) renderChat(); }
     if (!S.lastPresence || ts - S.lastPresence > 80) { S.lastPresence = ts; sendPresence(false); }
   } else {
@@ -6948,6 +6951,8 @@ function bindUi() {
   $('btn-lobby-x').addEventListener('click', closeLobbyPanel);
   $('btn-lobpanel').addEventListener('click', openLobbyPanel);
   $('btn-color-x').addEventListener('click', function () { setOverlay(null); });
+  $('btn-setview').addEventListener('click', openSetView);
+  $('btn-setview-x').addEventListener('click', function () { setOverlay(null); });
   $('btn-role').addEventListener('click', showRoleCard);
   $('btn-role-ok').addEventListener('click', function () { setOverlay(null); });
   $('btn-task-x').addEventListener('click', closeTask);
@@ -6957,7 +6962,6 @@ function bindUi() {
   $('cv-sab').addEventListener('pointerdown', function (e) { e.preventDefault(); sabTap(e); });
   $('btn-map-x').addEventListener('click', function () { S.mapFromMeeting = false; setOverlay(null); });
   $('btn-count-x').addEventListener('click', function () { setOverlay(null); });
-  $('btn-cam-x').addEventListener('click', function () { setOverlay(null); });
   ['btn-roles', 'btn-mt-roles'].forEach(function (id) { $(id).addEventListener('click', showRoleList); });
   $('btn-roles-x').addEventListener('click', function () { setOverlay(null); });
   $('btn-mt-map').addEventListener('click', openMeetingMap);
