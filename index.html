@@ -1589,6 +1589,18 @@ function grid(o) {
   function canStand(x, y, rad) {
     return walkable(x, y, 0) && walkable(x - rad, y, 0) && walkable(x + rad, y, 0) && walkable(x, y - rad, 0) && walkable(x, y + rad, 0);
   }
+  // 立てる場所のうち、指定の点にいちばん近いもの(壁の中や外に出てしまったときの救済)。rad は壁からの余裕
+  function nearestStand(x, y, rad) {
+    rad = rad || 18;
+    if (canStand(x, y, rad)) return { x: Math.round(x), y: Math.round(y) };
+    for (var r = 8; r <= 260; r += 8) {
+      for (var k = 0; k < 24; k++) {
+        var a = (Math.PI * 2 * k) / 24 + 0.4, nx = x + Math.cos(a) * r, ny = y + Math.sin(a) * r;
+        if (canStand(nx, ny, rad)) return { x: Math.round(nx), y: Math.round(ny) };
+      }
+    }
+    return { x: Math.round(x), y: Math.round(y) };
+  }
   function roomAt(x, y) {
     for (var i = 0; i < ROOMS.length; i++) {
       var q = ROOMS[i];
@@ -2192,7 +2204,7 @@ function grid(o) {
       if (a.type === 'ventout') {
         if (!p.iv) return { ok: false };
         vt = VENTS[p.iv.i]; p.iv = null; p.vx = now + 1200;
-        if (vt) tp(p, vt.x, vt.y + 30);
+        if (vt) { var ex = nearestStand(vt.x, vt.y, 14); tp(p, ex.x, ex.y); } // ベントの真上に出る(万一立てない場所なら、いちばん近い立てる場所)
         return { ok: true };
       }
       if (a.type === 'ventin') {
@@ -2478,7 +2490,7 @@ function grid(o) {
     COLORS: COLORS, MAX_PLAYERS: MAX_PLAYERS, TEAMS: TEAMS, ROLES: ROLES, ROLE_ORDER: ROLE_ORDER,
     SETTING_DEFS: SETTING_DEFS, TOGGLES: TOGGLES, defaultSettings: defaultSettings, clampSetting: clampSetting,
     MAPS: MAPS, BELT_SPEED: Maps.BELT_SPEED, useMap: useMap, setDyn: setDyn, canMove: canMove, canStand: canStand, walkable: walkable,
-    closedRects: closedRects, gateClosed: gateClosed, gateWarn: gateWarn, fogAt: fogAt, beltAt: beltAt, portalNear: portalNear, hallNear: hallNear,
+    closedRects: closedRects, nearestStand: nearestStand, gateClosed: gateClosed, gateWarn: gateWarn, fogAt: fogAt, beltAt: beltAt, portalNear: portalNear, hallNear: hallNear,
     roomAt: roomAt, spawnPoint: spawnPoint, dist: dist,
     newLobby: newLobby, addPlayer: addPlayer, removePlayer: removePlayer, validate: validate, isMelee: isMelee, kickPlayer: kickPlayer, startGame: startGame,
     act: act, tick: tick, markLeft: markLeft, backToLobby: backToLobby, recalcTasks: recalcTasks, evalWin: evalWin,
@@ -6668,6 +6680,7 @@ function moveMe(dt) {
     if (tpk !== S.lastTpKey) { S.lastTpKey = tpk; S.me.x = me.tp.x; S.me.y = me.tp.y; S.me.w = 0; }
   }
   if (me && me.iv && me.alive) { S.me.w = 0; return; } // ベントの中では歩けない
+  if (me && me.alive && st && st.phase === 'play' && !S.overlay && !E.canStand(S.me.x, S.me.y, 10)) { var ns = E.nearestStand(S.me.x, S.me.y, 16); S.me.x = ns.x; S.me.y = ns.y; } // 壁の中に挟まったときは、いちばん近い立てる場所へ出す
   var can = st && (st.phase === 'play' || (st.phase === 'lobby' && !S.lobbyPanel)) && !S.overlay;
   if (!can) { S.me.w = 0; return; }
   var ghost = !me || !me.alive;
