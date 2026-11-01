@@ -86,6 +86,9 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 .pl .tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--panel2); color: var(--mute); flex: none; }
 .pl .tag.host { background: var(--accent); color: var(--accent-ink); }
 .pl .x { margin-left: auto; margin-top: -2px; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--mute); flex: none; }
+.mask-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 10px; }
+.mask-list .btn.dead { opacity: .72; }
+.mask-list .btn { display: flex; align-items: center; gap: 8px; justify-content: flex-start; text-align: left; }
 .swatch { width: 22px; height: 22px; border-radius: 50% 50% 46% 46%; flex: none; border: 2px solid rgba(8, 12, 24, .8); }
 .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
 .tabs::-webkit-scrollbar { display: none; }
@@ -699,6 +702,15 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
       <canvas id="cv-sab" class="mapbox sabmap" width="800" height="500"></canvas>
       <div id="sab-info" class="small map-tasks"></div>
       <div id="sab-status" class="small mute"></div>
+    </div>
+  </div>
+
+  <!-- 変装する相手の選択(仮面師) -->
+  <div id="ov-mask" class="ov" hidden>
+    <div class="box">
+      <div class="game-head"><h2 style="font-size:24px">誰に変装する?</h2><button id="btn-mask-x" class="btn small" type="button">やめる</button></div>
+      <p class="small mute">マップのどこにいても、倒れた人も含めて、誰にでも変装できます。</p>
+      <div id="mask-list" class="mask-list"></div>
     </div>
   </div>
 
@@ -1444,8 +1456,8 @@ function grid(o) {
       d: 'インポスター陣営。会議中に相手の役職を言い当てて撃てる。外すと自分が倒れる。', goal: 'インポスターと同じ。',
       abil: ['襲撃・ベント・妨害(インポスターと同じ)', '役職当て: 会議中に相手と役職を指定して撃つ。当たれば相手が、外れば自分が倒れる(回数制限あり)'] },
     maskmaker: { n: '仮面師', team: 'impostor', tasks: false, threat: true, kill: true, mask: true, vent: true, sab: true,
-      d: 'インポスター陣営。近くの1人の姿(色と名前)をコピーして、しばらくその人に成りすませる。', goal: '生き残りの数で、クルー側と並ぶか上回る。',
-      abil: ['襲撃・ベント・妨害(インポスターと同じ)', '変装: 近くの1人の色と名前をまねる。ほかの人からはその人に見える(仲間のインポスターには本当の姿が見える)。会議が始まると解ける'] },
+      d: 'インポスター陣営。マップのどこにいても、(死んでいる人も含む)誰か1人の姿(色と名前)をコピーして、しばらくその人に成りすませる。', goal: '生き残りの数で、クルー側と並ぶか上回る。',
+      abil: ['襲撃・ベント・妨害(インポスターと同じ)', '変装: 誰か1人(死んでいる人も、どれだけ遠くにいても)の色と名前をまねる。ほかの人からはその人に見える(仲間のインポスターには本当の姿が見える)。会議が始まると解ける'] },
     cleaner: { n: 'クリーナー', team: 'impostor', tasks: false, threat: true, kill: true, clean: true, vent: true, sab: true,
       d: 'インポスター陣営。倒した相手の遺体を消して、事件をなかったことにできる。', goal: '生き残りの数で、クルー側と並ぶか上回る。',
       abil: ['襲撃・ベント・妨害(インポスターと同じ)', '掃除: 近くの遺体を消す。消えた遺体は通報できない(クールダウンあり)'] },
@@ -2231,12 +2243,11 @@ function grid(o) {
       return { ok: true };
     }
 
-    if (a.type === 'disguise') { // 仮面師: 近くの1人の姿をまねる。変装中にもう一度使うと解ける
+    if (a.type === 'disguise') { // 仮面師: マップのどこにいる誰にでも(死んでいる人にも)変装できる(距離は関係ない)。変装中にもう一度使うと解ける
       if (!R || !R.mask) return { ok: false };
       if (p.dg && p.dg.until > now) { p.dg = null; p.ca = now + s.maskCd * 1000; return { ok: true, off: true }; }
       if (now < (p.ca || 0)) return { ok: false };
-      if (!T || !T.alive || T.left || T.id === pid) return { ok: false };
-      if (!nearOk(ctx, pid, T.id, rng)) return { ok: false, err: 'far' };
+      if (!T || T.left || T.id === pid) return { ok: false }; // 死んでいる人にも変装できる
       p.dg = { as: T.id, until: now + s.maskSec * 1000, n: ((p.dg && p.dg.n) || 0) + 1 };
       p.ca = p.dg.until + s.maskCd * 1000;
       pushMsg(p, COLORS[T.color].name + 'の' + T.name + 'に変装した。');
@@ -5326,7 +5337,7 @@ function roleNotes(role, s) {
     n.push('レティクルは、' + (s.snipeSee ? '他のプレイヤーにも見えます(狙っているのがばれます)。' : 'インポスター陣営と倒れた人にだけ見えます。'));
     n.push(s.sniperKill ? '狙撃のほかに、通常の襲撃(近くの1人を倒す)もできます。' : '通常の襲撃はできません(狙撃だけです)。');
   }
-  if (role === 'maskmaker') n.push('変装は ' + s.maskSec + ' 秒つづき、会議が始まると解けます。解けたあと(または自分で解いたあと) ' + s.maskCd + ' 秒は変装できません。');
+  if (role === 'maskmaker') n.push('変装ボタンで、誰か(仲間も、すでに倒れた人も含む。どこにいても)を一覧から選べます。変装は ' + s.maskSec + ' 秒つづき、会議が始まると解けます。解けたあと(または自分で解いたあと) ' + s.maskCd + ' 秒は変装できません。');
   if (role === 'cleaner') n.push('掃除のクールダウンは ' + s.cleanCd + ' 秒です。遺体のそばで使うと、その遺体が消えます。');
   if (role === 'accomplice') n.push(s.accompliceKnown ? 'インポスター陣営の側もあなたの正体を知っています。' : 'インポスター陣営の側は、あなたの正体を知りません(あなただけが知っています)。インポスターに襲撃されることもあります。');
   if (role === 'fortune') n.push('占いはゲーム中に ' + s.fortuneUses + ' 回まで(1回の会議で何回使ってもかまいません)。');
@@ -5416,6 +5427,7 @@ function applyOverlays() {
   $('ov-count').hidden = !(inGame && S.overlay === 'count' && st.phase === 'play');
   $('ov-roles').hidden = !(inGame && S.overlay === 'roles' && !over);
   $('ov-sab').hidden = !(inGame && S.overlay === 'sab' && st.phase === 'play');
+  $('ov-mask').hidden = !(inGame && S.overlay === 'mask' && st.phase === 'play');
   if (S.overlay === 'task' && st && st.phase !== 'play') closeTask();
   // 会議中は、マップだけ開いたままにできる(会議が終わったら閉じる)
   if (S.overlay === 'map') {
@@ -5442,6 +5454,14 @@ function sabState() {
   if (E.sabActive(st, now)) return { ok: false, msg: 'いま別の妨害が発動中です。終わるまで次は起こせません。' };
   if (left > 0) return { ok: false, msg: '次の妨害まで あと ' + Math.ceil(left / 1000) + ' 秒' };
   return { ok: true, msg: '赤い印をタップすると、その妨害を起こします。' };
+}
+function openMask() {
+  var st = S.state, me = myPlayer(), box = $('mask-list'); clear(box);
+  if (!st || !me) return;
+  st.order.map(function (id) { return st.players[id]; }).filter(function (q) { return q && !q.left && q.id !== S.pid; }).forEach(function (q) {
+    box.appendChild(h('button', { class: 'btn' + (q.alive ? '' : ' dead'), type: 'button', onclick: function () { sendAct({ type: 'disguise', t: q.id }); setOverlay(null); } }, [swatch(q), h('span', { text: q.name + (q.alive ? '' : '(死亡)') })]));
+  });
+  setOverlay('mask');
 }
 function openSab() {
   var box = $('sab-info'); clear(box);
@@ -7137,8 +7157,8 @@ function computeActions(st, me) {
     list.push({ id: 'thrall', label: '眷属化', color: 'var(--imp)', sub: me.tu ? '使用済' : '', ready: !!tt && !me.tu, press: function () { sendAct({ type: 'thrall', t: tt }); } });
   }
   if (me.role === 'maskmaker') {
-    var mon = !!(me.dg && me.dg.until > now), cm = cd(me.ca || 0, (s.maskSec + s.maskCd) * 1000), mt = tgt;
-    list.push({ id: 'disguise', label: mon ? '変装を解く' : '変装', color: 'var(--imp)', sub: mon ? Math.ceil((me.dg.until - now) / 1000) + '秒' : cm.left ? Math.ceil(cm.left / 1000) + '秒' : '', ready: mon || (!!mt && cm.left === 0), cd: mon ? 0 : cm.ratio, press: function () { sendAct(mon ? { type: 'disguise' } : { type: 'disguise', t: mt }); } });
+    var mon = !!(me.dg && me.dg.until > now), cm = cd(me.ca || 0, (s.maskSec + s.maskCd) * 1000), mt = st.order.some(function (id) { var q = st.players[id]; return q && !q.left && q.id !== S.pid; });
+    list.push({ id: 'disguise', label: mon ? '変装を解く' : '変装', color: 'var(--imp)', sub: mon ? Math.ceil((me.dg.until - now) / 1000) + '秒' : cm.left ? Math.ceil(cm.left / 1000) + '秒' : '', ready: mon || (!!mt && cm.left === 0), cd: mon ? 0 : cm.ratio, press: function () { if (mon) sendAct({ type: 'disguise' }); else openMask(); } });
   }
   if (me.role === 'cleaner') {
     var ccl = cd(me.ca || 0, s.cleanCd * 1000);
@@ -7416,6 +7436,7 @@ function bindUi() {
   $('btn-task-x').addEventListener('click', closeTask);
   $('btn-map').addEventListener('click', function () { setOverlay('map'); });
   $('btn-sab-x').addEventListener('click', function () { setOverlay(null); });
+  $('btn-mask-x').addEventListener('click', function () { setOverlay(null); });
   $('cv-sab').addEventListener('pointerdown', function (e) { e.preventDefault(); sabTap(e); });
   $('btn-map-x').addEventListener('click', function () { S.mapFromMeeting = false; setOverlay(null); });
   $('btn-count-x').addEventListener('click', function () { setOverlay(null); });
