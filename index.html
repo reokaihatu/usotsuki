@@ -414,6 +414,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 
 /* 人数モニター・会議の能力パネル・波動砲/シールドの表示 */
 #ov-count { z-index: 61; }
+#ov-cam { z-index: 61; }
 .count-list { display: flex; flex-wrap: wrap; gap: 6px; }
 .count-list .cn { border: 1px solid var(--line, #2b365f); border-radius: 10px; padding: 4px 10px; font-size: 13px; background: rgba(255, 255, 255, .04); }
 .count-list .cn b { margin-left: 6px; color: #ffd24d; font-size: 15px; }
@@ -493,6 +494,18 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 .seg.lv button { flex: 1 1 0; min-width: 0; padding: 4px 2px; }
 .lob-l > *, .lob-r > *, .entry-l > *, .entry-r > * { min-width: 0; }
 
+/* ---------- 待機室(歩き回れるロビー) ---------- */
+#s-lobby { position: fixed; inset: 0; z-index: 45; overflow-y: auto; background: var(--bg); }
+.lobchip, #btn-lobpanel { display: none; }
+.lobbymode .lobchip { display: block; align-self: center; padding: 6px 12px; border-radius: 10px; background: rgba(13, 19, 34, .86); border: 1px solid var(--line); font-weight: 700; font-size: 13px; white-space: pre; }
+.lobbymode #btn-lobpanel { display: inline-flex; align-items: center; }
+.lobbymode #btn-role, .lobbymode .prog, .lobbymode #btn-roles, .lobbymode #btn-map, .lobbymode #tasklist { display: none; }
+.color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 10px; }
+.colcard { display: grid; justify-items: center; gap: 2px; padding: 8px 4px 6px; border-radius: 12px; border: 2px solid var(--line); background: var(--panel); font-size: 12px; font-weight: 700; }
+.colcard.on { border-color: var(--accent); background: var(--panel2); }
+.colcard[disabled] { opacity: .45; cursor: not-allowed; }
+.colcard canvas { width: 72px; height: 84px; }
+
 </style>
 </head>
 <body>
@@ -553,7 +566,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
       <div class="lob-l">
         <div class="row between">
           <h2 style="font-size:26px">待機室</h2>
-          <div class="row"><button id="btn-snd-l" class="btn small snd-btn" type="button">音</button><button id="btn-keys-l" class="btn small" type="button" hidden>キー</button><button id="btn-rot" class="btn small" type="button">向き</button><button id="btn-leave" class="btn small" type="button">退出</button></div>
+          <div class="row"><button id="btn-lobby-x" class="btn small primary" type="button" hidden>歩き回る</button><button id="btn-snd-l" class="btn small snd-btn" type="button">音</button><button id="btn-keys-l" class="btn small" type="button" hidden>キー</button><button id="btn-rot" class="btn small" type="button">向き</button><button id="btn-leave" class="btn small" type="button">退出</button></div>
         </div>
         <div id="lobby-status" class="status-line"></div>
         <div id="vc-box" class="vc-box" hidden>
@@ -593,9 +606,9 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
   <section id="s-game" hidden>
     <canvas id="cv"></canvas>
     <div class="hud top">
-      <button id="btn-role" class="rolechip" type="button"><small id="rc-team"></small><span id="rc-name"></span></button>
+      <div id="lob-chip" class="lobchip"></div><button id="btn-role" class="rolechip" type="button"><small id="rc-team"></small><span id="rc-name"></span></button>
       <div class="prog" id="prog"><div class="bar"><i id="prog-fill"></i></div><span id="prog-text"></span></div>
-      <div class="hgroup"><button id="btn-snd-g" class="hbtn snd-btn" type="button">音</button><button id="btn-keys-g" class="hbtn" type="button" hidden>キー</button><button id="btn-mic" class="hbtn" type="button" hidden>マイクON</button><button id="btn-vol" class="hbtn" type="button" hidden>音量</button><button id="btn-roles" class="hbtn" type="button">役職一覧</button><button id="btn-map" class="hbtn" type="button">マップ</button></div>
+      <div class="hgroup"><button id="btn-snd-g" class="hbtn snd-btn" type="button">音</button><button id="btn-keys-g" class="hbtn" type="button" hidden>キー</button><button id="btn-mic" class="hbtn" type="button" hidden>マイクON</button><button id="btn-vol" class="hbtn" type="button" hidden>音量</button><button id="btn-lobpanel" class="hbtn" type="button">参加者・設定</button><button id="btn-roles" class="hbtn" type="button">役職一覧</button><button id="btn-map" class="hbtn" type="button">マップ</button></div>
     </div>
     <div id="tasklist" class="tasklist"></div>
     <div id="banner" class="banner" hidden></div>
@@ -696,6 +709,24 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
       <canvas id="cv-count" class="mapbox" width="800" height="500"></canvas>
       <p class="small mute" id="count-note">部屋ごとの、いまの人数です。遺体も1人として数えます。通路にいる人は数えません。</p>
       <div id="count-list" class="count-list"></div>
+    </div>
+  </div>
+
+  <!-- 監視カメラ -->
+  <div id="ov-cam" class="ov" hidden>
+    <div class="box map-box">
+      <div class="game-head"><h2 style="font-size:24px">監視カメラ</h2><button id="btn-cam-x" class="btn small" type="button">閉じる</button></div>
+      <canvas id="cv-cam" class="mapbox" width="800" height="500"></canvas>
+      <p class="small mute" id="cam-note">部屋ごとの、いまの様子です。人のマークの数だけがわかります(だれなのか、生きているのか遺体なのかもわかりません)。通路にいる人は映りません。</p>
+    </div>
+  </div>
+
+  <!-- 着替え(待機室の鏡) -->
+  <div id="ov-color" class="ov solid" hidden>
+    <div class="box">
+      <div class="game-head"><h2 style="font-size:24px">着替え</h2><button id="btn-color-x" class="btn small" type="button">閉じる</button></div>
+      <p class="small mute">キャラクターの色を選べます。ほかの人が使っている色は選べません。</p>
+      <div id="color-grid" class="color-grid"></div>
     </div>
   </div>
 
@@ -1251,6 +1282,8 @@ function grid(o) {
   };
   /* 人数モニター: 部屋ごとの人数(遺体も1人)を確認できる端末。指定した部屋の中で、ほかの物から最も離れた場所に置く。 */
   var COUNTER_ROOM = { ship: 'com', mansion: 'stu', lab: 'ctl', queen: 'bri', castle: 'gal', city: 'ctl' };
+  /* 監視カメラ: 人数モニターとは別の部屋に置く */
+  var CAMERA_ROOM = { ship: 'cmd', mansion: 'ent', lab: 'sec', queen: 'cap', castle: 'hall', city: 'srv' };
   function counterSpot(m, roomId) {
     var room = m.rooms.filter(function (r) { return r.id === roomId; })[0], objs = [];
     m.tasks.forEach(function (t) { t.steps.forEach(function (st) { objs.push([st.x, st.y]); }); });
@@ -1260,6 +1293,7 @@ function grid(o) {
     if (G.panel) objs.push([G.panel.x, G.panel.y]);
     (G.portals || []).forEach(function (q) { objs.push([q.x, q.y]); });
     if (m.crisis) m.crisis.points.forEach(function (q) { objs.push([q.x, q.y]); });
+    if (m.counter) objs.push([m.counter.x, m.counter.y]);
     var best = null, bd = -1;
     for (var x = room.x + 70; x <= room.x + room.w - 70; x += 10) {
       for (var y = room.y + 70; y <= room.y + room.h - 50; y += 10) {
@@ -1287,6 +1321,7 @@ function grid(o) {
   });
   [ship, mansion, lab, queen, castle, city].forEach(function (m) {
     m.counter = counterSpot(m, COUNTER_ROOM[m.id]);
+    m.camera = counterSpot(m, CAMERA_ROOM[m.id]); // 監視カメラ: この前に留まっているあいだだけ、全員の位置が見える
     m.sabn = SABN[m.id];
   });
 
@@ -1295,7 +1330,28 @@ function grid(o) {
     if (lk.colors) m.rooms.forEach(function (r) { if (lk.colors[r.id]) r.c = lk.colors[r.id]; });
   });
 
-  var Maps = { list: [ship, mansion, lab, queen, castle, city], BELT_SPEED: 80 };
+  /* ================= 待機室(ゲーム開始前のロビー) =================
+   * 部屋は3つ: 真ん中のラウンジ(みんなが集まる)・左の更衣室(色を選ぶ)・右の作戦室(ゲーム設定の端末と、発進のレバー)。
+   * ゲームのマップ一覧(list)には入れない。state.phase が 'lobby' のあいだだけ、エンジンが useMap('lobby') で使う。 */
+  var lobby = {
+    id: 'lobby', n: '待機室', short: '待機室', rec: [1, 20], d: 'ゲーム開始前の待機室。', gim: [],
+    world: { w: 1600, h: 860 }, table: { x: 750, y: 380, n: 'ラウンジ' }, spawn: { rx: 230, ry: 170 },
+    rooms: [
+      { id: 'lng', n: 'ラウンジ', x: 430, y: 130, w: 640, h: 580, c: '#2f3a68' },
+      { id: 'drs', n: '更衣室', x: 60, y: 250, w: 280, h: 360, c: '#4a3e66' },
+      { id: 'ctl', n: '作戦室', x: 1160, y: 210, w: 380, h: 440, c: '#25405f' }
+    ],
+    halls: [{ x: 340, y: 390, w: 90, h: 80 }, { x: 1070, y: 390, w: 90, h: 80 }],
+    vents: [], tasks: [], gimmicks: {},
+    stations: [
+      { id: 'wardrobe', n: '着替え', x: 200, y: 340 },
+      { id: 'config', n: 'ゲーム設定', x: 1260, y: 310 },
+      { id: 'launch', n: '発進', x: 1420, y: 540 }
+    ],
+    theme: 'dark', outer: 'space', floors: {}, deco: { lng: 'lounge', drs: 'dressing', ctl: 'dockctl' }
+  };
+
+  var Maps = { list: [ship, mansion, lab, queen, castle, city], lobby: lobby, BELT_SPEED: 80 };
   if (typeof module !== 'undefined' && module.exports) module.exports = Maps; else root.Maps = Maps;
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -1340,9 +1396,6 @@ function grid(o) {
     guardian: { n: '守護者', team: 'crew', tasks: true, threat: false,
       d: '近くの1人にバリアを張る。バリアは次の会議まで、襲撃を1回防ぐ。', goal: 'クルーと同じ。',
       abil: ['守護: 近くの1人を守る(1ラウンドに1回)'] },
-    watcher: { n: '管制官', team: 'crew', tasks: true, threat: false,
-      d: '監視カメラで船内の全員の位置を一定時間見渡せる。', goal: 'クルーと同じ。',
-      abil: ['監視: 数秒間、霧を無視して全員の位置が見える(回数制限あり)'] },
     engineer: { n: '技師', team: 'crew', tasks: true, threat: false,
       d: '船内のダクト(ベント)を使って移動できる。', goal: 'クルーと同じ。',
       abil: ['ベント: ダクトの近くで使うと別の部屋へ移動(回数制限あり)'] },
@@ -1363,10 +1416,10 @@ function grid(o) {
       abil: ['インポスター陣営の正体がわかる(インポスター側は、設定しだいで共犯者の正体を知らない)', 'ベント・妨害(インポスターと同じ)', 'タスクはなく、襲撃もできない。投票でクルーを誘導して勝利を目指す'] },
     vampire: { n: 'ヴァンパイア', team: 'impostor', tasks: false, threat: true, kill: true, bite: true, vent: true, sab: true,
       d: 'インポスター陣営。噛みついた相手は、時間がたってから倒れる。非インポスターを1人だけ「眷属」にできる。', goal: '生き残りの数で、クルー側と並ぶか上回る。',
-      abil: ['噛みつき: 近くの1人に噛みつく。相手は設定の秒数のあと、その場で倒れる(遺体が現れる)', '眷属化: 非インポスターの1人を眷属にする(ゲーム中1回)', 'ベント・妨害(インポスターと同じ)', '人数モニターに映らず、緊急事態の修理もできない'] },
+      abil: ['噛みつき: 近くの1人に噛みつく。相手は設定の秒数のあと、その場で倒れる(遺体が現れる)', '眷属化: 非インポスターの1人を眷属にする(ゲーム中1回)', 'ベント・妨害(インポスターと同じ)', '人数モニター・監視カメラに映らず、緊急事態の修理もできない'] },
     thrall: { n: '眷属', team: 'impostor', tasks: false, threat: true, kill: true,
       d: 'ヴァンパイアに眷属にされた。襲撃できるようになったが、視界は停電のときと同じに狭くなる。', goal: 'インポスター陣営と同じ。生き残りの数で、クルー側と並ぶか上回る。',
-      abil: ['襲撃: 近くの1人を倒す', 'わかる仲間はヴァンパイアだけ(ほかのインポスターは見分けられない)', '人数モニターに映らず、緊急事態の修理もできない'] },
+      abil: ['襲撃: 近くの1人を倒す', 'わかる仲間はヴァンパイアだけ(ほかのインポスターは見分けられない)', '人数モニター・監視カメラに映らず、緊急事態の修理もできない'] },
     jackal: { n: 'ジャッカル', team: 'neutral', tasks: false, threat: true, kill: true, anyKill: true, jk: true,
       d: '誰とも組まない単独の殺し屋。', goal: 'インポスターがいない状態で、生き残りの半数以上を自分たちにする。',
       abil: ['襲撃: 近くの1人を倒す(インポスター陣営も対象)'] },
@@ -1392,7 +1445,7 @@ function grid(o) {
       d: '誰とも組まない単独の殺し屋。壁を貫通するビームで倒していく。', goal: 'インポスターがいない状態で、生き残りの半数以上を自分たちにする。',
       abil: ['波動砲: 向いている方向に、壁を貫通するビームを放つ。ためているあいだは動けない。触れた人は(インポスター陣営も)倒れる'] }
   };
-  var ROLE_ORDER = ['impostor', 'assassin', 'maskmaker', 'cleaner', 'wavecannon', 'vampire', 'accomplice', 'jackal', 'wavejackal', 'arsonist', 'jester', 'detective', 'sheriff', 'sniper', 'guardian', 'watcher', 'engineer', 'fortune', 'niceguesser', 'shielder'];
+  var ROLE_ORDER = ['impostor', 'assassin', 'maskmaker', 'cleaner', 'wavecannon', 'vampire', 'accomplice', 'jackal', 'wavejackal', 'arsonist', 'jester', 'detective', 'sheriff', 'sniper', 'guardian', 'engineer', 'fortune', 'niceguesser', 'shielder'];
 
   // ---------- 設定 ----------
   var SETTING_DEFS = [
@@ -1412,7 +1465,6 @@ function grid(o) {
     { g: 'role', k: 'r_sheriff', role: 'sheriff', label: 'シェリフ', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_sniper', role: 'sniper', label: '狙撃手', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_guardian', role: 'guardian', label: '守護者', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
-    { g: 'role', k: 'r_watcher', role: 'watcher', label: '管制官', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_engineer', role: 'engineer', label: '技師', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_fortune', role: 'fortune', label: '占い師', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_niceguesser', role: 'niceguesser', label: 'ナイスゲッサー', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
@@ -1450,9 +1502,6 @@ function grid(o) {
     { g: 'abil', r: 'maskmaker', k: 'maskCd', label: '変装のクールダウン(変装が終わってから)', min: 10, max: 90, step: 5, def: 40, unit: '秒' },
     { g: 'abil', r: 'cleaner', k: 'cleanCd', label: '掃除のクールダウン', min: 5, max: 60, step: 5, def: 20, unit: '秒' },
     { g: 'abil', r: 'detective', k: 'detectiveUses', label: '探偵の鑑識回数', min: 1, max: 5, step: 1, def: 2, unit: '回' },
-    { g: 'abil', r: 'watcher', k: 'watcherUses', label: '管制官の監視回数', min: 1, max: 6, step: 1, def: 3, unit: '回' },
-    { g: 'abil', r: 'watcher', k: 'watchSec', label: '監視の長さ', min: 4, max: 20, step: 2, def: 8, unit: '秒' },
-    { g: 'abil', r: 'watcher', k: 'watcherCd', label: '監視のクールダウン', min: 10, max: 60, step: 5, def: 25, unit: '秒' },
     { g: 'abil', r: 'engineer', k: 'engineerUses', label: '技師のベント回数', min: 1, max: 8, step: 1, def: 4, unit: '回' },
     { g: 'abil', r: 'arsonist', k: 'douseCd', label: 'ガソリンのクールダウン', min: 5, max: 30, step: 1, def: 12, unit: '秒' },
     { g: 'abil', r: 'fortune', k: 'fortuneUses', label: '占いの回数(ゲーム全体)', min: 1, max: 6, step: 1, def: 3, unit: '回' },
@@ -1520,9 +1569,11 @@ function grid(o) {
     });
   }
   function useMap(i) {
-    i = Math.max(0, Math.min(MAPS.length - 1, i | 0));
+    var nm;
+    if (i === 'lobby') nm = Maps.lobby; // 待機室(ゲーム開始前のロビー)。一覧のマップとは別に持っている
+    else { i = Math.max(0, Math.min(MAPS.length - 1, i | 0)); nm = MAPS[i]; }
     if (i === mapIdx) return M;
-    mapIdx = i; M = MAPS[i];
+    mapIdx = i; M = nm;
     ROOMS = M.rooms; HALLS = M.halls; WORLD = M.world; TABLE = M.table; VENTS = M.vents; TASKS = M.tasks; GIM = M.gimmicks || {};
     RECTS = ROOMS.concat(HALLS);
     buildGraph();
@@ -1795,7 +1846,6 @@ function grid(o) {
       if (p.role === 'cleaner') p.ca = now;
       if (R.team === 'impostor' && p.role !== 'accomplice' && s.accompliceKnown) p.ak = 1;
       if (p.role === 'detective') { p.u = s.detectiveUses; p.ca = now; }
-      if (p.role === 'watcher') { p.u = s.watcherUses; p.ca = now; }
       if (p.role === 'engineer') p.u = s.engineerUses;
       if (p.role === 'fortune') { p.u = s.fortuneUses; p.fr = []; }
       if (p.role === 'niceguesser') p.u = s.niceShots;
@@ -1913,6 +1963,18 @@ function grid(o) {
     if (state.phase === 'meeting' && mm.stage === 'vote' && alivePlayers(state).every(function (q) { return mm.votes[q.id] !== undefined; })) mm.end = now;
   }
   function act(state, pid, a, ctx) {
+    // 待機室(ロビー)でできることは、色を変えることだけ。マップは切り替えない(待機室のマップのまま)
+    if (state.phase === 'lobby') {
+      var lp = state.players[pid];
+      if (a && a.type === 'setcolor' && lp && !lp.left) {
+        var cc = a.c | 0;
+        if (cc < 0 || cc >= COLORS.length) return { ok: false, err: 'color' };
+        if (state.order.some(function (id) { return id !== pid && state.players[id] && state.players[id].color === cc; })) return { ok: false, err: 'taken' };
+        lp.color = cc;
+        return { ok: true };
+      }
+      return { ok: false, err: 'lobby' };
+    }
     useMap(state.settings.map);
     var p = state.players[pid];
     if (!p || p.left) return { ok: false, err: 'no player' };
@@ -2119,12 +2181,6 @@ function grid(o) {
       var ago = Math.max(0, Math.round((now - bd.t) / 1000));
       var nearNames = bd.near.map(function (id) { return COLORS[state.players[id].color].name; });
       pushNote(p, '鑑識: ' + COLORS[v.color].name + 'の遺体は死後' + ago + '秒。付近にいた人: ' + (nearNames.length ? nearNames.join('・') : 'いない'));
-      return { ok: true };
-    }
-
-    if (a.type === 'watch') {
-      if (p.role !== 'watcher' || !(p.u > 0) || now < (p.ca || 0)) return { ok: false };
-      p.u--; p.ca = now + s.watcherCd * 1000; p.ws = now + s.watchSec * 1000;
       return { ok: true };
     }
 
@@ -2668,7 +2724,19 @@ function grid(o) {
     } else { var p2 = randomPoint(rand); b.task = null; goTo(b, p2.x, p2.y); }
   }
 
-  var Bots = { create: create, step: step, teleport: teleport, nodeNear: nodeNear, path: path };
+  // ロビーでのボット: ときどき歩き出して、部屋のなかをうろうろする
+  function idle(b, dt, rand) {
+    if (!b.goal && !b.route.length) {
+      b.w = 0; b.mode = 'idle';
+      b.wait = (b.wait > 0 ? b.wait : 1.5 + rand() * 7) - dt;
+      if (b.wait > 0) return;
+      b.wait = 0;
+      var q = randomPoint(rand); goTo(b, q.x, q.y);
+      return;
+    }
+    walk(b, dt, 80);
+  }
+  var Bots = { create: create, step: step, idle: idle, teleport: teleport, nodeNear: nodeNear, path: path };
   if (typeof module !== 'undefined' && module.exports) module.exports = Bots; else root.Bots = Bots;
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -3304,9 +3372,11 @@ var S = {
   online: false, capsReady: false, lastFrame: 0, lastHostTick: 0
 };
 // 現在の状態に合わせてマップ(エンジン内部)を切り替え、隔壁やゲートの状態を最新にする
+// いま使うマップ: ロビーのあいだは待機室、ゲームが始まったら設定で選んだマップ
+function sceneOf(st) { return st.phase === 'lobby' ? 'lobby' : (st.settings.map | 0); }
 function syncMap(st) {
   if (!st || !st.settings) return;
-  E.useMap(st.settings.map | 0);
+  E.useMap(sceneOf(st));
   E.setDyn(st, Date.now() + (S.isHost || S.mode === 'local' ? 0 : S.skew));
 }
 function tnow() { return Date.now() + (S.isHost || S.mode === 'local' ? 0 : S.skew); }
@@ -3498,18 +3568,18 @@ async function electionTick() {
 
 /* ---------- ホストの処理 ---------- */
 function cleanAct(x) {
-  var types = ['task', 'report', 'emergency', 'kill', 'shoot', 'guard', 'inspect', 'watch', 'vent', 'sab', 'douse', 'ignite', 'vote', 'assassinate', 'fortune', 'nicekill', 'shield', 'wave', 'seal', 'fixlights', 'portal', 'fixcrisis', 'thrall', 'snipe', 'disguise', 'clean'];
+  var types = ['task', 'report', 'emergency', 'kill', 'shoot', 'guard', 'inspect', 'vent', 'sab', 'douse', 'ignite', 'vote', 'assassinate', 'fortune', 'nicekill', 'shield', 'wave', 'seal', 'fixlights', 'portal', 'fixcrisis', 'thrall', 'setcolor', 'snipe', 'disguise', 'clean'];
   if (!x || types.indexOf(x.type) < 0) return null;
   var a = { type: x.type };
   if (typeof x.t === 'string' && x.t.length <= 48) a.t = x.t;
   if (typeof x.r === 'string' && x.r.length <= 16) a.r = x.r;
-  ['s', 'st', 'b', 'to', 'dx', 'dy'].forEach(function (k) { if (typeof x[k] === 'number' && isFinite(x[k])) a[k] = x[k]; });
+  ['s', 'st', 'b', 'to', 'dx', 'dy', 'c'].forEach(function (k) { if (typeof x[k] === 'number' && isFinite(x[k])) a[k] = x[k]; });
   return a;
 }
 function hostPoll() {
   var st = S.hostState;
   if (!st || !S.isHost) return;
-  E.useMap(st.settings.map); E.setDyn(st, Date.now());
+  E.useMap(sceneOf(st)); E.setDyn(st, Date.now());
   refreshPeers();
   var ctx = hostCtx(), changed = false, now = ctx.now;
 
@@ -3562,8 +3632,14 @@ function ensureBots() {
 function hostTick(dt) {
   var st = S.hostState;
   if (!S.isHost || !st) return;
-  E.useMap(st.settings.map); E.setDyn(st, Date.now());
+  E.useMap(sceneOf(st)); E.setDyn(st, Date.now());
   ensureBots();
+  if (st.phase === 'lobby') {
+    // ゲームから戻ってきたら、ボットも待機室の入口に並べ直す。そのあとは、うろうろ歩く
+    if (S.botScene !== 'lobby') st.order.forEach(function (id, i) { if (S.bots[id]) { var sp = E.spawnPoint(i, Math.max(1, st.order.length)); B.teleport(S.bots[id], sp.x, sp.y); } });
+    Object.keys(S.bots).forEach(function (id) { B.idle(S.bots[id], dt, Math.random); });
+  }
+  S.botScene = st.phase === 'lobby' ? 'lobby' : 'game';
   var ctx = hostCtx(), changed = false;
   var api = { act: function (pid, a) { var r = E.act(st, pid, a, ctx); if (r && r.ok) changed = true; return r; } };
   if (st.phase === 'play' || st.phase === 'meeting') {
@@ -3693,6 +3769,8 @@ var DECO_T = {
   waste: 'machine:.16,.76,100,70;barrel:.88,.8,34,34;barrel:.8,.88,28,28;pipe:.5,.07,240,14;crate:.9,.18,38,38',
   corridor: 'lamp:.1,.5,20,20;lamp:.5,.5,20,20;lamp:.9,.5,20,20',
   factory: 'machine:.15,.84,110,60;machine:.85,.84,110,60;pipe:.5,.07,300,14;crate:.9,.16,38,38;rug:.5,.55,200,60',
+  dressing: 'wardrobe:.25,.07,90,30;wardrobe:.75,.07,90,30;rug:.5,.66,170,110;plant:.9,.9,26,26;lamp:.1,.92,26,26',
+  dockctl: 'window:.5,.06,230,20;rack:.12,.16,56,34;rack:.88,.16,56,34;rug:.5,.64,220,130;lamp:.08,.92,26,26;lamp:.92,.92,26,26;plant:.1,.84,26,26',
   lounge: 'sofa:.2,.86,96,38;sofa:.8,.86,96,38;rtable:.5,.66,64,44;window:.5,.06,220,20;plant:.93,.2,26,26;rug:.5,.55,200,100',
   casino: 'ftable:.2,.7,92,56;ftable:.5,.72,92,56;ftable:.8,.7,92,56;slot:.12,.14,34,40;slot:.88,.14,34,40;rug:.5,.5,280,150',
   spa: 'pool:.5,.6,200,90;sofa:.14,.12,70,32;plant:.93,.15,26,26;plant:.07,.86,26,26',
@@ -3720,6 +3798,7 @@ function decoAnchors(M) {
   (M.tasks || []).forEach(function (T) { T.steps.forEach(function (s) { a.push([s.x, s.y, 34]); }); });
   (M.vents || []).forEach(function (v) { a.push([v.x, v.y, 32]); });
   if (M.table) a.push([M.table.x, M.table.y, 64]);
+  (M.stations || []).forEach(function (s) { a.push([s.x, s.y, 80]); });
   if (M.counter) a.push([M.counter.x, M.counter.y, 56]);
   var G = M.gimmicks || {};
   if (G.panel) a.push([G.panel.x, G.panel.y, 50]);
@@ -5034,7 +5113,13 @@ function kickBtn(id, name) {
       setTimeout(function () { if (S.kickAsk === id) { S.kickAsk = null; S.uiRev = -1; } }, 4000);
     } });
 }
+// 設定の表示は「選んでいるゲームのマップ」の仕組み(隔壁・声の設定など)に合わせる。終わったら待機室に戻す
 function renderLobby(st) {
+  if (st && st.settings) E.useMap(st.settings.map | 0);
+  try { renderLobbyBody(st); } finally { if (st) syncMap(st); }
+  $('btn-lobby-x').hidden = !st || (S.mode === 'online' && st.locked && !st.players[S.pid]);
+}
+function renderLobbyBody(st) {
   var isH = S.isHost && S.mode;
   var stat = $('lobby-status'); clear(stat);
   var chip = codeChip(); if (chip) stat.appendChild(chip);
@@ -5046,7 +5131,6 @@ function renderLobby(st) {
     $('summary').textContent = ''; $('start-msg').textContent = ''; $('btn-start').disabled = true; $('bot-ctl').hidden = true; clear($('map-pick'));
     return;
   }
-  syncMap(st);
   var host = st.players[st.hostId];
   stat.appendChild(h('span', { class: 'dot ok' }));
   var shut = S.mode === 'online' && st.locked && !st.players[S.pid];
@@ -5119,7 +5203,6 @@ function roleNotes(role, s) {
     n.push(s.waveKill ? '波動砲のほかに、通常の襲撃(近くの1人を倒す)もできます。クールダウンは波動砲と共通です。' : '通常の襲撃はできません(波動砲だけです)。');
   }
   if (role === 'detective') n.push('鑑識はゲーム中に ' + s.detectiveUses + ' 回まで。');
-  if (role === 'watcher') n.push('監視は ' + s.watcherUses + ' 回まで。1回 ' + s.watchSec + ' 秒、クールダウン ' + s.watcherCd + ' 秒。');
   if (role === 'engineer') n.push('ベントはゲーム中に ' + s.engineerUses + ' 回まで。');
   if (role === 'arsonist') n.push('ガソリンのクールダウンは ' + s.douseCd + ' 秒。');
   if (role === 'vampire') {
@@ -5188,11 +5271,13 @@ function applyOverlays() {
   var st = S.state, inGame = !!(S.mode && st && st.phase !== 'lobby');
   var meet = inGame && meetingShown(st), over = inGame && st.phase === 'over' && !meet;
   $('ov-meeting').hidden = !meet; $('ov-over').hidden = !over;
+  $('ov-color').hidden = !(S.mode && st && st.phase === 'lobby' && S.overlay === 'color');
   $('ov-role').hidden = !(inGame && S.overlay === 'role' && !meet && !over);
   $('ov-task').hidden = !(inGame && S.overlay === 'task' && st.phase === 'play');
   $('ov-vent').hidden = !(inGame && S.overlay === 'vent' && st.phase === 'play');
   $('ov-map').hidden = !(inGame && S.overlay === 'map');
   $('ov-count').hidden = !(inGame && S.overlay === 'count' && st.phase === 'play');
+  $('ov-cam').hidden = !(inGame && S.overlay === 'cam' && st.phase === 'play');
   $('ov-roles').hidden = !(inGame && S.overlay === 'roles' && !over);
   $('ov-sab').hidden = !(inGame && S.overlay === 'sab' && st.phase === 'play');
   if (S.overlay === 'task' && st && st.phase !== 'play') closeTask();
@@ -5201,7 +5286,7 @@ function applyOverlays() {
     if (over || (meet && !S.mapFromMeeting) || (!meet && S.mapFromMeeting)) { S.overlay = null; $('ov-map').hidden = true; }
     if (!meet) S.mapFromMeeting = false;
   } else if (S.overlay && S.overlay !== 'role' && !(S.overlay === 'roles' && meet) && (meet || over)) S.overlay = null;
-  if (S.overlay === 'count' && st && st.phase !== 'play') S.overlay = null;
+  if ((S.overlay === 'count' || S.overlay === 'cam') && st && st.phase !== 'play') S.overlay = null;
 }
 /* ---------- 妨害の選択(インポスター側) ---------- */
 // 妨害の発動地点: 修理する場所(配電盤・修理地点)に、発動ボタンを置く。2か所を直す緊急事態は、片方(1番目)だけに置き、もう片方は通信妨害にあてる
@@ -5328,6 +5413,35 @@ function drawCountOverlay() {
     box.setAttribute('data-sig', sig); clear(box);
     E.ROOMS.forEach(function (r) { var n = cnt[r.id] || 0; box.appendChild(h('span', { class: 'cn' + (n ? '' : ' zero') }, [r.n, h('b', { text: n + '人' })])); });
   }
+}
+
+/* ---------- 監視カメラ ---------- */
+// 部屋ごとに、人のマークを並べる(だれなのか、生きているのか遺体なのかも区別がつかない)。開いているあいだ、毎フレーム更新する
+function drawCamOverlay() {
+  var st = S.state, u0 = E.M.scale || 1;
+  if (!st) return;
+  var cnt = E.roomCounts(st, getPos);
+  drawMapThumb($('cv-cam'), E.M, { names: true, table: false, fs: 22, after: function (c) {
+    E.ROOMS.forEach(function (r) {
+      var n = cnt[r.id] || 0, cx = r.x + r.w / 2;
+      if (!n) return;
+      // 部屋の広さに合わせて、マークをできるだけ大きく並べる
+      var f = 2.6, cols = 1, rows = 1, gap = 34;
+      for (; f >= 0.9; f -= 0.2) {
+        gap = 34 * f * u0; cols = Math.max(1, Math.floor((r.w - 20 * u0) / gap)); rows = Math.ceil(n / cols);
+        if (rows * gap <= r.h * 0.5) break;
+      }
+      var u = f * u0, cy0 = r.y + r.h - 16 * u0 - 17 * u - (rows - 1) * gap; // 部屋の下がわに寄せて、部屋の名前と重ならないようにする
+      for (var k = 0; k < n; k++) {
+        var col = k % cols, row = Math.floor(k / cols), rowN = Math.min(cols, n - row * cols);
+        var x = cx + (col - (rowN - 1) / 2) * gap, y = cy0 + row * gap;
+        c.fillStyle = '#10172b'; c.beginPath(); c.arc(x, y - 9 * u, 10.5 * u, 0, 6.2832); c.fill(); c.fillRect(x - 12 * u, y + 1 * u, 24 * u, 16 * u);
+        c.fillStyle = '#f2f6ff'; c.beginPath(); c.arc(x, y - 9 * u, 8.5 * u, 0, 6.2832); c.fill();
+        c.beginPath(); c.moveTo(x - 10 * u, y + 15 * u); c.lineTo(x - 7 * u, y + 3 * u); c.lineTo(x + 7 * u, y + 3 * u); c.lineTo(x + 10 * u, y + 15 * u); c.closePath(); c.fill();
+      }
+    });
+    if (E.M.camera) { c.strokeStyle = '#7fb0ff'; c.lineWidth = 6 * u0; c.beginPath(); c.arc(E.M.camera.x, E.M.camera.y, 20 * u0, 0, 6.2832); c.stroke(); }
+  } });
 }
 
 /* ---------- 会議 ---------- */
@@ -5473,15 +5587,44 @@ function renderOver() {
   else ctl.appendChild(h('p', { class: 'mute', style: 'text-align:center', text: 'ホストがロビーに戻すのを待っています…' }));
 }
 
+/* ---------- 待機室: 設定パネルと着替え ---------- */
+function openLobbyPanel() { S.lobbyPanel = true; S.joy.x = 0; S.joy.y = 0; S.uiRev = -1; var el = $('s-lobby'); if (el) el.scrollTop = 0; }
+function closeLobbyPanel() { S.lobbyPanel = false; S.uiRev = -1; }
+function openColor() { S.overlay = 'color'; renderColor(S.state); applyOverlays(); }
+function renderColor(st) {
+  var box = $('color-grid'), me = myPlayer();
+  if (!st || !me) return;
+  clear(box);
+  C.forEach(function (col, i) {
+    var owner = null;
+    st.order.forEach(function (id) { if (id !== S.pid && st.players[id] && st.players[id].color === i) owner = st.players[id]; });
+    var cvs = h('canvas', { width: 72, height: 84 });
+    box.appendChild(h('button', { type: 'button', class: 'colcard' + (me.color === i ? ' on' : ''), disabled: !!owner, 'aria-pressed': me.color === i ? 'true' : 'false',
+      'aria-label': col.name + (owner ? '(' + owner.name + 'さんが使用中)' : ''), onclick: function () { pickColor(i); } }, [cvs, h('span', { text: col.name }), owner ? h('small', { class: 'mute', text: owner.name }) : null]));
+    var c = cvs.getContext('2d'); c.save(); c.translate(36, 48); c.scale(1.7, 1.7); drawBlob(c, 0, 0, col.hex, 1, 0, 1, false, false); c.restore();
+  });
+}
+function pickColor(i) {
+  var me = myPlayer();
+  if (me && me.color === i) { setOverlay(null); return; }
+  var r = sendAct({ type: 'setcolor', c: i });
+  if (r && r.ok === false) { toast(r.err === 'taken' ? 'その色は、ほかの人が使っています' : '色を変えられませんでした'); return; }
+  setOverlay(null);
+}
+
 /* ---------- 画面全体の再描画 ---------- */
 function renderUI() {
   var st = S.state, me = myPlayer();
   if (typeof vcRender === 'function') vcRender();
-  var scr = !S.mode ? 'entry' : (!st || st.phase === 'lobby') ? 'lobby' : 'game';
-  $('s-entry').hidden = scr !== 'entry'; $('s-lobby').hidden = scr !== 'lobby'; $('s-game').hidden = scr !== 'game';
-  if (scr === 'entry') updateEntryStatus();
-  if (scr === 'lobby') renderLobby(st);
-  if (scr === 'game') {
+  var inLobby = !!(S.mode && st && st.phase === 'lobby');
+  if (!inLobby) { S.lobbyPanel = false; if (S.overlay === 'color') S.overlay = null; }
+  var shut = inLobby && S.mode === 'online' && st.locked && !st.players[S.pid]; // 締め切られて入れない人には、理由を見せる
+  var showPanel = !!S.mode && (!st || (inLobby && (!!S.lobbyPanel || shut))), showGame = !!S.mode && !!st;
+  $('s-entry').hidden = !!S.mode; $('s-lobby').hidden = !showPanel; $('s-game').hidden = !showGame;
+  if (!S.mode) updateEntryStatus();
+  if (showPanel) renderLobby(st);
+  if (inLobby && S.overlay === 'color') renderColor(st);
+  if (showGame && !inLobby) {
     if (me && me.role && (S.cardRound !== st.round || S.cardRc !== (me.rc || 0)) && st.phase === 'play') { S.cardRound = st.round; S.cardRc = me.rc || 0; showRoleCard(); }
     if (!S.hintShown && VH > VW * 1.1) { S.hintShown = true; toast('横向きにすると広く見渡せて遊びやすくなります。縦のまま固定されるときは、入室画面の「画面の向き」で横向き表示にできます。'); }
     if (meetingShown(st)) renderMeeting();
@@ -5701,7 +5844,7 @@ var KEY_GROUPS = [
   { id: 'use', n: 'タスク・使う(緊急会議・修復・人数確認)', def: 'KeyE', acts: ['use'] },
   { id: 'report', n: '通報', def: 'KeyR', acts: ['report'] },
   { id: 'attack', n: '襲撃・噛む・波動砲・射撃・狙撃', def: 'KeyQ', acts: ['kill', 'wave', 'shoot', 'snipe'] },
-  { id: 'skill', n: '役職の能力(シールド・守護・鑑識・監視・ガソリン・眷属化・変装・掃除・隠し扉)', def: 'KeyF', acts: ['shield', 'guard', 'inspect', 'watch', 'douse', 'thrall', 'disguise', 'clean', 'portal'] },
+  { id: 'skill', n: '役職の能力(シールド・守護・鑑識・ガソリン・眷属化・変装・掃除・隠し扉)', def: 'KeyF', acts: ['shield', 'guard', 'inspect', 'douse', 'thrall', 'disguise', 'clean', 'portal'] },
   { id: 'skill2', n: '点火', def: 'KeyG', acts: ['ignite'] },
   { id: 'vent', n: 'ベント', def: 'KeyV', acts: ['vent'] },
   { id: 'sab', n: '妨害(マップを開く)', def: 'KeyX', acts: ['sab'] },
@@ -5753,10 +5896,11 @@ function kbEscape() {
   if (!$('ov-vol').hidden) { $('ov-vol').hidden = true; return true; }
   if (!$('ov-keys').hidden) { $('ov-keys').hidden = true; return true; }
   if (!$('ov-sound').hidden) { $('ov-sound').hidden = true; return true; }
+  if (S.lobbyPanel) { closeLobbyPanel(); return true; }
   var o = S.overlay;
   if (o === 'task') { closeTask(); setOverlay(null); return true; }
   if (o === 'map') { S.mapFromMeeting = false; setOverlay(null); return true; }
-  if (o === 'sab' || o === 'vent' || o === 'count' || o === 'roles') { setOverlay(null); return true; }
+  if (o === 'sab' || o === 'vent' || o === 'count' || o === 'cam' || o === 'roles' || o === 'color') { setOverlay(null); return true; }
   return false;
 }
 function kbConflict(code, except) { for (var i = 0; i < KEY_GROUPS.length; i++) if (KEY_GROUPS[i].id !== except && KB.map[KEY_GROUPS[i].id] === code) return KEY_GROUPS[i]; return null; }
@@ -5795,11 +5939,14 @@ function bindKeys() {
     if (code === 'Escape') { if (kbEscape()) e.preventDefault(); return; }
     S.kc[code] = true;
     if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
-    if (!S.mode || !S.state || S.state.phase !== 'play') return;
+    if (!S.mode || !S.state || (S.state.phase !== 'play' && S.state.phase !== 'lobby')) return;
+    var inLob = S.state.phase === 'lobby';
+    if (inLob && S.lobbyPanel) return;
     if (S.overlay && S.overlay !== 'role' && !(S.overlay === 'map' && code === KB.map.map)) return;
     for (var i = 0; i < KEY_GROUPS.length; i++) {
       var g = KEY_GROUPS[i];
       if (g.move || KB.map[g.id] !== code) continue;
+      if (inLob && g.id !== 'use') continue; // 待機室で使えるのは「使う」のキーだけ
       if (kbPress(g)) { e.preventDefault(); return; }
     }
   }, true);
@@ -6073,7 +6220,8 @@ function drawWorld(c, st, me, vr, watching, ghost, now) {
   c.fillStyle = '#4a3f6e'; ell(c, E.TABLE.x, E.TABLE.y, 74, 46); c.fill();
   c.strokeStyle = '#0b1020'; c.lineWidth = 4; ell(c, E.TABLE.x, E.TABLE.y, 74, 46); c.stroke();
   var usable = S.nearInfo && S.nearInfo.table;
-  c.fillStyle = usable ? '#ff6a6f' : '#b13b43'; c.beginPath(); c.arc(E.TABLE.x, E.TABLE.y, 12 + (usable ? Math.sin(now / 160) * 2 : 0), 0, 6.2832); c.fill();
+  if (st.phase !== 'lobby') { c.fillStyle = usable ? '#ff6a6f' : '#b13b43'; c.beginPath(); c.arc(E.TABLE.x, E.TABLE.y, 12 + (usable ? Math.sin(now / 160) * 2 : 0), 0, 6.2832); c.fill(); }
+  if (E.M.stations) drawLobbyProps(c, st, now);
   // 人数モニター
   if (E.M.counter) {
     var ct = E.M.counter, cu = S.nearInfo && S.nearInfo.counter;
@@ -6083,6 +6231,19 @@ function drawWorld(c, st, me, vr, watching, ghost, now) {
     c.fillStyle = '#10172b'; c.fillRect(ct.x - 24, ct.y + 13, 48, 4);
     if (cu) { c.strokeStyle = 'rgba(95,208,138,' + (0.5 + 0.4 * Math.sin(now / 200)) + ')'; c.lineWidth = 3; c.strokeRect(ct.x - 36, ct.y - 28, 72, 56); }
     label(c, '人数モニター', ct.x, ct.y - 36, cu ? '#9be8b4' : '#8fb7c0');
+  }
+  // 監視カメラ(この前に留まっているあいだだけ、全員の位置が見える)
+  if (E.M.camera) {
+    var cm = E.M.camera, cn = S.nearInfo && S.nearInfo.camera, con = cn && S.overlay === 'cam';
+    c.fillStyle = '#10172b'; c.fillRect(cm.x - 38, cm.y - 24, 76, 48);
+    for (var mq = 0; mq < 3; mq++) {
+      c.fillStyle = con ? '#7fb0ff' : '#2b3a63'; c.fillRect(cm.x - 33 + mq * 24, cm.y - 19, 20, 16);
+      c.fillStyle = con ? '#10172b' : '#4a5d93'; c.fillRect(cm.x - 28 + mq * 24, cm.y - 14, 4 + mq, 4); c.fillRect(cm.x - 24 + mq * 24, cm.y - 10, 5, 3);
+    }
+    c.fillStyle = '#10172b'; c.fillRect(cm.x - 33, cm.y + 6, 66, 12);
+    c.fillStyle = con ? '#ff6a6f' : '#6b2b33'; c.beginPath(); c.arc(cm.x + 26, cm.y + 12, 3 + (con ? Math.sin(now / 140) : 0), 0, 6.2832); c.fill(); // 録画中の赤い点
+    if (cn) { c.strokeStyle = 'rgba(127,176,255,' + (0.5 + 0.4 * Math.sin(now / 200)) + ')'; c.lineWidth = 3; c.strokeRect(cm.x - 44, cm.y - 30, 88, 60); }
+    label(c, '監視カメラ', cm.x, cm.y - 40, cn ? '#a9c9ff' : '#8fa6d6');
   }
   // 配電盤(宇宙船)
   if (G.panel) {
@@ -6153,13 +6314,107 @@ function drawWorld(c, st, me, vr, watching, ghost, now) {
     if (d.until > tn && E.HALLS[d.h]) { var o = E.HALLS[d.h]; hazard(c, o, 0.92); label(c, '隔壁', o.x + o.w / 2, o.y - 8, '#ffb3bf'); }
   });
 }
+/* ---------- 待機室(ゲーム開始前) ---------- */
+// 3つの端末: 着替えの鏡 / ゲーム設定の端末 / 発進のレバー
+function drawLobbyProps(c, st, now) {
+  var near = S.nearInfo || {}, isH = !!(S.isHost && S.mode);
+  (E.M.stations || []).forEach(function (s) {
+    var on = near.station === s.id, pul = 0.5 + 0.4 * Math.sin(now / 200), nm = s.n, i;
+    if (s.id === 'wardrobe') {
+      c.fillStyle = '#10172b'; c.fillRect(s.x - 32, s.y - 38, 64, 76);
+      var g = c.createLinearGradient(s.x - 26, s.y - 32, s.x + 26, s.y + 28); g.addColorStop(0, '#b8cdf5'); g.addColorStop(1, '#4a5d93');
+      c.fillStyle = g; c.fillRect(s.x - 26, s.y - 32, 52, 60);
+      c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 3; c.beginPath(); c.moveTo(s.x - 14, s.y - 22); c.lineTo(s.x - 2, s.y - 8); c.moveTo(s.x - 6, s.y - 24); c.lineTo(s.x + 2, s.y - 15); c.stroke();
+      var me0 = myPlayer(), mc = me0 ? C[me0.color].hex : '#9bb';
+      drawBlob(c, s.x + 4, s.y + 10, mc, 1, 0, 0.5, false, false);
+      for (i = 0; i < 6; i++) { c.fillStyle = C[(i * 2) % C.length].hex; c.beginPath(); c.arc(s.x - 20 + i * 8, s.y + 46, 3.5, 0, 6.2832); c.fill(); }
+    } else if (s.id === 'config') {
+      c.fillStyle = '#10172b'; c.fillRect(s.x - 40, s.y - 28, 80, 62);
+      c.fillStyle = on ? '#7fd4ff' : '#2f6f94'; c.fillRect(s.x - 34, s.y - 22, 68, 38);
+      for (i = 0; i < 4; i++) { c.fillStyle = '#0b2438'; c.fillRect(s.x - 28, s.y - 16 + i * 8, 14 + ((i * 17 + 5) % 30), 4); }
+      c.fillStyle = '#0b2438'; c.fillRect(s.x - 34, s.y + 20, 68, 8);
+      for (i = 0; i < 5; i++) { c.fillStyle = i === 1 ? '#ffd24d' : '#5fd08a'; c.fillRect(s.x - 28 + i * 13, s.y + 21, 6, 5); }
+    } else if (s.id === 'launch') {
+      c.fillStyle = '#10172b'; c.fillRect(s.x - 40, s.y - 22, 80, 54);
+      c.fillStyle = '#3d4d7e'; c.fillRect(s.x - 34, s.y - 16, 68, 14);
+      c.fillStyle = '#0b1020'; c.fillRect(s.x - 5, s.y - 4, 10, 30);
+      var ang = on && isH ? -0.4 + 0.1 * Math.sin(now / 150) : -0.55;
+      c.save(); c.translate(s.x, s.y + 22); c.rotate(ang); c.fillStyle = '#b0b8d4'; c.fillRect(-3, -40, 6, 40);
+      c.fillStyle = isH ? '#ff6a6f' : '#7a5a60'; c.beginPath(); c.arc(0, -42, 9, 0, 6.2832); c.fill(); c.restore();
+      nm = isH ? '発進' : '発進(ホスト)';
+    }
+    if (on) { c.strokeStyle = 'rgba(255,255,255,' + (0.55 + 0.4 * pul) + ')'; c.lineWidth = 3; c.strokeRect(s.x - 48, s.y - 46, 96, 92); }
+    label(c, nm, s.x, s.y - 54, on ? '#ffffff' : '#9fb3e6');
+  });
+}
+function renderLobbyScene(c, st, now) {
+  c.save();
+  c.translate(VW / 2 - S.me.x * SCALE, VH / 2 - S.me.y * SCALE); c.scale(SCALE, SCALE);
+  drawWorld(c, st, myPlayer(), 9999, false, false, now);
+  var list = [];
+  st.order.forEach(function (id) {
+    var p = st.players[id]; if (!p || p.left) return;
+    var v = id === S.pid ? S.me : S.vis[id]; if (!v) return;
+    list.push({ id: id, p: p, v: v });
+  });
+  list.sort(function (a, b) { return a.v.y - b.v.y; });
+  list.forEach(function (o) {
+    var v = o.v, host = o.id === st.hostId;
+    drawBlob(c, v.x, v.y, C[o.p.color].hex, v.f || 1, v.ph || 0, 1, false, false);
+    label(c, o.p.name, v.x, v.y - 34, o.id === S.pid ? '#ffffff' : '#e9eef9');
+    if (host) label(c, 'HOST', v.x, v.y - 50, '#ffd24d');
+    if (S.speaking[o.id]) drawSpeak(c, v.x + (host ? 30 : 0), v.y - 52, now);
+  });
+  c.restore();
+}
+function lobbyNear() {
+  var near = { station: null }, list = (E.M.stations || []).map(function (s) { return { x: s.x, y: s.y, id: s.id }; });
+  var b = nearest(list, S.me, 100);
+  if (b) near.station = b.id;
+  return near;
+}
+function lobbyStart() {
+  var st = S.hostState;
+  if (!S.isHost || !st || st.phase !== 'lobby') return;
+  var err = E.startGame(st, hostCtx());
+  if (err) { toast(err); return; }
+  S.cardRound = 0; S.vis = {}; S.chat = []; S.chatMsg = null; S.lobbyPanel = false;
+  Object.keys(S.bots).forEach(function (id) { delete S.bots[id]; });
+  touch();
+}
+function computeLobbyActions(st) {
+  var id = S.nearInfo && S.nearInfo.station, isH = !!(S.isHost && S.mode), list = [];
+  var lab = id === 'wardrobe' ? '着替え' : id === 'config' ? (isH ? '設定' : '設定を見る') : id === 'launch' ? '発進' : '調べる';
+  list.push({ id: 'use', label: lab, big: true, color: id === 'launch' ? 'var(--imp)' : 'var(--accent)', sub: id === 'launch' && !isH ? 'ホストだけ' : '', ready: !!id && (id !== 'launch' || isH),
+    press: function () { if (id === 'wardrobe') openColor(); else if (id === 'config') openLobbyPanel(); else if (id === 'launch') lobbyStart(); } });
+  return list;
+}
+// 待機室の入口: 自分の入り口の位置に立つ
+function lobbyPlace(st) {
+  if (S.placed || !st.players[S.pid]) return;
+  S.placed = true; S.overlay = null;
+  var sp = E.spawnPoint(Math.max(0, st.order.indexOf(S.pid)), Math.max(1, st.order.length));
+  S.me.x = sp.x; S.me.y = sp.y; S.me.w = 0;
+  if (!S.lobbyHint) { S.lobbyHint = true; toast('待機室です。歩き回れます。右の部屋で設定とゲーム開始、左の部屋で着替えができます'); }
+}
+function updateLobbyHud(st) {
+  var isH = !!(S.isHost && S.mode), near = S.nearInfo && S.nearInfo.station, txt = '';
+  if (near === 'wardrobe') txt = '鏡の前です。ボタンでキャラクターの色を変えられます';
+  else if (near === 'config') txt = isH ? 'ゲームの設定やマップを変えられます' : 'ゲームの設定を見られます(変えられるのはホストだけ)';
+  else if (near === 'launch') txt = isH ? 'ボタンでゲームを開始します' : 'ゲームを始めるのはホストです';
+  var ch = $('lob-chip'), t = (S.roomCode ? '部屋コード ' + S.roomCode + '  ' : '') + st.order.length + '人';
+  if (ch.textContent !== t) ch.textContent = t;
+  var bn = $('banner');
+  if (txt) { bn.hidden = false; if (bn.textContent !== txt) bn.textContent = txt; bn.className = 'banner'; } else bn.hidden = true;
+}
 function render(dt) {
   var c = g2, now = performance.now();
   c.setTransform(DPR, 0, 0, DPR, 0, 0);
   c.fillStyle = outerBg(E.M); c.fillRect(0, 0, VW, VH);
   var st = S.state;
-  if (!S.mode || !st || st.phase === 'lobby') return;
-  var me = myPlayer(), ghost = !me || !me.alive, watching = !!(me && me.ws > tnow());
+  if (!S.mode || !st) return;
+  if (st.phase === 'lobby') { renderLobbyScene(c, st, now); return; }
+  var me = myPlayer(), ghost = !me || !me.alive, watching = false;
   var vr = visionOf(st, me);
   c.save();
   c.translate(VW / 2 - S.me.x * SCALE, VH / 2 - S.me.y * SCALE); c.scale(SCALE, SCALE);
@@ -6321,7 +6576,7 @@ function moveMe(dt) {
     tpk = st.round + ':' + me.tp.n;
     if (tpk !== S.lastTpKey) { S.lastTpKey = tpk; S.me.x = me.tp.x; S.me.y = me.tp.y; S.me.w = 0; }
   }
-  var can = st && st.phase === 'play' && !S.overlay;
+  var can = st && (st.phase === 'play' || (st.phase === 'lobby' && !S.lobbyPanel)) && !S.overlay;
   if (!can) { S.me.w = 0; return; }
   var ghost = !me || !me.alive;
   var v = moveVec(), len = Math.hypot(v[0], v[1]);
@@ -6375,7 +6630,7 @@ function nearest(list, from, range) {
   return best;
 }
 function computeNear(st, me) {
-  var near = { task: -1, step: 0, table: false, vent: -1, body: null, portal: -1, panel: false, hall: -1, fix: -1, counter: false };
+  var near = { task: -1, step: 0, table: false, vent: -1, body: null, portal: -1, panel: false, hall: -1, fix: -1, counter: false, camera: false };
   if (!me) return near;
   var G = E.GIM, now = tnow(), jamOn = st.jamUntil > now;
   if (me.alive && teamOf(me) !== 'impostor' && E.M.crisis && (st.crisis || jamOn)) {
@@ -6399,6 +6654,8 @@ function computeNear(st, me) {
   if (bb) near.body = bb.id;
   if (me.alive && G.portals) near.portal = E.portalNear(S.me.x, S.me.y, 100);
   if (me.alive && E.M.counter && !(jamOn && teamOf(me) !== 'impostor') && E.dist(S.me, E.M.counter) <= 110) near.counter = true;
+  if (me.alive && E.M.camera && !(jamOn && teamOf(me) !== 'impostor') && E.dist(S.me, E.M.camera) <= 90) near.camera = true;
+  if (!near.camera && S.overlay === 'cam') setOverlay(null); // 離れたら(通信妨害・倒れたときも)監視は終わる
   if (me.alive && G.panel && st.blackoutUntil > now && teamOf(me) !== 'impostor' && E.dist(S.me, G.panel) <= 110) near.panel = true;
   if (me.alive && G.doors) near.hall = E.hallNear(S.me.x, S.me.y, 140);
   return near;
@@ -6424,9 +6681,9 @@ function computeActions(st, me) {
   // タスクのボタンの文字は「タスク」で統一(タスク名は小さく添える)。停電の復旧・緊急事態の修理も、このボタンで行う(急ぎなので先に)
   var rep = near.panel ? 'panel' : near.fix >= 0 ? 'fix' : '';
   var repSub = rep === 'panel' ? '停電の復旧' : rep === 'fix' ? (st.crisis ? '緊急事態の修理' : '通信の復旧') : '';
-  var useLabel = rep || near.task >= 0 ? 'タスク' : near.table ? '緊急会議' : near.counter ? '人数確認' : '調べる';
-  list.push({ id: 'use', label: useLabel, big: true, color: 'var(--accent)', sub: rep ? repSub : near.task >= 0 ? E.TASKS[near.task].n : '', ready: !!rep || near.task >= 0 || near.table || near.counter,
-    press: function () { if (rep === 'panel') openPanel(); else if (rep === 'fix') openRepair(near.fix); else if (near.task >= 0) openTask(near.task); else if (near.table) sendAct({ type: 'emergency' }); else if (near.counter) setOverlay('count'); } });
+  var useLabel = rep || near.task >= 0 ? 'タスク' : near.table ? '緊急会議' : near.counter ? '人数確認' : near.camera ? '監視' : '調べる';
+  list.push({ id: 'use', label: useLabel, big: true, color: 'var(--accent)', sub: rep ? repSub : near.task >= 0 ? E.TASKS[near.task].n : '', ready: !!rep || near.task >= 0 || near.table || near.counter || near.camera,
+    press: function () { if (rep === 'panel') openPanel(); else if (rep === 'fix') openRepair(near.fix); else if (near.task >= 0) openTask(near.task); else if (near.table) sendAct({ type: 'emergency' }); else if (near.counter) setOverlay('count'); else if (near.camera) setOverlay('cam'); } });
   var G = E.GIM;
   if (alive && G.portals) list.push({ id: 'portal', label: '隠し扉', color: 'var(--neu)', ready: near.portal >= 0 && now >= (me.cp || 0), cd: cd(me.cp || 0, 2500).ratio, press: function () { sendAct({ type: 'portal' }); } });
   if (alive) list.push({ id: 'report', label: '通報', color: 'var(--warn)', ready: near.body != null, press: function () { sendAct({ type: 'report', b: near.body }); } });
@@ -6475,10 +6732,6 @@ function computeActions(st, me) {
   if (me.role === 'detective') {
     var c3 = cd(me.ca || 0, 5000);
     list.push({ id: 'inspect', label: '鑑識', color: 'var(--crew)', sub: '残り' + (me.u || 0), ready: near.body != null && (me.u || 0) > 0 && c3.left === 0, cd: c3.ratio, press: function () { sendAct({ type: 'inspect', b: near.body }); } });
-  }
-  if (me.role === 'watcher') {
-    var c4 = cd(me.ca || 0, s.watcherCd * 1000), on = (me.ws || 0) > now;
-    list.push({ id: 'watch', label: '監視', color: 'var(--crew)', sub: on ? Math.ceil((me.ws - now) / 1000) + '秒' : '残り' + (me.u || 0), ready: !on && (me.u || 0) > 0 && c4.left === 0, cd: c4.ratio, press: function () { sendAct({ type: 'watch' }); } });
   }
   if (R.vent || me.role === 'engineer') {
     list.push({ id: 'vent', label: 'ベント', color: R.team === 'impostor' ? 'var(--imp)' : 'var(--crew)', sub: me.role === 'engineer' ? '残り' + (me.u || 0) : '', ready: near.vent >= 0 && (me.role !== 'engineer' || (me.u || 0) > 0), press: openVent });
@@ -6607,7 +6860,18 @@ function frame(ts) {
   if (st && S.mode) syncMap(st);
   var rev = st ? st.rev : -2;
   if (S.uiRev !== rev) { S.uiRev = rev; renderUI(); }
-  if (S.mode && st && st.phase !== 'lobby') {
+  var inLobby = !!(S.mode && st && st.phase === 'lobby');
+  $('s-game').classList.toggle('lobbymode', inLobby);
+  if (inLobby) {
+    lobbyPlace(st);
+    moveMe(dt); stepVis(dt);
+    S.nearInfo = lobbyNear(); S.actList = computeLobbyActions(st); S.targetPid = null;
+    syncActionButtons(S.actList);
+    updateLobbyHud(st);
+    render(dt);
+    if (!S.lastPresence || ts - S.lastPresence > 80) { S.lastPresence = ts; sendPresence(false); }
+  } else if (S.mode && st) {
+    S.placed = false;
     moveMe(dt); stepVis(dt);
     if (st.phase === 'play') {
       S.nearInfo = computeNear(st, me);
@@ -6619,9 +6883,13 @@ function frame(ts) {
     if (S.overlay === 'map') drawMapOverlay();
     if (S.overlay === 'sab') drawSabOverlay();
     if (S.overlay === 'count') drawCountOverlay();
+    if (S.overlay === 'cam') drawCamOverlay();
     if (!$('ov-meeting').hidden) { updateMeetingTimer(); if (S.chatDirty) renderChat(); }
     if (!S.lastPresence || ts - S.lastPresence > 80) { S.lastPresence = ts; sendPresence(false); }
-  } else if (S.mode === 'online' && (!S.lastPresence || ts - S.lastPresence > 400)) { S.lastPresence = ts; sendPresence(false); }
+  } else {
+    S.placed = false;
+    if (S.mode === 'online' && (!S.lastPresence || ts - S.lastPresence > 400)) { S.lastPresence = ts; sendPresence(false); }
+  }
   requestAnimationFrame(frame);
 }
 function slowTick() {
@@ -6676,15 +6944,10 @@ function bindUi() {
   })();
   $('btn-lock').addEventListener('click', function () { var st = S.hostState; if (!st || !S.isHost) return; st.locked = !st.locked; toast(st.locked ? '参加を締め切りました。' : '参加を開けました。'); touch(); });
   $('btn-fillbot').addEventListener('click', function () { var st = S.hostState; if (!st) return; while (st.order.length < 4) { var before = st.order.length; addBot(); if (st.order.length === before) break; } });
-  $('btn-start').addEventListener('click', function () {
-    var st = S.hostState;
-    if (!S.isHost || !st) return;
-    var err = E.startGame(st, hostCtx());
-    if (err) { toast(err); return; }
-    S.cardRound = 0; S.vis = {}; S.chat = []; S.chatMsg = null;
-    Object.keys(S.bots).forEach(function (id) { delete S.bots[id]; });
-    touch();
-  });
+  $('btn-start').addEventListener('click', lobbyStart);
+  $('btn-lobby-x').addEventListener('click', closeLobbyPanel);
+  $('btn-lobpanel').addEventListener('click', openLobbyPanel);
+  $('btn-color-x').addEventListener('click', function () { setOverlay(null); });
   $('btn-role').addEventListener('click', showRoleCard);
   $('btn-role-ok').addEventListener('click', function () { setOverlay(null); });
   $('btn-task-x').addEventListener('click', closeTask);
@@ -6694,6 +6957,7 @@ function bindUi() {
   $('cv-sab').addEventListener('pointerdown', function (e) { e.preventDefault(); sabTap(e); });
   $('btn-map-x').addEventListener('click', function () { S.mapFromMeeting = false; setOverlay(null); });
   $('btn-count-x').addEventListener('click', function () { setOverlay(null); });
+  $('btn-cam-x').addEventListener('click', function () { setOverlay(null); });
   ['btn-roles', 'btn-mt-roles'].forEach(function (id) { $(id).addEventListener('click', showRoleList); });
   $('btn-roles-x').addEventListener('click', function () { setOverlay(null); });
   $('btn-mt-map').addEventListener('click', openMeetingMap);
