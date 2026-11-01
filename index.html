@@ -1472,6 +1472,7 @@ function grid(o) {
     { g: 'rule', k: 'discussSec', label: '話し合いの時間', min: 10, max: 300, step: 10, def: 40, unit: '秒' },
     { g: 'rule', k: 'voteSec', label: '投票の時間', min: 10, max: 600, step: 5, def: 30, unit: '秒' },
     { g: 'rule', k: 'killCd', label: '襲撃のクールダウン', min: 10, max: 60, step: 5, def: 25, unit: '秒' },
+    { g: 'rule', k: 'startCd', label: '開始直後の襲撃クールダウン(短いほど、すぐ襲撃できる)', min: 0, max: 60, step: 5, def: 15, unit: '秒' },
     { g: 'rule', k: 'killRange', label: '襲撃・射撃の距離', min: 60, max: 140, step: 10, def: 90, unit: '' },
     { g: 'rule', m: 'voice', k: 'voiceRange', label: '声の届く距離(近くだけのとき)', min: 200, max: 700, step: 50, def: 400, unit: '' },
     // lv: 5段階のかんたん設定(ラベルと、そのときの値)。数字でこまかく決めることもできる
@@ -1843,8 +1844,8 @@ function grid(o) {
         });
       }
       p.em = 0;
-      if (R.kill) p.ck = now + (s.killCd + 5) * 1000;
-      if (R.wave) p.ck = now + (Math.min(s.waveCd, 20) + 5) * 1000;
+      if (R.kill) p.ck = now + s.startCd * 1000; // 開始直後は何もできない時間が長いと、タスクし放題になるので、短めにできる
+      if (R.wave) p.ck = now + s.startCd * 1000;
       if (R.sab) { p.cs = now + 15000; p.cq = now + 20000; }
       if (p.role === 'assassin') p.gs = s.assassinShots;
       if (p.role === 'sheriff') { p.u = s.sheriffShots; p.ca = now + 15000; }
@@ -5237,7 +5238,7 @@ function roleNotes(role, s) {
     n.push(s.vampireThrall ? '眷属化は、非インポスターの1人にだけ、ゲーム中1回できます。' : '眷属化はできません(噛みつくだけ)。');
   }
   if (role === 'thrall') n.push('視界は、停電のときと同じに狭くなります。仲間のうちわかるのはヴァンパイアだけです。');
-  if (E.ROLES[role].kill || (E.ROLES[role].wave && s.waveKill)) n.push((E.ROLES[role].bite ? '噛みつき' : '襲撃') + 'のクールダウンは ' + s.killCd + ' 秒です。');
+  if (E.ROLES[role].kill || (E.ROLES[role].wave && s.waveKill)) n.push((E.ROLES[role].bite ? '噛みつき' : '襲撃') + 'のクールダウンは ' + s.killCd + ' 秒です(ゲーム開始の直後だけ ' + s.startCd + ' 秒)。');
   return n;
 }
 function showRoleCard() {
