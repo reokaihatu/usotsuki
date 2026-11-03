@@ -1226,7 +1226,7 @@ function grid(o) {
   var castle = {
     id: 'castle', n: '白亜の古城', short: '古城', rec: [9, 20],
     d: '白い石の塔と回廊と中庭が入り組む、明るい古城。秘密の本棚が3組あり、霧の中庭や地下牢は視界が悪い。',
-    gim: ['秘密の本棚: 離れた部屋どうしを一瞬で行き来できる(全員が使える)', '霧の中庭・地下牢・裏庭: 中にいると視界が狭くなる', '東西の塔は、本棚か武器庫・回廊からしか行けない', '跳ね橋: 霧の中庭の橋を、レバーで上げ下げできる(上がると東西の行き来がふさがり、25秒で自然に降りる)'],
+    gim: ['秘密の本棚: 離れた部屋どうしを一瞬で行き来できる(全員が使える)', '霧の中庭・地下牢・裏庭: 中にいると視界が狭くなる', '東西の塔は、本棚か武器庫・回廊からしか行けない', '跳ね橋: 霧の中庭の橋を、レバーで上げ下げできる(上がると東西の行き来がふさがり、25秒で自然に降りる。一度押すと、35秒たつまで、どちらのレバーも使えない)'],
     world: gc.world, table: { x: 1400, y: 1350, n: '晩餐のベル' }, spawn: { rx: 200, ry: 70 },
     rooms: gc.rooms, halls: gc.halls,
     vents: [vc('twrw', 'tl', 0), vc('arm', 'tr', 0), vc('hall', 'tl', 0), vc('lib', 'bl', 1), vc('kit', 'tr', 1), vc('stb', 'tl', 1),
@@ -1893,7 +1893,7 @@ function grid(o) {
     return out;
   }
   // ---- マップ固有の「しかけ(spots)」: 船外通路・肖像画の目・薬品棚・カジノ・跳ね橋のレバー・地下鉄・区画ブレーカー ----
-  var SPOT = { hullMs: 1500, peekMs: 10000, peekCd: 12000, potionMs: 45000, potionCd: 50000, casinoCd: 40000, casinoSpin: 2600, casinoWin: 0.45, brUpMs: 25000, brCd: 8000, pwMs: 80000, pwCd: 15000, pwMax: 2, metroPeriod: 36000, metroStop: 8000, metroRide: 10000, reach: 130 };
+  var SPOT = { hullMs: 1500, peekMs: 10000, peekCd: 12000, potionMs: 45000, potionCd: 50000, casinoCd: 40000, casinoSpin: 2600, casinoWin: 0.45, brUpMs: 25000, brCd: 35000, pwMs: 80000, pwCd: 15000, pwMax: 2, metroPeriod: 36000, metroStop: 8000, metroRide: 10000, reach: 130 };
   // 薬のバフ(good: 良い効果)。鉄壁は、攻撃を1回だけ防ぐバリアをまとう(会議で消える)
   var BUFFS = {
     spd: { n: '俊足', good: 1, d: '足が速くなる' },
