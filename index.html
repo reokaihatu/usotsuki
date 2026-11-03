@@ -1375,7 +1375,7 @@ function grid(o) {
     city: { outer: 'cavern', theme: 'dark', deco: { rec: 'reception', bio: 'lab', ctl: 'server', frz: 'cold', wst: 'waste', sp1: 'corridor', sto: 'storage', gen: 'electric', fac: 'factory', lab2: 'lab', arc: 'archive', sp2: 'corridor', hang: 'dock', qua: 'medical', srv: 'server', hyd: 'greenhouse', rea: 'reactor' } }
   };
   /* 人数モニター: 前に留まっているあいだだけ、部屋ごとの人数(遺体も1人)が人のマークで見える端末。指定した部屋の中で、ほかの物から最も離れた場所に置く。 */
-  var BALL_ROOM = { ship: 'cafe', mansion: 'din', lab: 'rec', queen: 'dan', castle: 'hall', city: 'rec' };
+  var BALL_ROOM = { ship: 'bay', mansion: 'lib', lab: 'rec', queen: 'dan', castle: 'hall', city: 'rec' };
   var COUNTER_ROOM = { ship: 'com', mansion: 'stu', lab: 'ctl', queen: 'bri', castle: 'gal', city: 'ctl' };
   function counterSpot(m, roomId) {
     var room = m.rooms.filter(function (r) { return r.id === roomId; })[0], objs = [];
@@ -1415,7 +1415,7 @@ function grid(o) {
   });
   [ship, mansion, lab, queen, castle, city].forEach(function (m) {
     m.counter = counterSpot(m, COUNTER_ROOM[m.id]);
-    var bs = counterSpot(m, BALL_ROOM[m.id]); m.ballBtn = { x: bs.x, y: bs.y, r: bs.r, n: '舞踏会のベル' }; // 仮面舞踏会を、好きなタイミングで始められるボタン
+    var bs = counterSpot(m, BALL_ROOM[m.id]); m.ballBtn = { x: bs.x, y: bs.y, r: bs.r, n: '舞踏会のベル' }; // 仮面舞踏会を、停電中に始められるボタン(緊急会議ボタンから遠い部屋に置く)
     m.sabn = SABN[m.id];
   });
 
@@ -1616,7 +1616,7 @@ function grid(o) {
     { g: 'rule', k: 'speed', label: '移動速度(全員共通)', min: 120, max: 260, step: 10, def: 190, unit: '', lv: { l: ['最小', '遅い', '普通', '速い', '最大'], v: [120, 155, 190, 225, 260] } },
     { g: 'rule', k: 'vision', label: 'クルー・第三陣営の視界', min: 150, max: 450, step: 10, def: 270, unit: '', lv: { l: ['最小', '狭い', '普通', '広い', '最大'], v: [150, 210, 270, 360, 450] } },
     { g: 'rule', k: 'visionImp', label: 'インポスター陣営の視界', min: 150, max: 550, step: 10, def: 310, unit: '', lv: { l: ['最小', '狭い', '普通', '広い', '最大'], v: [150, 230, 310, 430, 550] } },
-    { g: 'rule', k: 'emergencyN', label: '緊急会議の回数(1人あたり)', min: 0, max: 3, step: 1, def: 1, unit: '回' },
+    { g: 'rule', k: 'emergencyN', label: '緊急会議の回数(1人あたり)', min: 0, max: 10, step: 1, def: 1, unit: '回' },
     { g: 'rule', k: 'sabCd', label: '妨害のクールダウン', min: 20, max: 90, step: 5, def: 45, unit: '秒' },
     { g: 'rule', k: 'jamSec', label: '通信妨害の長さ', min: 10, max: 40, step: 5, def: 25, unit: '秒' },
     { g: 'rule', m: 'mapsab', k: 'mapSabSec', label: 'このマップ固有の妨害の長さ', min: 10, max: 40, step: 5, def: 20, unit: '秒' },
@@ -1923,6 +1923,11 @@ function grid(o) {
   function ballNextAt(state) { var b = state.ball, s = state.settings; return b ? Math.max((s.ballFirstSec + b.n * s.ballEverySec) * 1000, b.nextOk || 0) : 0; } // 舞踏会のあとは、クールタイムが明けるまで次は来ない
   // いま、舞踏会を始められるか(妨害(停電・通信妨害・緊急事態など)が起きている間は、時間でもベルでも始まらない)
   function ballCan(state, now) { var b = state.ball; return !!(b && b.on && b.stage === 'wait' && state.phase === 'play' && b.n < (state.settings.ballTimes | 0) && ballT(state, now) >= (b.nextOk || 0) && !sabActive(state, now)); }
+  // 舞踏会のベルが押せるか: 停電が起きているあいだだけ(ほかの妨害が重なっているときは不可)
+  function ballBtnCan(state, now) {
+    var b = state.ball; if (!(b && b.on && b.stage === 'wait' && state.phase === 'play' && b.n < (state.settings.ballTimes | 0) && ballT(state, now) >= (b.nextOk || 0))) return false;
+    return (state.blackoutUntil || 0) > now && !((state.jamUntil || 0) > now) && !state.crisis && !(state.mapSab && state.mapSab.until > now);
+  }
   function ballMasked(state) { return !!(state.ball && state.ball.stage === 'mask' && state.phase === 'play'); }
   function dancing(p, now) { return !!(p && p.dn && p.dn.until > now); }
   // ダンス専用ステージにいる人(踊っている人と、踊りおえて会議を待っている人)
@@ -1957,7 +1962,7 @@ function grid(o) {
     state.order.forEach(function (id) {
       var q = state.players[id]; if (!q || q.left) return;
       delete q.dd; delete q.dn; q.inv = null; q.inb = null;
-      if (q.alive) pushMsg(q, '仮面舞踏会がはじまった' + (how === 'btn' ? '(だれかが「舞踏会のベル」を鳴らした)' : '') + '。全員が同じ姿になり、声も聞こえない。近くの人を「誘う」と、相手が受けてくれたら2人だけの時間になる。');
+      if (q.alive) pushMsg(q, '仮面舞踏会がはじまった' + (how === 'btn' ? '(だれかが「舞踏会のベル」を鳴らし、停電が終わった)' : '') + '。全員が同じ姿になり、声も聞こえない。近くの人を「誘う」と、相手が受けてくれたら2人だけの時間になる。');
     });
   }
   function newLobby(hostId, settings, epoch) {
@@ -2302,11 +2307,13 @@ function grid(o) {
     if (a.type === 'ballbtn') { // マップの「舞踏会のベル」: 好きなタイミングで舞踏会を始める(1人1回)
       var bl1 = state.ball;
       if (!bl1 || !bl1.on || !s.ballBtn || bl1.stage !== 'wait' || bl1.n >= (s.ballTimes | 0) || !p.alive || p.iv || p.bp || !BALLBTN) return { ok: false };
-      if (sabActive(state, now)) return { ok: false, err: 'sab' };
-      if (ballT(state, now) < (bl1.nextOk || 0)) return { ok: false, err: 'cool' };
       if (now - state.roundStart < 8000) return { ok: false, err: 'early' };
+      if (ballT(state, now) < (bl1.nextOk || 0)) return { ok: false, err: 'cool' };
+      if (!((state.blackoutUntil || 0) > now)) return { ok: false, err: 'noblack' }; // ベルは、停電中にしか使えない
+      if (sabActive(state, now) && !ballBtnCan(state, now)) return { ok: false, err: 'sab' }; // ほかの妨害が重なっているあいだは使えない
       if (!nearOk(ctx, pid, BALLBTN, 150)) return { ok: false, err: 'far' };
-      p.bp = 1; beginBall(state, now, 'btn');
+      p.bp = 1; state.blackoutUntil = 0; // 停電はその場で終わり、すぐ舞踏会へ
+      beginBall(state, now, 'btn');
       return { ok: true };
     }
     if (a.type === 'dance') { // 近くにいる、まだ踊っていない人を、ダンスに誘う(相手が受けると、2人で踊りはじめる)
@@ -2919,7 +2926,7 @@ function grid(o) {
     newLobby: newLobby, addPlayer: addPlayer, removePlayer: removePlayer, validate: validate, isMelee: isMelee, kickPlayer: kickPlayer, startGame: startGame,
     act: act, tick: tick, markLeft: markLeft, backToLobby: backToLobby, recalcTasks: recalcTasks, evalWin: evalWin,
     alivePlayers: alivePlayers, cleanName: cleanName, roleCounts: roleCounts, sabActive: sabActive, crisisMs: crisisMs,
-    ballT: ballT, onStage: onStage, ballCan: ballCan, ballNextAt: ballNextAt, ballMasked: ballMasked, dancing: dancing, roomCounts: roomCounts, knowsAlly: knowsAlly, canTarget: canTarget, shownAs: shownAs, mapSabs: mapSabs, mapSabInfo: mapSabInfo, msOn: msOn, WAVE_LEN: WAVE_LEN, WAVE_HALF: WAVE_HALF
+    ballT: ballT, onStage: onStage, ballCan: ballCan, ballBtnCan: ballBtnCan, ballNextAt: ballNextAt, ballMasked: ballMasked, dancing: dancing, roomCounts: roomCounts, knowsAlly: knowsAlly, canTarget: canTarget, shownAs: shownAs, mapSabs: mapSabs, mapSabInfo: mapSabInfo, msOn: msOn, WAVE_LEN: WAVE_LEN, WAVE_HALF: WAVE_HALF
   });
   useMap(0);
   if (typeof module !== 'undefined' && module.exports) module.exports = Engine; else root.Engine = Engine;
@@ -5565,7 +5572,7 @@ function renderSettings(st, canEdit) {
     var nl = Math.min(s.longTasks, Math.floor(s.tasksPer / 2)), nc = Math.min(s.commonTasks, s.tasksPer);
     body.appendChild(h('p', { class: 'small mute', text: '1人あたり: 共通 ' + nc + '個 + 長いタスク ' + nl + '個 + 短いタスク ' + Math.max(0, s.tasksPer - nc - nl) + '個(長いタスクは全体の半分まで)。「長いタスク」は2〜3か所をまわる手順のタスクです。' }));
   } else if (S.tab === 'ball') {
-    body.appendChild(h('p', { class: 'small mute', text: 'ゲーム中の決まった時間か、マップの「舞踏会のベル」を鳴らすと、「仮面舞踏会」が開かれます。全員が同じ見た目になり、声も聞こえなくなります。近くの人を「誘う」と、誘われた人が受けるか断るかを選べます。受けてもらえたら2人1組で踊り、おたがいの相手がわかって、アリバイになります。一度開かれると、クールタイムが明けるまで次は開かれません。人狼の妨害(停電・通信妨害・緊急事態など)が起きている間は、時間でもベルでも始まりません。踊っているあいだは2人だけが見え、舞踏会の終わりに会議が開かれます。人狼は、踊っている相手を襲撃できます(クールタイムは踊っているあいだ進みません)。踊っている人を、相手以外は襲撃できません。' }));
+    body.appendChild(h('p', { class: 'small mute', text: 'ゲーム中の決まった時間になるか、人狼が起こした停電のあいだにマップの「舞踏会のベル」を鳴らすと、「仮面舞踏会」が開かれます(ベルは緊急会議ボタンから遠い場所にあり、鳴らすと停電はその場で終わります)。全員が同じ見た目になり、声も聞こえなくなります。近くの人を「誘う」と、誘われた人が受けるか断るかを選べます。受けてもらえたら2人1組で踊り、おたがいの相手がわかって、アリバイになります。一度開かれると、クールタイムが明けるまで次は開かれません。時間で始まる舞踏会は、人狼の妨害(停電・通信妨害・緊急事態など)が起きている間は、妨害が終わるまで待ちます。ベルは停電中にしか鳴らせず、通信妨害や緊急事態などほかの妨害が重なっているときは鳴らせません。踊っているあいだは2人だけが見え、舞踏会の終わりに会議が開かれます。人狼は、踊っている相手を襲撃できます(クールタイムは踊っているあいだ進みません)。踊っている人を、相手以外は襲撃できません。' }));
     E.TOGGLES.filter(function (d) { return d.g === 'ball'; }).forEach(function (d) { body.appendChild(toggleRow(d, s, canEdit)); });
     if (s.ballOn) E.SETTING_DEFS.filter(function (d) { return d.g === 'ball'; }).forEach(function (d) {
       body.appendChild(h('div', { class: 'set-row' }, [h('div', { class: 'lb', text: d.label }), stepper(d, s[d.k], canEdit)]));
@@ -7027,7 +7034,7 @@ function drawWorld(c, st, me, vr, watching, ghost, now) {
   }
   // 舞踏会のベル(押すと、決まった時間より前に仮面舞踏会がはじまる)
   if (E.M.ballBtn && st.ball && st.ball.on && st.settings.ballBtn && st.phase !== 'lobby') {
-    var bb0 = E.M.ballBtn, bavail = E.ballCan(st, tn) && !(myPlayer() && myPlayer().bp), bnear = S.nearInfo && S.nearInfo.ballbtn;
+    var bb0 = E.M.ballBtn, bavail = E.ballBtnCan(st, tn) && !(myPlayer() && myPlayer().bp), bnear = S.nearInfo && S.nearInfo.ballbtn;
     var bp0 = bavail ? 0.5 + 0.5 * Math.sin(now / 420) : 0;
     c.fillStyle = '#10172b'; ell(c, bb0.x, bb0.y + 14, 26, 10); c.fill();
     c.fillStyle = bavail ? '#7a5fd0' : '#3d4466'; c.fillRect(bb0.x - 17, bb0.y + 3, 34, 11);
@@ -7604,7 +7611,7 @@ function computeNear(st, me) {
     if (best) { near.task = best.s; near.step = best.st; near.d.task = Math.hypot(best.x - S.me.x, best.y - S.me.y); }
   }
   if (me.alive && E.dist(S.me, E.TABLE) <= 120 && (me.em || 0) < st.settings.emergencyN && tnow() - st.roundStart >= 8000 && !E.sabActive(st, tnow())) { near.table = true; near.d.table = E.dist(S.me, E.TABLE); }
-  if (me.alive && !me.iv && E.BALLBTN && st.ball && st.ball.on && st.settings.ballBtn && E.ballCan(st, tnow()) && !me.bp && E.dist(S.me, E.BALLBTN) <= 110 && tnow() - st.roundStart >= 8000) { near.ballbtn = true; near.d.ballbtn = E.dist(S.me, E.BALLBTN); }
+  if (me.alive && !me.iv && E.BALLBTN && st.ball && st.ball.on && st.settings.ballBtn && E.ballBtnCan(st, tnow()) && !me.bp && E.dist(S.me, E.BALLBTN) <= 110 && tnow() - st.roundStart >= 8000) { near.ballbtn = true; near.d.ballbtn = E.dist(S.me, E.BALLBTN); }
   var vi = nearest(E.VENTS.map(function (v, i) { return { x: v.x, y: v.y, i: i }; }), S.me, 90);
   if (vi) { near.vent = vi.i; near.d.vent = Math.hypot(vi.x - S.me.x, vi.y - S.me.y); }
   var bb = nearest(st.bodies.map(function (b) { return { x: b.x, y: b.y, id: b.id }; }), S.me, 150);
