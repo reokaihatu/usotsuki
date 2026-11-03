@@ -892,8 +892,8 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
   var ship = {
     id: 'ship', n: '宇宙船マスカレード号', short: '宇宙船', rec: [4, 8],
     d: '3×3の部屋が通路でつながる、いちばん標準的な船内。',
-    gim: ['隔壁閉鎖: インポスター陣営は、近くの通路を一定時間ふさげる', '配電盤: 停電は、電気室の配電盤でクルーが復旧できる'],
-    world: { w: 1600, h: 1240 }, table: { x: 800, y: 200, n: '緊急ボタン' },
+    gim: ['隔壁閉鎖: インポスター陣営は、近くの通路を一定時間ふさげる', '配電盤: 停電は、電気室の配電盤でクルーが復旧できる', '船外通路: 船の外壁ぞいにある細い通路。四隅の部屋を時計回りにつなぎ、一度入ったら戻れない一方通行(通路の中は、だれかに襲われるかも)'],
+    world: { w: 1600, h: 1280 }, table: { x: 800, y: 200, n: '緊急ボタン' },
     rooms: [
       { id: 'cmd', n: '司令室', x: 60, y: 60, w: 360, h: 260, c: '#2b3b69' },
       { id: 'cafe', n: '食堂', x: 560, y: 60, w: 480, h: 300, c: '#35426f' },
@@ -954,7 +954,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
   var mansion = {
     id: 'mansion', n: '陽だまりの洋館', short: '洋館', rec: [4, 8],
     d: '明るい日差しが差し込む入り組んだ屋敷。秘密の本棚と、視界の悪い庭園・地下室がある。',
-    gim: ['秘密の本棚: 離れた部屋どうしを一瞬で行き来できる(全員が使える)', '霧の庭園・暗い地下室と地下通路: 中にいると視界が狭くなる'],
+    gim: ['秘密の本棚: 離れた部屋どうしを一瞬で行き来できる(全員が使える)', '霧の庭園・暗い地下室と地下通路: 中にいると視界が狭くなる', '肖像画の目: 絵の前に立つと、別の部屋のようすを10秒だけ覗ける(そのあいだ自分は動けない)'],
     world: { w: 1600, h: 1240 }, table: { x: 800, y: 470, n: '晩餐のベル' },
     rooms: [
       { id: 'lib', n: '図書室', x: 60, y: 60, w: 420, h: 300, c: '#3a3050' },
@@ -1019,7 +1019,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
   var lab = {
     id: 'lab', n: '純白の研究所', short: '研究所', rec: [4, 8],
     d: '白いタイルの明るい施設。長い中央廊下に部屋が並ぶ。廊下は周期的に閉じ、動く歩道が走る。',
-    gim: ['高圧ゲート: 廊下の2か所が周期的に閉じる(予告の点滅あり)', '動く歩道: 流れに乗ると速く、逆らうと遅くなる'],
+    gim: ['高圧ゲート: 廊下の2か所が周期的に閉じる(予告の点滅あり)', '動く歩道: 流れに乗ると速く、逆らうと遅くなる', '薬品棚: 飲むとランダムな薬の効果が45秒つく(良い薬も、悪い薬もある)'],
     world: { w: 1800, h: 1240 }, table: { x: 990, y: 190, n: '緊急ボタン' },
     rooms: [
       { id: 'rec', n: '受付', x: 60, y: 60, w: 300, h: 280, c: '#2d4a55' },
@@ -1166,7 +1166,7 @@ function grid(o) {
   var queen = {
     id: 'queen', n: '大型客船クイーン号', short: '大型客船', rec: [9, 20],
     d: '19の部屋が入り組む大きな客船。中央の大広間から四方へ道が分かれ、遠回りや行き止まりも多い。',
-    gim: ['隔壁閉鎖: インポスター陣営は、近くの通路を一定時間ふさげる', '配電盤: 停電は、発電室の配電盤でクルーが復旧できる', '大広間を通らないと行けない区画がある'],
+    gim: ['隔壁閉鎖: インポスター陣営は、近くの通路を一定時間ふさげる', '配電盤: 停電は、発電室の配電盤でクルーが復旧できる', '大広間を通らないと行けない区画がある', 'カジノ: スロットを回して、当たると薬の良い効果、外れると悪い効果がつく(台は4つ。当たると周りの人にも分かる)'],
     world: gq.world, table: { x: 1400, y: 770, n: '緊急ボタン' }, spawn: { rx: 200, ry: 150 },
     rooms: gq.rooms, halls: gq.halls,
     vents: [vq('bri', 'tl', 0), vq('cab2', 'tl', 0), vq('boil', 'tr', 0), vq('lng', 'tl', 1), vq('thr', 'tr', 1), vq('gen', 'tl', 1),
@@ -1226,7 +1226,7 @@ function grid(o) {
   var castle = {
     id: 'castle', n: '白亜の古城', short: '古城', rec: [9, 20],
     d: '白い石の塔と回廊と中庭が入り組む、明るい古城。秘密の本棚が3組あり、霧の中庭や地下牢は視界が悪い。',
-    gim: ['秘密の本棚: 離れた部屋どうしを一瞬で行き来できる(全員が使える)', '霧の中庭・地下牢・裏庭: 中にいると視界が狭くなる', '東西の塔は、本棚か武器庫・回廊からしか行けない'],
+    gim: ['秘密の本棚: 離れた部屋どうしを一瞬で行き来できる(全員が使える)', '霧の中庭・地下牢・裏庭: 中にいると視界が狭くなる', '東西の塔は、本棚か武器庫・回廊からしか行けない', '跳ね橋: 霧の中庭の橋を、レバーで上げ下げできる(上がると東西の行き来がふさがり、25秒で自然に降りる)'],
     world: gc.world, table: { x: 1400, y: 1350, n: '晩餐のベル' }, spawn: { rx: 200, ry: 70 },
     rooms: gc.rooms, halls: gc.halls,
     vents: [vc('twrw', 'tl', 0), vc('arm', 'tr', 0), vc('hall', 'tl', 0), vc('lib', 'bl', 1), vc('kit', 'tr', 1), vc('stb', 'tl', 1),
@@ -1295,7 +1295,7 @@ function grid(o) {
   var city = {
     id: 'city', n: '深層研究都市', short: '研究都市', rec: [9, 20],
     d: '2本の長い廊下が走る巨大な地下施設。廊下は周期的に閉じ、動く歩道が流れる。部屋どうしは廊下を通らず行ける近道もある。',
-    gim: ['高圧ゲート: 北廊下と南廊下に2か所ずつ、周期的に閉じる(予告の点滅あり)', '動く歩道: 流れに乗ると速く、逆らうと遅くなる', '廊下を通らない近道が部屋の間にある'],
+    gim: ['高圧ゲート: 北廊下と南廊下に2か所ずつ、周期的に閉じる(予告の点滅あり)', '動く歩道: 流れに乗ると速く、逆らうと遅くなる', '廊下を通らない近道が部屋の間にある', '地下鉄: 倉庫駅(西区)と資料庫駅(東区)を36秒周期で往復する(停車中のみ乗れる。どちらかの駅の区画が停電中は運休)', '区画ブレーカー: 西・中央・東の区画の電力を、インポスターが落とせる(クルーは暗くなり、クルーが復旧できる)。マップ全体の停電は、直した区画から電気が戻る'],
     world: gl.world, table: { x: 1400, y: 160, n: '緊急ボタン' }, spawn: { rx: 200, ry: 70 },
     rooms: gl.rooms, halls: gl.halls,
     vents: [vl('rec', 'tl', 0), vl('hang', 'bl', 0), vl('rea', 'tr', 0), vl('wst', 'tr', 1), vl('sto', 'tl', 1), vl('srv', 'tl', 1),
@@ -1388,6 +1388,7 @@ function grid(o) {
     if (m.crisis) m.crisis.points.forEach(function (q) { objs.push([q.x, q.y]); });
     if (m.counter) objs.push([m.counter.x, m.counter.y]);
     if (m.ballBtn) objs.push([m.ballBtn.x, m.ballBtn.y]);
+    (m.spots || []).forEach(function (o) { objs.push([o.x, o.y]); });
     var best = null, bd = -1;
     for (var x = room.x + 70; x <= room.x + room.w - 70; x += 10) {
       for (var y = room.y + 70; y <= room.y + room.h - 50; y += 10) {
@@ -1419,6 +1420,55 @@ function grid(o) {
     m.sabn = SABN[m.id];
   });
 
+  /* マップ固有のしかけ(spots): 1つの「使う」ボタンで使える場所。k=hull(船外通路の入口) / hullx(出口) / eye(肖像画) / potion(薬品棚) / casino / lever(跳ね橋) / metro(地下鉄の駅) / breaker(区画ブレーカー)。
+   * 部屋の中の、ほかの物から最も離れた場所に置く(置いた物は、次の物の避ける対象になる)。 */
+  function roomOf(m, id) { return m.rooms.filter(function (r) { return r.id === id; })[0]; }
+  function putSpot(m, roomId, o) {
+    var sp = counterSpot(m, roomId); o.x = sp.x; o.y = sp.y; o.r = roomId; (m.spots = m.spots || []).push(o); return o;
+  }
+  function setupSpots(m) {
+    var R = function (id) { var r = roomOf(m, id); return r ? r.n : id; };
+    m.spots = [];
+    if (m.id === 'ship') { // 船外通路: 船の外壁ぞい(マップの外)にある、細い通路。四隅の部屋を時計回りにつなぐ。一度入ったら、進むしかない一方通行
+      m.world = { w: 1600, h: 1280 };
+      m.gimmicks.outer = [
+        { x: 300, y: 0, w: 1050, h: 44, ax: 'x', dir: 1, n: '船外通路' },     // 司令室 → 実験室(上の外壁。東へ)
+        { x: 1556, y: 150, w: 44, h: 1010, ax: 'y', dir: 1, n: '船外通路' }, // 実験室 → 整備ドック(東の外壁。南へ)
+        { x: 400, y: 1216, w: 850, h: 44, ax: 'x', dir: -1, n: '船外通路' },  // 整備ドック → 気密室(下の外壁。西へ)
+        { x: 0, y: 110, w: 44, h: 1080, ax: 'y', dir: -1, n: '船外通路' }     // 気密室 → 司令室(西の外壁。北へ)
+      ];
+      // [入口(部屋の中), 通路に出る位置, 出口(通路の終わり), 部屋に戻る位置, 行き先の部屋]
+      [['cmd', 380, 95, 330, 22, 1320, 22, 1250, 100, 'lab'],
+       ['lab', 1480, 235, 1578, 190, 1578, 1110, 1230, 1075, 'bay'],
+       ['bay', 1220, 1170, 1220, 1238, 440, 1238, 380, 1100, 'air'],
+       ['air', 150, 1172, 22, 1160, 22, 150, 190, 190, 'cmd']].forEach(function (c) {
+        var ent = { k: 'hull', n: '船外通路(→' + R(c[9]) + ')', x: c[1], y: c[2], r: c[0], ax: c[3], ay: c[4] };
+        var ext = { k: 'hullx', n: '船内へ(' + R(c[9]) + ')', x: c[5], y: c[6], r: 'out', ax: c[7], ay: c[8] };
+        m.spots.push(ent); m.spots.push(ext); ent.to = m.spots.length - 1;
+      });
+    }
+    if (m.id === 'mansion') { // 肖像画の目: 絵の前に立つと、別の部屋のようすが見える
+      [['lib', 'din'], ['kit', 'gar'], ['cel', 'ent'], ['chap', 'vlt']].forEach(function (pr) {
+        var tr = roomOf(m, pr[1]);
+        putSpot(m, pr[0], { k: 'eye', n: '肖像画の目(→' + R(pr[1]) + ')', see: { x: tr.x + tr.w / 2, y: tr.y + tr.h / 2, r: pr[1] } });
+      });
+    }
+    if (m.id === 'lab') ['bio', 'exp'].forEach(function (rid) { putSpot(m, rid, { k: 'potion', n: '薬品棚' }); });
+    if (m.id === 'queen') [0, 1, 2, 3].forEach(function (i) { putSpot(m, 'cas', { k: 'casino', n: 'スロットマシン' + (i + 1) }); }); // 台は4つ(4人まで同時に遊べる)
+    if (m.id === 'castle') { // 跳ね橋: 霧の中庭の真ん中を南北に走る堀。橋が上がると、東西の行き来がふさがる(レバーは堀の両側)
+      m.gimmicks.bridge = { x: 1432, y: 400, w: 56, h: 780 };
+      (m.spots).push({ k: 'lever', n: '跳ね橋のレバー', x: 1310, y: 790, r: 'cy' }, { k: 'lever', n: '跳ね橋のレバー', x: 1610, y: 790, r: 'cy' });
+    }
+    if (m.id === 'city') { // 地下鉄(倉庫駅と資料庫駅を結ぶ)と、区画ブレーカー(西区・中央区・東区)
+      putSpot(m, 'sto', { k: 'metro', side: 'A', n: '地下鉄 ' + R('sto') + '駅' });
+      putSpot(m, 'arc', { k: 'metro', side: 'B', n: '地下鉄 ' + R('arc') + '駅' });
+      delete m.gimmicks.panel; // 停電は、配電盤ではなく、区画ごとのブレーカー(修理地点)で直す
+      m.gimmicks.zones = [{ x: 0, y: 0, w: 1050, h: 1600, n: '西区' }, { x: 1050, y: 0, w: 700, h: 1600, n: '中央区' }, { x: 1750, y: 0, w: 1050, h: 1600, n: '東区' }];
+      ['gen', 'fac', 'lab2'].forEach(function (rid, z) { putSpot(m, rid, { k: 'breaker', z: z, n: m.gimmicks.zones[z].n + 'のブレーカー' }); });
+    }
+  }
+  [ship, mansion, lab, queen, castle, city].forEach(setupSpots);
+
   /* ベントの分離: 「使う」ボタンは、タスク・修理・緊急ボタン・人数モニター・配電盤・ベントを1つにまとめている。近づいたものに切り替わるので、
    * ベントがほかの物と近すぎて同時に触れないよう、ベントを同じ部屋の中でずらす(元の位置からいちばん近い、十分離れた場所へ) */
   var VENT_GAP = 105;
@@ -1432,6 +1482,7 @@ function grid(o) {
     if (m.crisis) m.crisis.points.forEach(function (q) { objs.push([q.x, q.y]); });
     if (m.counter) objs.push([m.counter.x, m.counter.y]);
     if (m.ballBtn) objs.push([m.ballBtn.x, m.ballBtn.y]);
+    (m.spots || []).forEach(function (o) { objs.push([o.x, o.y]); });
     function gap(x, y, self) {
       var d = 1e9;
       objs.forEach(function (o) { d = Math.min(d, Math.hypot(o[0] - x, o[1] - y)); });
@@ -1757,7 +1808,7 @@ function grid(o) {
     if (i === mapIdx) return M;
     mapIdx = i; M = nm;
     ROOMS = M.rooms; HALLS = M.halls; WORLD = M.world; TABLE = M.table; BALLBTN = M.ballBtn || null; VENTS = M.vents; TASKS = M.tasks; GIM = M.gimmicks || {};
-    RECTS = ROOMS.concat(HALLS);
+    RECTS = ROOMS.concat(HALLS, GIM.outer || []); // 船外通路などの、マップの外の通路も歩ける場所に入れる
     buildGraph(); buildVentLinks();
     Engine.M = M; Engine.mapIndex = i;
     Engine.ROOMS = ROOMS; Engine.HALLS = HALLS; Engine.WORLD = WORLD; Engine.TABLE = TABLE; Engine.BALLBTN = BALLBTN; Engine.VENTS = VENTS; Engine.TASKS = TASKS;
@@ -1806,7 +1857,7 @@ function grid(o) {
   }
 
   // ---- マップ固有のしかけ ----
-  function setDyn(state, now) { DYN.now = now; DYN.doors = (state && state.doors) || []; DYN.ms = (state && state.mapSab) || null; }
+  function setDyn(state, now) { DYN.now = now; DYN.doors = (state && state.doors) || []; DYN.ms = (state && state.mapSab) || null; DYN.br = (state && state.br) || null; DYN.pw = (state && state.pw) || []; DYN.bo = (state && state.blackoutUntil) || 0; DYN.bz = (state && state.bz) || null; }
   // マップ固有の妨害(いまのマップのしかけに応じて決まる)。種類: lockdown(全通路の隔壁) / portals(本棚) / fog(濃霧) / gates(ゲート) / belts(動く歩道の逆流)
   function mapSabs() {
     var o = [];
@@ -1838,7 +1889,67 @@ function grid(o) {
     DYN.doors.forEach(function (d) { if (d.until > DYN.now && HALLS[d.h]) out.push(HALLS[d.h]); });
     (GIM.gates || []).forEach(function (g) { if (gateClosed(g, DYN.now)) out.push(g); });
     if (msOn('lockdown')) HALLS.forEach(function (q) { out.push(q); });
+    if (GIM.bridge && bridgeUp(DYN.now)) out.push(GIM.bridge); // 跳ね橋が上がっていると、堀が渡れない
     return out;
+  }
+  // ---- マップ固有の「しかけ(spots)」: 船外通路・肖像画の目・薬品棚・カジノ・跳ね橋のレバー・地下鉄・区画ブレーカー ----
+  var SPOT = { hullMs: 1500, peekMs: 10000, peekCd: 12000, potionMs: 45000, potionCd: 50000, casinoCd: 40000, casinoSpin: 2600, casinoWin: 0.45, brUpMs: 25000, brCd: 8000, pwMs: 80000, pwCd: 15000, pwMax: 2, metroPeriod: 36000, metroStop: 8000, metroRide: 10000, reach: 130 };
+  // 薬のバフ(good: 良い効果)。鉄壁は、攻撃を1回だけ防ぐバリアをまとう(会議で消える)
+  var BUFFS = {
+    spd: { n: '俊足', good: 1, d: '足が速くなる' },
+    eye: { n: '千里眼', good: 1, d: '視界が広がる' },
+    guard: { n: '鉄壁', good: 1, d: '攻撃を1回だけ防ぐバリアをまとう' },
+    slow: { n: '鈍足', good: 0, d: '足が遅くなる' },
+    dim: { n: '近視', good: 0, d: '視界が狭まる' },
+    glow: { n: '蛍光', good: 0, d: '体が光り、霧の中でも居場所がみんなに見える' }
+  };
+  var BUFF_GOOD = ['spd', 'eye', 'guard'], BUFF_BAD = ['slow', 'dim', 'glow'], BUFF_ALL = ['spd', 'eye', 'guard', 'slow', 'dim', 'glow'];
+  function buffOf(p, now) { return p && p.bf && p.bf.until > now ? p.bf.k : null; }
+  function giveBuff(p, k, now) {
+    var b = BUFFS[k];
+    if (k === 'guard') p.shield = true; else p.bf = { k: k, until: now + SPOT.potionMs };
+    pushMsg(p, '「' + b.n + '」: ' + b.d + (k === 'guard' ? '(会議までのあいだ)。' : '(' + Math.round(SPOT.potionMs / 1000) + '秒)。'));
+  }
+  function bridgeUp(now) { return !!(DYN.br && DYN.br.until > now); }
+  // 地下鉄: 36秒周期。A駅に停車(0-8秒)→B駅へ走行(8-18)→B駅に停車(18-26)→A駅へ走行(26-36)
+  function metroAt(now) {
+    var P = SPOT.metroPeriod, t = ((now % P) + P) % P, st = SPOT.metroStop, half = P / 2;
+    if (t < st) return { at: 'A', left: st - t, t: t };
+    if (t < half) return { at: null, to: 'B', left: half - t, next: half - t, t: t };
+    if (t < half + st) return { at: 'B', left: half + st - t, t: t };
+    return { at: null, to: 'A', left: P - t, next: P - t, t: t };
+  }
+  // 次に停車するまで(停車中なら0)
+  function metroWait(now, side) {
+    var m = metroAt(now); if (m.at === side) return 0;
+    var P = SPOT.metroPeriod, t = m.t, start = side === 'A' ? 0 : P / 2, d = start - t; if (d <= 0) d += P; return d;
+  }
+  function zoneDarkAt(x, y, now) {
+    var zs = GIM.zones || [], pw = DYN.pw || [];
+    for (var i = 0; i < zs.length; i++) { var z = zs[i]; if ((pw[i] || 0) > now && x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h) return true; }
+    return false;
+  }
+  // 区画の番号(区画のないマップ・どの区画でもない場所は -1)
+  function zoneIdxAt(x, y) {
+    var zs = GIM.zones || [];
+    for (var i = 0; i < zs.length; i++) { var z = zs[i]; if (x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h) return i; }
+    return -1;
+  }
+  // 停電(マップ全体)のうち、まだ直っていない区画か(直した区画から、電気が戻る)
+  function zoneBlackAt(x, y, now) {
+    if (!GIM.zones || !(DYN.bo > now)) return false;
+    var i = zoneIdxAt(x, y); return i >= 0 && !(DYN.bz && DYN.bz[i]);
+  }
+  // 区画 i の電気が止まっているか(インポスターの電力遮断、または、停電でまだ直していない)
+  function zoneOutS(state, i, now) {
+    if (((state.pw || [])[i] || 0) > now) return true;
+    return (state.blackoutUntil || 0) > now && !((state.bz || [])[i]);
+  }
+  // 地下鉄が止まっているか: どちらかの駅のある区画が停電していると、地下鉄は使えない(乗っている人はそのまま着く)
+  function metroOutS(state, now) {
+    var sl = (M && M.spots) || [];
+    for (var i = 0; i < sl.length; i++) if (sl[i].k === 'metro') { var zi = zoneIdxAt(sl[i].x, sl[i].y); if (zi >= 0 && zoneOutS(state, zi, now)) return true; }
+    return false;
   }
   function overlapsRect(x, y, rad, q) { return x > q.x - rad && x < q.x + q.w + rad && y > q.y - rad && y < q.y + q.h + rad; }
   // 動く封鎖(隔壁・ゲート)を考えた移動可否。すでに封鎖の中にいる人は、そこから出られる。
@@ -1846,6 +1957,11 @@ function grid(o) {
     if (!canStand(x, y, rad)) return false;
     var cr = closedRects();
     for (var i = 0; i < cr.length; i++) if (overlapsRect(x, y, rad, cr[i]) && !overlapsRect(cx, cy, rad, cr[i])) return false;
+    var ow = GIM.outer || []; // 船外通路は一方通行: 通路の中では、進む向きとは逆へは戻れない
+    for (var oi = 0; oi < ow.length; oi++) {
+      var o = ow[oi];
+      if (cx >= o.x - 2 && cx <= o.x + o.w + 2 && cy >= o.y - 2 && cy <= o.y + o.h + 2) { var dl = o.ax === 'x' ? x - cx : y - cy; if (dl * o.dir < -0.0001) return false; }
+    }
     return true;
   }
   function fogAt(x, y) {
@@ -1970,7 +2086,7 @@ function grid(o) {
       v: 1, rev: 0, now: 0, epoch: epoch || 1, hostId: hostId, phase: 'lobby',
       settings: settings ? Object.assign(defaultSettings(), settings) : defaultSettings(),
       players: {}, order: [], ack: {}, kicked: {}, locked: false, melee: false, bodies: [], meeting: null, winner: null,
-      tasksTotal: 0, tasksDone: 0, blackoutUntil: 0, jamUntil: 0, mapSab: null, crisis: null, doors: [], trails: [], roundStart: 0, meetingCount: 0, nextBody: 1, round: 0
+      br: null, bz: null, cs: [], pw: [], pwc: [], tasksTotal: 0, tasksDone: 0, blackoutUntil: 0, jamUntil: 0, mapSab: null, crisis: null, doors: [], trails: [], roundStart: 0, meetingCount: 0, nextBody: 1, round: 0
     };
   }
   function freeColor(state) {
@@ -2057,7 +2173,7 @@ function grid(o) {
     state.order.forEach(function (id) {
       var p = state.players[id];
       p.alive = true; p.left = false; p.notes = []; p.msgs = []; p.tp = null; p.kd = null;
-      ['ck', 'cw', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'tasks', 'wv', 'wf', 'wn', 'sh', 'sb', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc', 'iv', 'vx', 'ar', 'dg', 'ak', 'dn', 'dd', 'dl', 'bp', 'inv', 'inb'].forEach(function (k) { delete p[k]; });
+      ['ck', 'cw', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'tasks', 'wv', 'wf', 'wn', 'sh', 'sb', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc', 'iv', 'vx', 'ar', 'dg', 'ak', 'dn', 'dd', 'dl', 'bp', 'inv', 'inb', 'tr', 'pk', 'bf', 'cf', 'pc', 'cc', 'ek', 'cz'].forEach(function (k) { delete p[k]; });
     });
     // タスクの割り当て: 全員共通 + 長いタスク(複数の場所) + 短いタスク。長いタスクは全体の半分まで
     var singles = [], longs = [];
@@ -2104,7 +2220,7 @@ function grid(o) {
       tp(state.players[id], sp.x, sp.y);
     });
     state.phase = 'play'; state.round++; state.bodies = []; state.meeting = null; state.winner = null;
-    state.blackoutUntil = 0; state.jamUntil = 0; state.mapSab = null; state.crisis = null; state.doors = []; state.trails = []; state.roundStart = now; state.meetingCount = 0; state.nextBody = 1;
+    state.blackoutUntil = 0; state.jamUntil = 0; state.mapSab = null; state.crisis = null; state.doors = []; state.br = null; state.bz = null; state.cs = []; state.pw = []; state.pwc = []; state.trails = []; state.roundStart = now; state.meetingCount = 0; state.nextBody = 1;
     state.ball = s.ballOn ? { on: true, run: true, s0: now, t0: 0, n: 0, stage: 'wait', at: 0, end: 0 } : null;
     recalcTasks(state);
     return null;
@@ -2210,7 +2326,7 @@ function grid(o) {
       if (dw && dw.dn && dw.dn.w === victim.id) finishDance(dw, ctx.now);
     }
     clearInvite(state, victim.id);
-    victim.alive = false; victim.wv = null; victim.sh = 0; victim.dg = null; victim.iv = null; victim.ar = null; // (死ぬとベントの外へ。クールタイムは使わないので戻さない)
+    victim.alive = false; victim.wv = null; victim.sh = 0; victim.dg = null; victim.iv = null; victim.tr = null; victim.pk = null; victim.ar = null; // (死ぬとベントの外へ。クールタイムは使わないので戻さない)
     victim.kd = { n: ((victim.kd && victim.kd.n) || 0) + 1, by: by || null, how: how || 'kill', at: ctx.now };
     if (state.ball && state.ball.stage === 'mask') (state.ball.dead = state.ball.dead || []).push(victim.id); // 舞踏会のあいだに倒れた人(会議で知らされる)
     if (noBody) return; // 踊っている最中に倒した場合は、遺体が出ない
@@ -2396,6 +2512,83 @@ function grid(o) {
     // ベントの中: できるのは、ベントのあいだの移動と、外に出ることだけ。ベントの中の人には、だれも何もできない
     if (p.iv && a.type !== 'vent' && a.type !== 'ventout' && !(a.type === 'kill' && R && R.worm)) return { ok: false, err: 'invent' };
     if (T && T.iv && T.id !== pid && state.phase === 'play') return { ok: false, err: 'invent' };
+    if (p.tr) return { ok: false, err: 'transit' }; // 船外通路・地下鉄で移動中は、なにもできない
+    if (T && T.tr && T.id !== pid && state.phase === 'play') return { ok: false, err: 'transit' }; // 移動中の人には、だれも何もできない
+    if (p.pk && a.type !== 'peekend' && a.type !== 'spot') p.pk = null; // 肖像画を覗いている最中に、ほかのことをすると、覗くのをやめる
+    if (a.type === 'peekend') { if (!p.pk) return { ok: false }; p.pk = null; p.ek = now + SPOT.peekCd; return { ok: true }; }
+    if (a.type === 'spot') {
+      var sp = (M.spots || [])[a.i | 0];
+      if (!sp || state.phase !== 'play' || !p.alive || p.iv || p.dn || p.dd) return { ok: false };
+      if (ballMasked(state) && sp.k !== 'hullx') return { ok: false, err: 'ball' }; // 船外通路の出口だけは、舞踏会のあいだも使える(通路に取り残されないように)
+      if (p.wv || (p.sh || 0) > now || p.ar) return { ok: false, err: 'busy' };
+      if (!nearOk(ctx, pid, sp, SPOT.reach)) return { ok: false, err: 'far' };
+      var srand = ctx.rand || Math.random;
+      if (sp.k === 'hull' || sp.k === 'hullx') { // エアロック: 入口(部屋の中)から船外通路へ、通路の終わりの出口から船内の部屋へ
+        if (sp.ax == null) return { ok: false };
+        var ex = nearestStand(sp.ax, sp.ay, 14);
+        p.pk = null; p.tr = { k: 'hull', to: { x: ex.x, y: ex.y }, at: now, until: now + SPOT.hullMs, f: sp.n };
+        return { ok: true, until: p.tr.until };
+      }
+      if (sp.k === 'eye') {
+        if (p.pk) { p.pk = null; p.ek = now + SPOT.peekCd; return { ok: true }; }
+        if (now < (p.ek || 0)) return { ok: false, err: 'cool' };
+        p.pk = { i: a.i | 0, at: now, until: now + SPOT.peekMs };
+        return { ok: true };
+      }
+      if (sp.k === 'potion') {
+        if (now < (p.pc || 0)) return { ok: false, err: 'cool' };
+        p.pc = now + SPOT.potionCd;
+        var pk2 = BUFF_ALL[Math.floor(srand() * BUFF_ALL.length)];
+        giveBuff(p, pk2, now);
+        return { ok: true, buff: pk2 };
+      }
+      if (sp.k === 'casino') { // スロットは台ごとに1人ずつ(回しているあいだは、その台は使えない)。台が4つあるので、4人まで同時に遊べる
+        var cs = state.cs || (state.cs = []), mi = a.i | 0;
+        if (now < (cs[mi] || 0)) return { ok: false, err: 'busy' };
+        if (now < (p.cc || 0)) return { ok: false, err: 'cool' };
+        p.cc = now + SPOT.casinoCd; cs[mi] = now + SPOT.casinoSpin;
+        var win = srand() < SPOT.casinoWin, cz = { n: ((p.cz && p.cz.n) || 0) + 1, at: now, w: win ? 1 : 0, i: mi };
+        var gk = win ? BUFF_GOOD[Math.floor(srand() * BUFF_GOOD.length)] : BUFF_BAD[Math.floor(srand() * BUFF_BAD.length)];
+        cz.k = gk; giveBuff(p, gk, now); pushMsg(p, win ? 'スロットが揃った! 当たり。' : 'スロットは外れ。罰として悪い効果がついた。');
+        p.cz = cz;
+        return { ok: true, win: win, buff: gk };
+      }
+      if (sp.k === 'lever') {
+        var br = state.br || (state.br = { until: 0, cd: 0 });
+        if (now < (br.cd || 0)) return { ok: false, err: 'cool' };
+        br.cd = now + SPOT.brCd;
+        if (br.until > now) br.until = 0; else br.until = now + SPOT.brUpMs;
+        DYN.br = br;
+        return { ok: true, up: br.until > now };
+      }
+      if (sp.k === 'metro') {
+        var mt = metroAt(now);
+        if (metroOutS(state, now)) return { ok: false, err: 'dark' }; // 駅のある区画が停電していて、地下鉄は止まっている
+        if (mt.at !== sp.side) return { ok: false, err: 'wait' };
+        var dstSide = sp.side === 'A' ? 'B' : 'A', dsp = null, spl = M.spots || [];
+        for (var di = 0; di < spl.length; di++) if (spl[di].k === 'metro' && spl[di].side === dstSide) dsp = spl[di];
+        if (!dsp) return { ok: false };
+        var arrive = now + mt.left + SPOT.metroRide, mex = nearestStand(dsp.x, dsp.y + 55, 14);
+        p.pk = null; p.tr = { k: 'metro', to: { x: mex.x, y: mex.y }, at: now, until: arrive, f: sp.n };
+        return { ok: true, until: arrive };
+      }
+      if (sp.k === 'breaker') {
+        if (!state.pw) state.pw = []; if (!state.pwc) state.pwc = [];
+        var zi = sp.z, dark = (state.pw[zi] || 0) > now;
+        if (R && R.team === 'impostor') {
+          if (dark) return { ok: false, err: 'dark' };
+          if (now < (state.pwc[zi] || 0)) return { ok: false, err: 'cool' };
+          var nd = 0; state.pw.forEach(function (u) { if (u > now) nd++; });
+          if (nd >= SPOT.pwMax) return { ok: false, err: 'limit' };
+          state.pw[zi] = now + SPOT.pwMs; state.pwc[zi] = now + SPOT.pwCd; DYN.pw = state.pw;
+          return { ok: true, cut: true };
+        }
+        if (!dark) return { ok: false, err: 'lit' };
+        state.pw[zi] = 0; state.pwc[zi] = now + SPOT.pwCd; DYN.pw = state.pw;
+        return { ok: true, cut: false };
+      }
+      return { ok: false };
+    }
 
     if (a.type === 'kill' || a.type === 'nkill') {
       var nk = a.type === 'nkill'; // ヴァンパイアの通常の襲撃(噛みつきとは別)
@@ -2466,7 +2659,7 @@ function grid(o) {
         var best = null, bd = SNIPE_HIT;
         state.order.forEach(function (id) {
           var q = state.players[id];
-          if (!q || id === pid || !q.alive || q.left || q.iv || onStage(state, q) || ROLES[q.role].team === 'impostor') return; // 仲間(インポスター陣営)は撃てない
+          if (!q || id === pid || !q.alive || q.left || q.iv || q.tr || onStage(state, q) || ROLES[q.role].team === 'impostor') return; // 仲間(インポスター陣営)は撃てない
           var qp = ctx.pos(id); if (!qp) return;
           var dd = Math.hypot(qp.x - p.ar.x, qp.y - p.ar.y);
           if (dd <= bd) { bd = dd; best = q; }
@@ -2596,7 +2789,20 @@ function grid(o) {
     }
 
     if (a.type === 'fixlights') {
-      if (!GIM.panel || state.blackoutUntil <= now || (R && R.team === 'impostor')) return { ok: false };
+      if (state.blackoutUntil <= now || (R && R.team === 'impostor')) return { ok: false };
+      if (GIM.zones) { // 区画のあるマップ: 停電は、区画ごとの修理地点(ブレーカー)を3か所ともを直すと終わる
+        var fz = a.z | 0, fsp = null, fl = M.spots || [];
+        for (var fi2 = 0; fi2 < fl.length; fi2++) if (fl[fi2].k === 'breaker' && fl[fi2].z === fz) fsp = fl[fi2];
+        if (!fsp) return { ok: false };
+        if (!nearOk(ctx, pid, fsp, 170)) return { ok: false, err: 'far' };
+        var bz = state.bz || (state.bz = GIM.zones.map(function () { return false; }));
+        if (bz[fz]) return { ok: false };
+        bz[fz] = true;
+        var allz = bz.every(function (v) { return v; });
+        if (allz) { state.blackoutUntil = 0; state.bz = null; }
+        return { ok: true, done: allz };
+      }
+      if (!GIM.panel) return { ok: false };
       if (!nearOk(ctx, pid, GIM.panel, 170)) return { ok: false, err: 'far' };
       state.blackoutUntil = 0;
       return { ok: true };
@@ -2618,7 +2824,7 @@ function grid(o) {
       // 妨害は同時に1つだけ(停電・通信妨害・緊急事態のどれか)
       if (sabActive(state, now)) return { ok: false, err: 'busy' };
       var kind = a.t || 'blackout';
-      if (kind === 'blackout') { if (!GIM.panel) return { ok: false }; state.blackoutUntil = BLACKOUT_FOREVER; } // 停電は、配電盤で直されるまで続く
+      if (kind === 'blackout') { if (!GIM.panel && !GIM.zones) return { ok: false }; state.blackoutUntil = BLACKOUT_FOREVER; state.bz = GIM.zones ? GIM.zones.map(function () { return false; }) : null; } // 停電は、配電盤で直されるまで続く
       else if (kind === 'jam') state.jamUntil = now + s.jamSec * 1000;
       else if (kind === 'crisis' && M.crisis) state.crisis = { at: now, until: now + crisisMs(s), fixed: [false, false], pause: 0 };
       else if (mapSabs().indexOf(kind) >= 0) state.mapSab = { k: kind, at: now, until: now + s.mapSabSec * 1000 };
@@ -2673,7 +2879,7 @@ function grid(o) {
     var s = state.settings, hits = [], myTeam = ROLES[p.role].team;
     state.order.forEach(function (id) {
       var q = state.players[id];
-      if (!q || q.id === p.id || !q.alive || q.left || !q.role || q.iv || onStage(state, q)) return; // ベントの中の人・ダンスが成立した人には当たらない
+      if (!q || q.id === p.id || !q.alive || q.left || !q.role || q.iv || q.tr || onStage(state, q)) return; // ベントの中の人・移動中の人・ダンスが成立した人には当たらない
       if (!s.waveAlly && myTeam !== 'crew' && ROLES[q.role].team === myTeam) return;
       var qp = ctx.pos(id); if (!qp) return;
       var rx = qp.x - w.x, ry = qp.y - w.y, t = rx * w.dx + ry * w.dy, perp = Math.abs(rx * w.dy - ry * w.dx);
@@ -2690,7 +2896,7 @@ function grid(o) {
     var s = state.settings, now = ctx.now, myTeam = ROLES[p.role].team, hits = [], end = at - WAVE_LEN;
     state.order.forEach(function (id) {
       var q = state.players[id];
-      if (!q || q.id === p.id || q.id === sh.id || !q.alive || q.left || !q.role || q.iv) return; // (撃った本人は、すでに倒れている)
+      if (!q || q.id === p.id || q.id === sh.id || !q.alive || q.left || !q.role || q.iv || q.tr) return; // (撃った本人は、すでに倒れている)
       if (!s.waveAlly && myTeam !== 'crew' && ROLES[q.role].team === myTeam) return;
       var qp = ctx.pos(id); if (!qp) return;
       var rx = qp.x - w.x, ry = qp.y - w.y, t = rx * w.dx + ry * w.dy, perp = Math.abs(rx * w.dy - ry * w.dx);
@@ -2745,6 +2951,8 @@ function grid(o) {
     state.order.forEach(function (id) {
       var p = state.players[id];
       p.inv = null; p.inb = null;
+      if (p.tr) { tp(p, p.tr.to.x, p.tr.to.y); p.tr = null; } // 移動中の人は、行き先に着いたことにして会議へ
+      p.pk = null; p.bf = null;
       if (p.dn) finishDance(p, now);
       leaveVent(p, now); p.gm = 0; p.shield = false; p.ws = 0; p.wv = null; p.sh = 0; p.iv = null; p.ar = null; // 会議が始まると、ベントの中の人も外に出される
       if (p.dg) { p.dg = null; if (p.role === 'maskmaker') p.ca = now + s.maskCd * 1000; } // 会議が始まると、変装は解ける
@@ -2841,6 +3049,12 @@ function grid(o) {
     if (state.phase === 'play') {
       state.order.forEach(function (id) {
         var q = state.players[id];
+        if (q && q.tr && now >= q.tr.until) { tp(q, q.tr.to.x, q.tr.to.y); q.tr = null; changed = true; } // 船外通路・地下鉄が着いた
+        if (q && q.pk && now >= q.pk.until) { q.pk = null; q.ek = now + SPOT.peekCd; changed = true; } // 肖像画を覗ける時間が切れた
+        if (q && !q.alive && (q.tr || q.pk)) { q.tr = null; q.pk = null; changed = true; }
+      });
+      state.order.forEach(function (id) {
+        var q = state.players[id];
         if (q && q.wv && now >= q.wv.fire) { if (q.alive && !q.left) fireWave(state, ctx, q); else q.wv = null; changed = true; }
       });
       if (state.mapSab && state.mapSab.until <= now) { state.mapSab = null; changed = true; }
@@ -2899,14 +3113,14 @@ function grid(o) {
     var lw = p.dn && state.players[p.dn.w];
     if (p.dn) finishDance(p, ctx.now);
     if (lw && lw.dn && lw.dn.w === pid) finishDance(lw, ctx.now);
-    p.left = true; p.alive = false; p.iv = null; p.ar = null;
+    p.left = true; p.alive = false; p.iv = null; p.tr = null; p.pk = null; p.ar = null;
     if (state.meeting && state.meeting.votes) delete state.meeting.votes[pid];
     recalcTasks(state);
     checkWin(state, ctx.now);
     return true;
   }
   function backToLobby(state) {
-    state.phase = 'lobby'; state.melee = false; state.meeting = null; state.winner = null; state.bodies = []; state.blackoutUntil = 0; state.jamUntil = 0; state.mapSab = null; state.crisis = null; state.doors = []; state.trails = [];
+    state.phase = 'lobby'; state.melee = false; state.meeting = null; state.winner = null; state.bodies = []; state.blackoutUntil = 0; state.jamUntil = 0; state.mapSab = null; state.crisis = null; state.doors = []; state.br = null; state.bz = null; state.cs = []; state.pw = []; state.pwc = []; state.trails = [];
     state.tasksTotal = 0; state.tasksDone = 0; state.progSnap = null; state.ball = null;
     state.order = state.order.filter(function (id) { return !state.players[id].left || (delete state.players[id], false); });
     state.order.forEach(function (id) {
@@ -2926,7 +3140,7 @@ function grid(o) {
     newLobby: newLobby, addPlayer: addPlayer, removePlayer: removePlayer, validate: validate, isMelee: isMelee, kickPlayer: kickPlayer, startGame: startGame,
     act: act, tick: tick, markLeft: markLeft, backToLobby: backToLobby, recalcTasks: recalcTasks, evalWin: evalWin,
     alivePlayers: alivePlayers, cleanName: cleanName, roleCounts: roleCounts, sabActive: sabActive, crisisMs: crisisMs,
-    ballT: ballT, onStage: onStage, ballCan: ballCan, ballBtnCan: ballBtnCan, ballNextAt: ballNextAt, ballMasked: ballMasked, dancing: dancing, roomCounts: roomCounts, knowsAlly: knowsAlly, canTarget: canTarget, shownAs: shownAs, mapSabs: mapSabs, mapSabInfo: mapSabInfo, msOn: msOn, WAVE_LEN: WAVE_LEN, WAVE_HALF: WAVE_HALF
+    ballT: ballT, SPOT: SPOT, BUFFS: BUFFS, buffOf: buffOf, BUFF_GOOD: BUFF_GOOD, bridgeUp: bridgeUp, metroAt: metroAt, metroWait: metroWait, zoneDarkAt: zoneDarkAt, zoneIdxAt: zoneIdxAt, zoneBlackAt: zoneBlackAt, zoneOutS: zoneOutS, metroOutS: metroOutS, onStage: onStage, ballCan: ballCan, ballBtnCan: ballBtnCan, ballNextAt: ballNextAt, ballMasked: ballMasked, dancing: dancing, roomCounts: roomCounts, knowsAlly: knowsAlly, canTarget: canTarget, shownAs: shownAs, mapSabs: mapSabs, mapSabInfo: mapSabInfo, msOn: msOn, WAVE_LEN: WAVE_LEN, WAVE_HALF: WAVE_HALF
   });
   useMap(0);
   if (typeof module !== 'undefined' && module.exports) module.exports = Engine; else root.Engine = Engine;
@@ -3026,6 +3240,12 @@ function grid(o) {
   }
 
   // 1ボット1フレーム分の更新。api.act(pid, action) でエンジンに行動を送る。
+  // 区画のあるマップの停電: まだ直っていない区画のうち、いちばん近いブレーカー(なければ null)
+  function zoneFixTarget(state, b, now) {
+    var bz = state.bz || [], best = null, bd = 1e9;
+    (E.M.spots || []).forEach(function (q) { if (q.k !== 'breaker' || bz[q.z]) return; var d = Math.hypot(q.x - b.x, q.y - b.y); if (d < bd) { bd = d; best = q; } });
+    return best;
+  }
   function step(b, dt, state, ctx, api) {
     var p = state.players[b.id], rand = ctx.rand || Math.random, now = ctx.now, s = state.settings;
     if (!p || p.left) return;
@@ -3089,7 +3309,7 @@ function grid(o) {
         var best = null, bd2 = 1e9;
         state.order.forEach(function (id) {
           var q = state.players[id];
-          if (!q || q.id === b.id || !q.alive || q.left || q.iv) return; // ベントの中の人は狙えない
+          if (!q || q.id === b.id || !q.alive || q.left || q.iv || q.tr) return; // ベントの中の人・移動中の人は狙えない
           if (!R2.wave && !E.canTarget(p, q)) return;
           if (R2.wave && !R2.anyKill && E.ROLES[q.role].team === 'impostor') return;
           if (R2.bite && q.bt) return;
@@ -3155,16 +3375,17 @@ function grid(o) {
         if (bi >= 0) { b.fix = { i: bi }; b.task = { fix: bi, k: CR.points[bi].k }; goTo(b, CR.points[bi].x, CR.points[bi].y); }
       }
     } else if (b.fix) { b.fix = null; if (b.task && b.task.fix !== undefined) { b.task = null; b.mode = 'idle'; } }
-    // 停電: 配電盤まで復旧に向かう(少し遅れて)
-    var blk = (state.blackoutUntil || 0) > now && E.GIM.panel;
+    // 停電: 配電盤(区画のあるマップは、まだ直っていない区画のブレーカー)まで復旧に向かう(少し遅れて)
+    var zfix = E.GIM.zones && (state.blackoutUntil || 0) > now ? zoneFixTarget(state, b, now) : null;
+    var blk = (state.blackoutUntil || 0) > now && (E.GIM.panel || zfix);
     if (blk) {
       if (!b.blkAt) b.blkAt = now + 2000 + rand() * 6000;
-      if (b.mode !== 'work' && !b.pan && now >= b.blkAt) { b.pan = true; b.task = { pan: true, k: 'lights' }; goTo(b, E.GIM.panel.x, E.GIM.panel.y); }
+      if (b.mode !== 'work' && !b.pan && now >= b.blkAt) { b.pan = true; b.task = { pan: true, k: 'lights', z: zfix ? zfix.z : undefined }; var pt = zfix || E.GIM.panel; goTo(b, pt.x, pt.y); }
     } else { b.blkAt = 0; if (b.pan) { b.pan = false; if (b.task && b.task.pan) { b.task = null; b.mode = 'idle'; } } }
     if (b.mode === 'work') {
       b.w = 0; b.tw -= dt;
       if (b.tw <= 0) {
-        if (b.task.pan) { api.act(b.id, { type: 'fixlights' }); b.pan = false; b.blkAt = 0; }
+        if (b.task.pan) { api.act(b.id, b.task.z != null ? { type: 'fixlights', z: b.task.z } : { type: 'fixlights' }); b.pan = false; b.blkAt = 0; }
         else if (b.task.fix !== undefined) api.act(b.id, { type: 'fixcrisis', s: b.task.fix });
         else api.act(b.id, { type: 'task', s: b.task.s, st: b.task.st });
         b.mode = 'idle'; b.task = null; b.fix = null; b.fixAt = now + 500; b.think = 0.5;
@@ -4140,7 +4361,7 @@ function hostTick(dt) {
 
 /* ---------- 行動の送信 ---------- */
 function sendAct(a) {
-  if (a.type === 'vent' || a.type === 'ventin' || a.type === 'ventout') SND.play('vent'); else if (a.type === 'portal') SND.play('portal'); else if (a.type === 'wave') SND.play('wavelock');
+  if (a.type === 'vent' || a.type === 'ventin' || a.type === 'ventout') SND.play('vent'); else if (a.type === 'portal') SND.play('portal'); else if (a.type === 'spot') { var sk = (E.M.spots || [])[a.i | 0]; SND.play(sk && (sk.k === 'hull' || sk.k === 'metro') ? 'portal' : sk && sk.k === 'lever' ? 'door' : sk && sk.k === 'breaker' ? 'lightson' : sk && sk.k === 'eye' ? 'reveal' : 'taskstep'); } else if (a.type === 'wave') SND.play('wavelock');
   if (S.isHost && S.hostState) {
     var r = E.act(S.hostState, S.pid, a, hostCtx());
     touch();
@@ -4289,6 +4510,7 @@ function decoAnchors(M) {
   (M.stations || []).forEach(function (s) { a.push([s.x, s.y, 80]); });
   if (M.counter) a.push([M.counter.x, M.counter.y, 56]);
   if (M.ballBtn) a.push([M.ballBtn.x, M.ballBtn.y, 56]);
+  (M.spots || []).forEach(function (o) { a.push([o.x, o.y, 60]); });
   var G = M.gimmicks || {};
   if (G.panel) a.push([G.panel.x, G.panel.y, 50]);
   (G.portals || []).forEach(function (p) { a.push([p.x, p.y, 50]); });
@@ -5055,8 +5277,8 @@ function mg_lights(body, ctx) {
   }
   do {
     on = [1, 1, 1, 1, 1, 1, 1, 1, 1];
-    mgShuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]).slice(0, 4 + Math.floor(Math.random() * 3)).forEach(function (i) { press(i, on); });
-  } while (on.every(function (v) { return v; }) || on.filter(function (v) { return !v; }).length < 3);
+    mgShuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]).slice(0, ctx.easy ? 1 + Math.floor(Math.random() * 2) : 4 + Math.floor(Math.random() * 3)).forEach(function (i) { press(i, on); }); // かんたん版: 1〜2回押しただけの盤面(押し直せば戻る)
+  } while (on.every(function (v) { return v; }) || (!ctx.easy && on.filter(function (v) { return !v; }).length < 3));
   var grid = h('div', { class: 'lights' }), btns = [], busy = false;
   function paint() { btns.forEach(function (b, i) { b.classList.toggle('on', !!on[i]); }); }
   for (var i = 0; i < 9; i++) (function (i) {
@@ -5349,7 +5571,7 @@ function openMini(opt) {
   var body = $('task-body'); clear(body);
   if (info[1]) mgHint(body, info[1]);
   var finished = false;
-  var ctx = { code: opt.code, done: function () { if (finished) return; finished = true; mgStopAll(); opt.onDone(); } };
+  var ctx = { code: opt.code, easy: !!opt.easy, done: function () { if (finished) return; finished = true; mgStopAll(); opt.onDone(); } };
   S.task = { kind: kind };
   try { fn(body, ctx); } catch (e) { toast('ミニゲームの表示に失敗しました'); closeTask(); return; }
   applyOverlays();
@@ -5382,10 +5604,11 @@ function openRepair(i) {
   S.taskRepair = true;
 }
 // 配電盤(停電の復旧)
-function openPanel() {
+function openPanel(z) {
+  var zoned = z != null && z >= 0 && E.GIM.zones, zn = zoned && E.GIM.zones[z] ? E.GIM.zones[z].n : '';
   openMini({
-    title: '配電盤', sub: '全部のライトを点けて、停電を復旧します', kind: 'lights',
-    onDone: function () { sendAct({ type: 'fixlights' }); toast('停電を復旧しました'); closeTask(); }
+    title: zoned ? zn + 'のブレーカー' : '配電盤', sub: zoned ? zn + 'のライトを点けて、停電を復旧します(3区画すべてで必要)' : '全部のライトを点けて、停電を復旧します', kind: 'lights', easy: !!zoned,
+    onDone: function () { sendAct(zoned ? { type: 'fixlights', z: z } : { type: 'fixlights' }); toast(zoned ? zn + 'の復旧が完了しました' : '停電を復旧しました'); closeTask(); }
   });
 }
 
@@ -5437,6 +5660,7 @@ function openSettings() {
   $('ov-settings').hidden = false;
 }
 function closeSettings() { KB.cap = null; $('ov-settings').hidden = true; }
+var SPOT_COL = { hull: '#7fd0ff', hullx: '#6fe6a0', eye: '#ffb86b', potion: '#9be67a', casino: '#ffd24d', lever: '#6fb4ff', metro: '#6fe3c8', breaker: '#ffd24d' };
 // マップの縮小図(入室画面・ロビー・マップ画面で共通)
 function drawMapThumb(cvs, M, opt) {
   opt = opt || {};
@@ -5447,6 +5671,7 @@ function drawMapThumb(cvs, M, opt) {
   c.save(); c.translate((cvs.width - M.world.w * k) / 2, (cvs.height - M.world.h * k) / 2); c.scale(k, k);
   var G = M.gimmicks || {}, u = M.scale || 1;
   M.halls.forEach(function (o) { c.fillStyle = th.thumbHall; c.fillRect(o.x, o.y, o.w, o.h); });
+  ((M.gimmicks && M.gimmicks.outer) || []).forEach(function (o) { c.fillStyle = th.thumbHall; c.fillRect(o.x, o.y, o.w, o.h); });
   M.rooms.forEach(function (o) {
     c.fillStyle = o.c; c.fillRect(o.x, o.y, o.w, o.h);
     if (opt.names) { c.fillStyle = th.thumbText; c.font = '700 ' + (opt.fs || 34) * u + 'px "Zen Maru Gothic", sans-serif'; c.textAlign = 'center'; c.fillText(o.n, o.x + o.w / 2, o.y + o.h / 2 + 12); }
@@ -5456,6 +5681,8 @@ function drawMapThumb(cvs, M, opt) {
   (G.gates || []).forEach(function (g) { c.fillStyle = '#ff6a6f'; c.fillRect(g.x - 6 * u, g.y, g.w + 12 * u, g.h); });
   (G.portals || []).forEach(function (p) { c.fillStyle = '#ab8eff'; c.beginPath(); c.arc(p.x, p.y, 26 * u, 0, 6.2832); c.fill(); });
   if (G.panel) { c.fillStyle = '#ffd24d'; c.fillRect(G.panel.x - 24 * u, G.panel.y - 18 * u, 48 * u, 36 * u); }
+  if (G.bridge) { c.fillStyle = 'rgba(90,160,230,.55)'; c.fillRect(G.bridge.x, G.bridge.y, G.bridge.w, G.bridge.h); }
+  (M.spots || []).forEach(function (o) { c.fillStyle = SPOT_COL[o.k] || '#fff'; c.beginPath(); c.arc(o.x, o.y, 22 * u, 0, 6.2832); c.fill(); });
   if (opt.table !== false) { c.fillStyle = '#e5484d'; c.beginPath(); c.arc(M.table.x, M.table.y, 22 * u, 0, 6.2832); c.fill(); }
   if (opt.after) opt.after(c, k);
   c.restore();
@@ -5822,7 +6049,8 @@ function applyOverlays() {
 // 妨害の発動地点: 修理する場所(配電盤・修理地点)に、発動ボタンを置く。2か所を直す緊急事態は、片方(1番目)だけに置き、もう片方は通信妨害にあてる
 function sabSpots() {
   var G = E.GIM || {}, CR = E.M.crisis, s = S.state.settings, o = [], mid = function (r) { return { x: r.x + r.w / 2, y: r.y + r.h / 2 }; };
-  if (G.panel) o.push({ k: 'blackout', t: '停電', c: '停', x: G.panel.x, y: G.panel.y, d: 'クルーの視界がずっと狭いまま。配電盤で直されるまで続く(会議をはさんでも続く)' });
+  var bpt = G.panel || (G.zones && (E.M.spots || []).filter(function (q) { return q.k === 'breaker'; })[1]);
+  if (bpt) o.push({ k: 'blackout', t: '停電', c: '停', x: bpt.x, y: bpt.y, d: G.zones ? 'クルーの視界がせまくなる。西・中央・東の区画ごとにブレーカーを直すと、直した区画から視界が戻り、3つとも直すと停電が終わる(会議をはさんでも続く)' : 'クルーの視界がずっと狭いまま。配電盤で直されるまで続く(会議をはさんでも続く)' });
   if (CR) o.push({ k: 'crisis', t: '緊急事態', c: '緊', x: CR.points[0].x, y: CR.points[0].y, d: CR.n + ': ' + Math.round(E.crisisMs(s) / 1000) + '秒以内に2か所とも直されなければ、インポスターの勝ち' });
   o.push({ k: 'jam', t: '通信妨害', c: '通', x: CR ? CR.points[1].x : E.TABLE.x, y: CR ? CR.points[1].y : E.TABLE.y + 90, d: s.jamSec + '秒間、クルーのタスクとマップが使えなくなる(修理地点で復旧される)' + (S.standalone && s.jamVoice !== false ? '。クルー・第三陣営はVCも聞こえなくなる(インポスター陣営には聞こえる)' : '') });
   E.mapSabs().forEach(function (k) {
@@ -6745,8 +6973,16 @@ function visionOf(st, me) {
   var tm = teamOf(me);
   if (me.role === 'thrall') v = v * 0.35; // 眷属: いつも、停電のときと同じ狭い視界
   else if (tm === 'impostor') v = s.visionImp || v * 1.15;
-  else if (tm === 'crew' && st.blackoutUntil > tnow()) v = v * 0.35; // 停電で狭くなるのはクルー陣営だけ
+  else if (tm === 'crew' && st.blackoutUntil > tnow() && (!E.GIM.zones || E.zoneBlackAt(S.me.x, S.me.y, tnow()))) v = v * 0.35; // 停電で狭くなるのはクルー陣営だけ(区画のあるマップは、まだ直っていない区画の中だけ)
+  var bk = E.buffOf(me, tnow());
+  if (bk === 'eye') v *= 1.6; else if (bk === 'dim') v *= 0.5; // 薬の効果
+  if (tm === 'crew' && E.zoneDarkAt(S.me.x, S.me.y, tnow())) v *= 0.4; // 電力を落とされた区画は、クルーの視界が狭い
   return v * E.fogAt(S.me.x, S.me.y);
+}
+// いま「見ている地点」: ふだんは自分。肖像画を覗いている間は、覗いた先の部屋
+function vpOf() {
+  var me = myPlayer(), sp = me && me.alive && me.pk ? (E.M.spots || [])[me.pk.i] : null;
+  return sp && sp.see ? sp.see : S.me;
 }
 // 足跡: ヴァンパイアに噛まれた人が、噛まれた場所から倒れた場所まで歩いた道すじ(会議のあとに現れ、次の会議で消える)
 function drawTrails(c, st, visible, now) {
@@ -6931,6 +7167,8 @@ function camStep(dt) {
     var kk = 1 - Math.exp(-dt * 12); S.cam.x += (tx - S.cam.x) * kk; S.cam.y += (ty - S.cam.y) * kk;
     return;
   }
+  var vp0 = vpOf();
+  if (vp0 !== S.me) { S.camFree = true; var k3 = 1 - Math.exp(-dt * 8); S.cam.x += (vp0.x - S.cam.x) * k3; S.cam.y += (vp0.y - S.cam.y) * k3; S.zoom = 1; return; } // 肖像画を覗いている間は、覗いた先の部屋へ画面が移る
   if (S.camFree) { // レティクルをしまったら、なめらかに自分のところへ戻る
     var k2 = 1 - Math.exp(-dt * 10); S.cam.x += (S.me.x - S.cam.x) * k2; S.cam.y += (S.me.y - S.cam.y) * k2; S.zoom += (1 - S.zoom) * k2;
     if (Math.hypot(S.me.x - S.cam.x, S.me.y - S.cam.y) < 3 && Math.abs(1 - S.zoom) < 0.01) { S.camFree = false; S.zoom = 1; }
@@ -6943,7 +7181,7 @@ function drawReticles(c, st, me, now) {
   var kz = Math.max(1, 1 / (S.zoom || 1)); // 引いて見ているときは、線や印を太く・大きくして、見失わないようにする
   if (S.ret) { // 狙撃中: 全員の位置に印をつける(仲間は青、撃てる相手は白)
     st.order.forEach(function (id) {
-      var p = st.players[id]; if (!p || p.left || !p.alive || id === S.pid || p.iv) return;
+      var p = st.players[id]; if (!p || p.left || !p.alive || id === S.pid || p.iv || p.tr) return;
       var v = S.vis[id]; if (!v) return;
       var ally = E.ROLES[p.role].team === 'impostor';
       c.save(); c.translate(v.x, v.y); c.strokeStyle = ally ? 'rgba(120,170,255,.85)' : 'rgba(255,255,255,.85)'; c.lineWidth = 2 * kz;
@@ -6990,17 +7228,223 @@ function drawFog(c, z, now) {
   }
   c.restore();
 }
+/* ---------- マップ固有のしかけ(spots)の描画 ---------- */
+var SLOT_SYM = ['7', '★', '♦', '♣', '♥'];
+// 跳ね橋(霧の中庭の堀): 降りているときは木の橋、上がっているときは水の堀
+function drawBridge(c, now) {
+  var br = E.GIM.bridge; if (!br) return;
+  var tn = tnow(), up = E.bridgeUp(tn);
+  if (up) {
+    var g = c.createLinearGradient(br.x, 0, br.x + br.w, 0); g.addColorStop(0, '#1b3a5e'); g.addColorStop(0.5, '#2f6ea3'); g.addColorStop(1, '#1b3a5e');
+    c.fillStyle = g; c.fillRect(br.x, br.y, br.w, br.h);
+    c.strokeStyle = 'rgba(190,225,255,.4)'; c.lineWidth = 2;
+    for (var y = br.y + 18; y < br.y + br.h; y += 46) { var ph = Math.sin(now / 500 + y * 0.05) * 6; c.beginPath(); c.moveTo(br.x + 8, y + ph); c.quadraticCurveTo(br.x + br.w / 2, y + ph - 7, br.x + br.w - 8, y + ph); c.stroke(); }
+    c.fillStyle = '#585e72'; c.fillRect(br.x - 7, br.y, 7, br.h); c.fillRect(br.x + br.w, br.y, 7, br.h);
+    c.fillStyle = 'rgba(255,106,111,' + (0.35 + 0.25 * Math.sin(now / 220)) + ')'; c.fillRect(br.x - 7, br.y, 3, br.h); c.fillRect(br.x + br.w + 4, br.y, 3, br.h);
+  } else {
+    c.fillStyle = '#7a5a36'; c.fillRect(br.x, br.y, br.w, br.h);
+    c.strokeStyle = '#4d3822'; c.lineWidth = 2;
+    for (var y2 = br.y; y2 < br.y + br.h; y2 += 22) { c.beginPath(); c.moveTo(br.x, y2); c.lineTo(br.x + br.w, y2); c.stroke(); }
+    c.fillStyle = '#3b2a18'; c.fillRect(br.x - 4, br.y, 4, br.h); c.fillRect(br.x + br.w, br.y, 4, br.h);
+  }
+}
+function spotLabelCol(on) { return on ? '#ffffff' : '#a9b6dc'; }
+function drawSpots(c, st, me, tn, now) {
+  var spots = E.M.spots; if (!spots || !spots.length) return;
+  var near = S.nearInfo || {}, bo = st.blackoutUntil > tn, i, q;
+  spots.forEach(function (sp, si) {
+    var on = near.spot === si, pul = 0.5 + 0.4 * Math.sin(now / 200), x = sp.x, y = sp.y, nm = sp.n, lc = on ? '#ffffff' : '#a9b6dc';
+    c.save();
+    if (sp.k === 'hull') { // エアロックの扉
+      c.fillStyle = '#10172b'; ell(c, x, y + 4, 36, 20); c.fill();
+      c.fillStyle = '#56648f'; ell(c, x, y, 31, 21); c.fill();
+      c.fillStyle = '#07102a'; ell(c, x, y, 23, 14); c.fill();
+      c.fillStyle = '#bfe4ff'; for (i = 0; i < 6; i++) { c.fillRect(x - 17 + ((i * 29) % 34), y - 6 + ((i * 13) % 11), 2, 2); }
+      c.strokeStyle = 'rgba(127,208,255,' + (0.4 + 0.5 * pul) + ')'; c.lineWidth = 3; ell(c, x, y, 28 + 3 * pul, 18 + 2 * pul); c.stroke();
+    } else if (sp.k === 'hullx') { // 通路の終わりの扉(船内へ戻る)
+      c.fillStyle = '#10172b'; ell(c, x, y + 4, 34, 19); c.fill();
+      c.fillStyle = '#3d5a4a'; ell(c, x, y, 29, 18); c.fill();
+      c.fillStyle = '#0a2218'; ell(c, x, y, 21, 12); c.fill();
+      c.strokeStyle = 'rgba(111,230,160,' + (0.4 + 0.5 * pul) + ')'; c.lineWidth = 3; ell(c, x, y, 26 + 3 * pul, 16 + 2 * pul); c.stroke();
+      c.fillStyle = '#9dffc4'; c.font = '800 12px sans-serif'; c.textAlign = 'center'; c.fillText('船内', x, y + 4);
+    } else if (sp.k === 'eye') { // 肖像画
+      c.fillStyle = '#10172b'; c.fillRect(x - 28, y - 38, 56, 68);
+      c.fillStyle = '#3a2a14'; c.fillRect(x - 25, y - 35, 50, 62); c.fillStyle = '#c9a24a'; c.fillRect(x - 22, y - 32, 44, 56); c.fillStyle = '#1b1626'; c.fillRect(x - 18, y - 28, 36, 48);
+      var look = Math.sin(now / 700 + si) * 4, pk = me && me.pk && me.pk.i === si;
+      c.fillStyle = '#eae6d8'; ell(c, x, y - 6, 14, 8); c.fill();
+      c.fillStyle = pk || on ? '#ff6a6f' : '#6a4bd0'; c.beginPath(); c.arc(x + look, y - 6, 5, 0, 6.2832); c.fill();
+      c.fillStyle = '#000'; c.beginPath(); c.arc(x + look, y - 6, 2.2, 0, 6.2832); c.fill();
+      if (on || pk) { c.strokeStyle = 'rgba(255,214,120,' + (0.5 + 0.4 * pul) + ')'; c.lineWidth = 3; c.strokeRect(x - 31, y - 41, 62, 74); }
+    } else if (sp.k === 'potion') { // 薬品棚
+      c.fillStyle = '#10172b'; c.fillRect(x - 33, y - 30, 66, 56); c.fillStyle = '#5a4228'; c.fillRect(x - 30, y - 27, 60, 50);
+      c.fillStyle = '#2b1f12'; c.fillRect(x - 28, y - 8, 56, 3); c.fillRect(x - 28, y + 12, 56, 3);
+      var pc = ['#6be08c', '#c58bff', '#ff7a90', '#7fd4ff', '#ffd24d'];
+      for (i = 0; i < 5; i++) { c.fillStyle = pc[i]; c.fillRect(x - 25 + i * 11, y - 20, 7, 11); c.fillRect(x - 24 + i * 11, y - 24, 5, 4); c.fillStyle = pc[(i + 2) % 5]; c.fillRect(x - 25 + i * 11, y + 1, 7, 10); c.fillRect(x - 24 + i * 11, y - 3, 5, 4); }
+      if (on) { c.strokeStyle = 'rgba(155,230,122,' + (0.5 + 0.4 * pul) + ')'; c.lineWidth = 3; c.strokeRect(x - 36, y - 33, 72, 62); }
+    } else if (sp.k === 'casino') { // スロットマシン
+      var spin = !!(st.cs && st.cs[si] > tn), jack = false;
+      st.order.forEach(function (id) { var pp = st.players[id]; if (pp && pp.cz && pp.cz.i === si && pp.cz.w && tn - pp.cz.at < 3500) jack = true; });
+      c.fillStyle = '#10172b'; c.fillRect(x - 24, y - 38, 48, 68);
+      c.fillStyle = jack ? (Math.sin(now / 70) > 0 ? '#ffd24d' : '#ff7a90') : '#8a1f3d'; c.fillRect(x - 21, y - 35, 42, 62);
+      c.fillStyle = '#f4efe0'; c.fillRect(x - 17, y - 24, 34, 18);
+      c.font = '900 14px sans-serif'; c.textAlign = 'center';
+      for (i = 0; i < 3; i++) { c.fillStyle = (SLOT_SYM[(spin ? Math.floor(now / 70 + i * 2) : (si + i * 2)) % 5] === '7' || jack) ? '#d8213a' : '#2b2b4a'; c.fillText(SLOT_SYM[(spin ? Math.floor(now / 70 + i * 2) : (si + i * 2)) % 5], x - 10 + i * 10, y - 10); }
+      for (i = 0; i < 5; i++) { c.fillStyle = (spin || jack) && Math.sin(now / 90 + i) > 0 ? '#fff3a8' : '#5a2236'; c.beginPath(); c.arc(x - 16 + i * 8, y - 30, 2.4, 0, 6.2832); c.fill(); }
+      c.fillStyle = '#2b1522'; c.fillRect(x - 15, y + 6, 30, 6);
+      c.strokeStyle = '#b0b8d4'; c.lineWidth = 3; c.beginPath(); c.moveTo(x + 24, y - 6); c.lineTo(x + 32, spin ? y + 4 : y - 20); c.stroke();
+      c.fillStyle = '#ff6a6f'; c.beginPath(); c.arc(x + 32, spin ? y + 4 : y - 20, 4, 0, 6.2832); c.fill();
+      if (on && !spin) { c.strokeStyle = 'rgba(255,210,77,' + (0.5 + 0.4 * pul) + ')'; c.lineWidth = 3; c.strokeRect(x - 28, y - 42, 56, 76); }
+      nm = null;
+    } else if (sp.k === 'lever') { // 跳ね橋のレバー
+      var up = E.bridgeUp(tn);
+      c.fillStyle = '#10172b'; c.fillRect(x - 24, y + 4, 48, 18); c.fillStyle = '#5b6485'; c.fillRect(x - 20, y + 8, 40, 10);
+      c.save(); c.translate(x, y + 10); c.rotate(up ? 0.65 : -0.65); c.fillStyle = '#b0b8d4'; c.fillRect(-3, -36, 6, 36); c.fillStyle = up ? '#6fb4ff' : '#ffd24d'; c.beginPath(); c.arc(0, -38, 8, 0, 6.2832); c.fill(); c.restore();
+      nm = '跳ね橋のレバー(' + (up ? '橋は上がっている' : '橋は降りている') + ')';
+      if (on) { c.strokeStyle = 'rgba(111,180,255,' + (0.5 + 0.4 * pul) + ')'; c.lineWidth = 3; c.strokeRect(x - 28, y - 50, 56, 76); }
+    } else if (sp.k === 'metro') { // 地下鉄の駅
+      var mt = E.metroAt(tn), mout = E.metroOutS(st, tn), here = mt.at === sp.side && !mout;
+      c.fillStyle = '#10172b'; c.fillRect(x - 64, y - 18, 128, 38); c.fillStyle = '#26325a'; c.fillRect(x - 60, y - 14, 120, 28);
+      c.fillStyle = '#ffd24d'; for (i = 0; i < 12; i++) c.fillRect(x - 60 + i * 10, y + 12, 6, 3);
+      if (here) { c.fillStyle = '#6fe3c8'; c.fillRect(x - 60, y - 52, 120, 34); c.fillStyle = '#10372f'; for (i = 0; i < 4; i++) c.fillRect(x - 52 + i * 28, y - 46, 20, 14); c.fillStyle = '#d8fff4'; c.fillRect(x - 60, y - 22, 120, 4); }
+      var secs = Math.ceil((here ? mt.left : E.metroWait(tn, sp.side)) / 1000);
+      c.font = '700 13px "Zen Maru Gothic", sans-serif'; c.textAlign = 'center'; c.fillStyle = here ? '#9dffe0' : '#ffd88a';
+      if (mout) { c.fillStyle = '#ff8c9b'; c.fillText('停電のため運休中', x, y + 4); }
+      else c.fillText(here ? '停車中 あと' + secs + '秒' : '次の列車まで ' + secs + '秒', x, y + 4);
+      if (on) { c.strokeStyle = 'rgba(111,227,200,' + (0.5 + 0.4 * pul) + ')'; c.lineWidth = 3; c.strokeRect(x - 68, y - 56, 136, 80); }
+    } else if (sp.k === 'breaker') { // 区画ブレーカー
+      var dk = !!(st.pw && st.pw[sp.z] > tn), fx = !!(bo && st.bz && st.bz[sp.z]), fl2 = bo && !fx && Math.sin(now / 150) > 0;
+      c.fillStyle = '#10172b'; c.fillRect(x - 30, y - 28, 60, 54);
+      c.fillStyle = dk ? '#5a2b33' : fl2 ? '#ff6a6f' : (bo && !fx ? '#6b2b33' : '#3d4d7e'); c.fillRect(x - 25, y - 23, 50, 30);
+      for (i = 0; i < 3; i++) { c.fillStyle = '#0b1020'; c.fillRect(x - 18 + i * 14, y - 18, 8, 20); c.fillStyle = dk || (bo && !fx) ? '#ff6a6f' : '#5fd08a'; c.fillRect(x - 18 + i * 14, dk || (bo && !fx) ? y - 4 : y - 18, 8, 8); }
+      nm = sp.n + (dk ? '(遮断中 ' + Math.ceil((st.pw[sp.z] - tn) / 1000) + '秒)' : (bo ? (fx ? '(復旧済み)' : '(要修理)') : ''));
+      if (on) { c.strokeStyle = 'rgba(255,210,77,' + (0.5 + 0.4 * pul) + ')'; c.lineWidth = 3; c.strokeRect(x - 34, y - 32, 68, 62); }
+    }
+    c.restore();
+    if (nm) label(c, nm, x, y + (sp.k === 'metro' ? 38 : 44), lc);
+  });
+}
+// 当たりの演出(まわりの人にも見える): 金色の光・コイン・「JACKPOT!」
+function drawCasinoFx(c, st, me, visible, now) {
+  var tn = tnow();
+  st.order.forEach(function (id) {
+    var p = st.players[id]; if (!p || p.left || !p.cz || !p.cz.w) return;
+    var age = (tn - p.cz.at) / 1000, v = id === S.pid ? S.me : S.vis[id];
+    if (!v || age < 0) return;
+    S.czSeen = S.czSeen || {};
+    if (S.czSeen[id] !== p.cz.n) { // はじめて見たときに、音を鳴らす(近いほど大きい)
+      S.czSeen[id] = p.cz.n;
+      if (age < 2) { var dd = id === S.pid ? 0 : Math.hypot(v.x - S.me.x, v.y - S.me.y); if (dd < 900) SND.play('win', { vol: Math.max(0.15, 0.7 * (1 - dd / 900)) }); }
+    }
+    if (age > 3.5 || (id !== S.pid && (!p.alive || !visible(v.x, v.y)))) return;
+    var a = Math.max(0, Math.min(1, (3.5 - age) / 1.2)), k = Math.min(1, age / 0.35);
+    c.save(); c.translate(v.x, v.y - 6);
+    var gr = c.createRadialGradient(0, 0, 4, 0, 0, 120 * k); gr.addColorStop(0, 'rgba(255,236,150,' + 0.75 * a + ')'); gr.addColorStop(1, 'rgba(255,210,77,0)');
+    c.fillStyle = gr; c.beginPath(); c.arc(0, 0, 120 * k, 0, 6.2832); c.fill();
+    c.strokeStyle = 'rgba(255,225,120,' + a * 0.8 + ')'; c.lineWidth = 3;
+    for (var r = 0; r < 12; r++) { var an = r / 12 * 6.2832 + age * 1.5; c.beginPath(); c.moveTo(Math.cos(an) * 34 * k, Math.sin(an) * 34 * k); c.lineTo(Math.cos(an) * (60 + 26 * Math.sin(age * 8 + r)) * k, Math.sin(an) * (60 + 26 * Math.sin(age * 8 + r)) * k); c.stroke(); }
+    for (var q = 0; q < 14; q++) { // 舞い上がるコイン
+      var ph = (age * 0.9 + q / 14) % 1, cx2 = Math.sin(q * 2.7) * 70 * ph, cy2 = -10 - ph * 110 + 60 * ph * ph;
+      c.globalAlpha = a * (1 - ph * 0.6); c.fillStyle = '#ffd24d'; c.strokeStyle = '#a8741c'; c.lineWidth = 1.5; ell(c, cx2, cy2, 6, 6 * Math.abs(Math.cos(age * 7 + q))); c.fill(); c.stroke();
+    }
+    c.globalAlpha = a; c.font = '900 22px "Zen Maru Gothic", sans-serif'; c.textAlign = 'center'; c.lineJoin = 'round'; c.lineWidth = 5; c.strokeStyle = '#7a2a10'; c.fillStyle = '#fff0a0';
+    var ty = -64 - Math.min(18, age * 30); c.strokeText('JACKPOT!', 0, ty); c.fillText('JACKPOT!', 0, ty);
+    c.restore();
+  });
+}
+// 画面全体にかぶせる表示: 移動中(船外通路・地下鉄)・肖像画を覗いている枠・スロットのリール・薬の効果
+function drawSpotOverlays(c, st, me, now) {
+  if (!me || !me.alive) return;
+  var tn = tnow();
+  if (me.tr) {
+    var tr = me.tr, left = Math.max(0, (tr.until - tn) / 1000), tot = Math.max(1, (tr.until - tr.at) / 1000), prog = 1 - left / tot, i;
+    c.save();
+    if (tr.k === 'hull') {
+      var bg = c.createLinearGradient(0, 0, 0, VH); bg.addColorStop(0, '#02030c'); bg.addColorStop(1, '#0b1233'); c.fillStyle = bg; c.fillRect(0, 0, VW, VH);
+      for (i = 0; i < 90; i++) { var sx = ((i * 97.3 + now * 0.02 * (1 + i % 3)) % (VW + 40)), sy = (i * 53.7) % VH; c.fillStyle = 'rgba(210,230,255,' + (0.3 + 0.5 * ((i * 7) % 10) / 10) + ')'; c.fillRect(VW - sx, sy, 2 + (i % 3), 1.5); }
+      c.fillStyle = '#26325a'; c.fillRect(0, VH * 0.66, VW, 18); c.fillStyle = '#3d4d7e'; for (i = 0; i < VW; i += 46) c.fillRect(i - ((now * 0.06) % 46), VH * 0.66 + 4, 26, 4);
+    } else {
+      c.fillStyle = '#05080f'; c.fillRect(0, 0, VW, VH);
+      for (i = 0; i < 18; i++) { var lx = ((i * 80 + now * 0.9) % (VW + 80)); c.fillStyle = 'rgba(111,227,200,.22)'; c.fillRect(VW - lx, VH * 0.2, 6, VH * 0.6); }
+      c.fillStyle = '#17243f'; c.fillRect(0, VH * 0.18, VW, 8); c.fillRect(0, VH * 0.8, VW, 8);
+      c.fillStyle = '#1b2a44'; c.fillRect(VW * 0.2, VH * 0.3, VW * 0.6, VH * 0.4); c.fillStyle = '#6fe3c8'; for (i = 0; i < 5; i++) c.fillRect(VW * 0.22 + i * VW * 0.118, VH * 0.34, VW * 0.09, VH * 0.14);
+    }
+    drawBlob(c, VW / 2, VH * 0.58 + Math.sin(now / 300) * 4, C[me.color].hex, 1, now / 90, 1, false, false);
+    c.font = '900 22px "Zen Maru Gothic", sans-serif'; c.textAlign = 'center'; c.fillStyle = '#e9eef9'; c.lineWidth = 4; c.strokeStyle = 'rgba(6,9,20,.9)';
+    var tt = tr.k === 'hull' ? 'エアロックを通過中…' : '地下鉄に乗車中…'; c.strokeText(tt, VW / 2, VH * 0.22); c.fillText(tt, VW / 2, VH * 0.22);
+    c.font = '700 14px "Zen Maru Gothic", sans-serif'; c.fillStyle = '#9fb3e6'; c.fillText('あと' + Math.ceil(left) + '秒(その間は何もできず、だれにも見えません)', VW / 2, VH * 0.22 + 26);
+    c.fillStyle = 'rgba(255,255,255,.15)'; c.fillRect(VW * 0.25, VH * 0.86, VW * 0.5, 8); c.fillStyle = '#7fd4ff'; c.fillRect(VW * 0.25, VH * 0.86, VW * 0.5 * prog, 8);
+    c.restore();
+    return;
+  }
+  var pkSp = me.pk ? (E.M.spots || [])[me.pk.i] : null;
+  if (pkSp && pkSp.see) { // 肖像画の枠(覗き穴)
+    c.save(); c.fillStyle = 'rgba(8,4,16,.5)'; var g2 = c.createRadialGradient(VW / 2, VH / 2, Math.min(VW, VH) * 0.3, VW / 2, VH / 2, Math.max(VW, VH) * 0.7); g2.addColorStop(0, 'rgba(10,6,20,0)'); g2.addColorStop(1, 'rgba(10,6,20,.75)'); c.fillStyle = g2; c.fillRect(0, 0, VW, VH);
+    c.strokeStyle = 'rgba(201,162,74,.85)'; c.lineWidth = 8; c.strokeRect(14, 14, VW - 28, VH - 28); c.lineWidth = 2; c.strokeStyle = 'rgba(255,230,160,.7)'; c.strokeRect(24, 24, VW - 48, VH - 48);
+    c.font = '800 16px "Zen Maru Gothic", sans-serif'; c.textAlign = 'center'; c.fillStyle = '#ffe9a8'; c.lineWidth = 4; c.strokeStyle = 'rgba(6,9,20,.9)';
+    var pt = '肖像画の目: ' + ((E.roomAt(pkSp.see.x, pkSp.see.y) || {}).n || '') + 'を覗いている(あと' + Math.max(0, Math.ceil((me.pk.until - tn) / 1000)) + '秒)';
+    c.strokeText(pt, VW / 2, 52); c.fillText(pt, VW / 2, 52); c.restore();
+  }
+  // スロットのリール(自分が回したとき)
+  var cz = me.cz;
+  if (cz && tn - cz.at < 3900 && tn >= cz.at) {
+    var t = (tn - cz.at) / 1000, stop = 2.3, bw = 62, gap = 10, x0 = VW / 2 - (bw * 3 + gap * 2) / 2, y0 = VH * 0.3;
+    c.save(); c.globalAlpha = Math.min(1, (3.9 - t) / 0.5);
+    c.fillStyle = 'rgba(16,10,28,.88)'; c.fillRect(x0 - 18, y0 - 22, bw * 3 + gap * 2 + 36, 112);
+    c.strokeStyle = cz.w && t > stop ? '#ffd24d' : '#8a6a3a'; c.lineWidth = 4; c.strokeRect(x0 - 18, y0 - 22, bw * 3 + gap * 2 + 36, 112);
+    for (var r = 0; r < 3; r++) {
+      var rx = x0 + r * (bw + gap), fin = t >= 0.9 + r * 0.45;
+      c.fillStyle = '#f4efe0'; c.fillRect(rx, y0, bw, 68);
+      var sym = fin ? (cz.w ? '7' : SLOT_SYM[(cz.n + [0, 2, 3][r]) % 5]) : SLOT_SYM[Math.floor(now / 60 + r * 2) % 5];
+      c.font = '900 44px sans-serif'; c.textAlign = 'center'; c.fillStyle = sym === '7' ? '#d8213a' : '#2b2b4a'; c.fillText(sym, rx + bw / 2, y0 + 50);
+    }
+    if (t > stop) {
+      var bd = E.BUFFS[cz.k]; c.font = '900 20px "Zen Maru Gothic", sans-serif'; c.lineWidth = 4; c.strokeStyle = 'rgba(6,9,20,.9)'; c.fillStyle = cz.w ? '#ffe27a' : '#ff9aa8';
+      var rt = (cz.w ? '当たり! ' : '外れ… ') + (bd ? bd.n : ''); c.strokeText(rt, VW / 2, y0 + 112); c.fillText(rt, VW / 2, y0 + 112);
+    }
+    c.restore();
+  }
+  // 薬の効果(いま効いているもの)
+  var bk = E.buffOf(me, tn);
+  if (bk) {
+    var bb = E.BUFFS[bk], bl = Math.max(0, Math.ceil((me.bf.until - tn) / 1000)), bw2 = 132;
+    c.save(); c.fillStyle = bb.good ? 'rgba(40,110,70,.82)' : 'rgba(120,40,52,.82)'; c.fillRect(VW / 2 - bw2 / 2, 8, bw2, 26);
+    c.strokeStyle = bb.good ? '#7dffb0' : '#ff8c9b'; c.lineWidth = 2; c.strokeRect(VW / 2 - bw2 / 2, 8, bw2, 26);
+    c.font = '800 13px "Zen Maru Gothic", sans-serif'; c.textAlign = 'center'; c.fillStyle = '#ffffff'; c.fillText(bb.n + ' ' + bl + '秒', VW / 2, 26); c.restore();
+  }
+}
+// 船外通路(マップの外にある一方通行の通路): 外壁ぞいの金属の歩道。進む向きに矢印が流れる
+function drawOuterWalk(c, now) {
+  var os = E.GIM.outer; if (!os || !os.length) return;
+  os.forEach(function (o) {
+    var hx = o.ax === 'x', len = hx ? o.w : o.h;
+    c.fillStyle = '#0a0f22'; c.fillRect(o.x - 12, o.y - 12, o.w + 24, o.h + 24);
+    c.fillStyle = '#2a3558'; c.fillRect(o.x, o.y, o.w, o.h);
+    c.fillStyle = '#1b2442'; if (hx) c.fillRect(o.x, o.y + o.h / 2 - 10, o.w, 20); else c.fillRect(o.x + o.w / 2 - 10, o.y, 20, o.h);
+    c.fillStyle = '#ffcc4d'; // 縁の注意帯
+    for (var t = 0; t < len; t += 28) { if (hx) { c.fillRect(o.x + t, o.y, 14, 4); c.fillRect(o.x + t, o.y + o.h - 4, 14, 4); } else { c.fillRect(o.x, o.y + t, 4, 14); c.fillRect(o.x + o.w - 4, o.y + t, 4, 14); } }
+    var sh = (now * 0.05) % 44; c.fillStyle = 'rgba(127,208,255,.65)';
+    for (var u = -44; u < len; u += 44) {
+      var q = u + sh; if (q < 4 || q > len - 12) continue;
+      c.beginPath();
+      if (hx) { var ax = o.x + q, ay = o.y + o.h / 2, d = o.dir; c.moveTo(ax - 6 * d, ay - 9); c.lineTo(ax + 5 * d, ay); c.lineTo(ax - 6 * d, ay + 9); c.lineTo(ax - 1 * d, ay); }
+      else { var bx = o.x + o.w / 2, by = o.y + q, e = o.dir; c.moveTo(bx - 9, by - 6 * e); c.lineTo(bx, by + 5 * e); c.lineTo(bx + 9, by - 6 * e); c.lineTo(bx, by - 1 * e); }
+      c.fill();
+    }
+  });
+}
 function drawWorld(c, st, me, vr, watching, ghost, now) {
   var RECTS = E.ROOMS.concat(E.HALLS), G = E.GIM, tn = tnow(), th = themeOf(E.M), fl = E.M.floors || {};
   drawOuter(c, E.M, now, S.cam.x - VW / VSC, S.cam.y - VH / VSC, S.cam.x + VW / VSC, S.cam.y + VH / VSC);
   c.fillStyle = th.wall;
   RECTS.forEach(function (o) { c.fillRect(o.x - 14, o.y - 14, o.w + 28, o.h + 28); });
   E.HALLS.forEach(function (o) { c.fillStyle = th.hall; c.fillRect(o.x, o.y, o.w, o.h); });
+  drawOuterWalk(c, now);
   E.ROOMS.forEach(function (o) {
     c.fillStyle = o.c || '#2d3862'; c.fillRect(o.x, o.y, o.w, o.h);
     drawFloor(c, o, th, fl[o.id]);
   });
   drawDecor(c, E.M, th, now, S.cam.x - VW / VSC, S.cam.y - VH / VSC, S.cam.x + VW / VSC, S.cam.y + VH / VSC);
+  drawBridge(c, now);
   // 動く歩道
   (G.belts || []).forEach(function (b) { drawBelt(c, E.msOn('belts') ? { x: b.x, y: b.y, w: b.w, h: b.h, dx: -b.dx, dy: -b.dy } : b, now); });
   // ベント(ベントの中にいるあいだは、いるベントを光らせ、移れるベントに印をつける)
@@ -7052,6 +7496,7 @@ function drawWorld(c, st, me, vr, watching, ghost, now) {
     if (bo) { c.strokeStyle = 'rgba(255,106,111,' + (0.5 + 0.4 * Math.sin(now / 200)) + ')'; c.lineWidth = 3; c.strokeRect(pn.x - 32, pn.y - 26, 64, 52); }
     label(c, '配電盤', pn.x, pn.y + 38, bo ? '#ffb3bf' : '#93a0c4');
   }
+  drawSpots(c, st, me, tn, now);
   // 修理地点(緊急事態・通信妨害のあいだだけ現れる)
   if (E.M.crisis && (st.crisis || st.jamUntil > tn)) E.M.crisis.points.forEach(function (pt, i) {
     var fx = !!(st.crisis && st.crisis.fixed[i]), pul = 0.55 + 0.4 * Math.sin(now / 170 + i);
@@ -7271,8 +7716,9 @@ function render(dt) {
   if (!S.mode || !st) return;
   if (st.phase === 'lobby') { renderLobbyScene(c, st, now); return; }
   var me = myPlayer(), ghost = !me || !me.alive, watching = false;
-  var vr = S.ret ? 99999 : visionOf(st, me); // 狙撃中は、霧も隠れた通路もなくなり、画面の中の全員が見える
-  if (!ghost && st.phase === 'play' && !S.ret) occCompute(vr); else { OCC.hid = null; OCC.cells = null; OCC.key = ''; } // 幽霊は、全部見える
+  var peeking = !!(me && me.alive && me.pk && vpOf() !== S.me);
+  var vr = S.ret ? 99999 : peeking ? 340 : visionOf(st, me); // 狙撃中は、霧も隠れた通路もなくなり、画面の中の全員が見える
+  if (!ghost && st.phase === 'play' && !S.ret && !peeking) occCompute(vr); else { OCC.hid = null; OCC.cells = null; OCC.key = ''; } // 幽霊は、全部見える
   c.save();
   c.translate(VW / 2 - S.cam.x * VSC, VH / 2 - S.cam.y * VSC); c.scale(VSC, VSC);
   drawWorld(c, st, me, vr, watching, ghost, now);
@@ -7280,7 +7726,8 @@ function render(dt) {
   var meDance = !!(me && me.alive && E.dancing(me, tnow())); // 踊っているあいだは、相手のほかは見えない
   var uniform = E.ballMasked(st) && !!(me && me.alive) && teamOf(me) !== 'impostor'; // 舞踏会: 全員が同じ姿(インポスター陣営からは、いつもの姿のまま)
   var seeAll = ghost || watching || !!S.ret;
-  function visible(x, y) { return seeAll || (Math.hypot(x - S.me.x, y - S.me.y) <= vr + 12 && !hiddenAt(x, y)); }
+  var vpt = vpOf();
+  function visible(x, y) { return seeAll || (Math.hypot(x - vpt.x, y - vpt.y) <= vr + 12 && !hiddenAt(x, y)); }
   // 遺体
   if (!meDance) drawTrails(c, st, visible, now);
   st.bodies.forEach(function (b) {
@@ -7302,12 +7749,12 @@ function render(dt) {
     var v;
     if (id === S.pid) v = S.me; else v = S.vis[id];
     if (!v) return;
-    if (p.iv && p.alive && !ghost) return; // ベントの中の人は、本人にも、ほかの人にも見えない
+    if ((p.iv || p.tr) && p.alive && !ghost) return; // ベントの中の人・移動中の人は、本人にも、ほかの人にも見えない
     if (meDance && id !== S.pid && id !== me.dn.w) return;
     if (id !== S.pid) {
       if (!p.alive && !ghost) return;
       if (!ghost && E.onStage(st, p)) return; // ダンスが成立した人は、ほかの人から見えない(死んだ人の目には見える)
-      if (!visible(v.x, v.y)) return;
+      if (!visible(v.x, v.y) && !(E.buffOf(p, tnow()) === 'glow' && !hiddenAt(v.x, v.y))) return; // 蛍光の人は、霧の中でも見える
     }
     list.push({ id: id, p: p, v: v });
   });
@@ -7363,6 +7810,7 @@ function render(dt) {
     c.restore();
     label(c, 'ダンス中 ' + d.left + '秒', d.x, d.y - 62, '#d7c8ff');
   });
+  drawCasinoFx(c, st, me, visible, now);
   drawBeams(c, st, now);
   c.restore();
 
@@ -7372,10 +7820,16 @@ function render(dt) {
     fx.setTransform(1, 0, 0, 1, 0, 0); fx.globalCompositeOperation = 'source-over'; fx.clearRect(0, 0, fogCv.width, fogCv.height);
     fx.fillStyle = themeOf(E.M).fog; fx.fillRect(0, 0, fogCv.width, fogCv.height);
     fx.globalCompositeOperation = 'destination-out';
-    var cx = (VW / 2 + (S.me.x - S.cam.x) * VSC) * DPR, cy = (VH / 2 + (S.me.y - S.cam.y) * VSC) * DPR, rr = vr * VSC * DPR;
+    var cx = (VW / 2 + (vpt.x - S.cam.x) * VSC) * DPR, cy = (VH / 2 + (vpt.y - S.cam.y) * VSC) * DPR, rr = vr * VSC * DPR;
     var gr = fx.createRadialGradient(cx, cy, rr * 0.6, cx, cy, rr);
     gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
     fx.fillStyle = gr; fx.beginPath(); fx.arc(cx, cy, rr, 0, 6.2832); fx.fill();
+    st.order.forEach(function (gid) { // 蛍光の薬を飲んだ人のまわりは、霧が晴れる
+      var gp = st.players[gid]; if (!gp || !gp.alive || gp.left || gid === S.pid || gp.tr || E.buffOf(gp, tnow()) !== 'glow') return;
+      var gv = S.vis[gid]; if (!gv) return;
+      var gx = (VW / 2 + (gv.x - S.cam.x) * VSC) * DPR, gy = (VH / 2 + (gv.y - S.cam.y) * VSC) * DPR, gr2 = 120 * VSC * DPR, gg = fx.createRadialGradient(gx, gy, gr2 * 0.3, gx, gy, gr2);
+      gg.addColorStop(0, 'rgba(0,0,0,1)'); gg.addColorStop(1, 'rgba(0,0,0,0)'); fx.fillStyle = gg; fx.beginPath(); fx.arc(gx, gy, gr2, 0, 6.2832); fx.fill();
+    });
     if (OCC.cells) { // 閉じた通路の向こうは、霧で隠す(穴を開けたあとに、もう一度ぬりつぶす)
       fx.globalCompositeOperation = 'source-over'; fx.fillStyle = themeOf(E.M).fog;
       var cs = OCC_G * VSC * DPR + 1, ox = (VW / 2 - S.cam.x * VSC) * DPR, oy = (VH / 2 - S.cam.y * VSC) * DPR;
@@ -7395,6 +7849,7 @@ function render(dt) {
     var stT = me.dn ? (tnow() - me.dn.from) / 1000 : 9, sa = Math.max(0, Math.min(1, stT / 0.5));
     drawDanceStage(c, st, me, now, uniform, sa);
   } else DSTAGE.cur = null;
+  drawSpotOverlays(c, st, me, now);
 }
 // 画面の外にある修理地点(緊急事態・通信妨害・停電の配電盤)を、縁の矢印で知らせる
 // タスク一覧で選んだタスクの方向を示す。画面の外なら縁に矢印、画面の中ならそのタスクの上に▼
@@ -7439,6 +7894,7 @@ function drawBeacons(c, st, now) {
     pts.push({ x: pt.x, y: pt.y, i: i, t: '修理' });
   });
   if (st.blackoutUntil > tn && E.GIM.panel && me0 && me0.alive && teamOf(me0) !== 'impostor') pts.push({ x: E.GIM.panel.x, y: E.GIM.panel.y, i: 9, t: '配電盤' });
+  if (st.blackoutUntil > tn && E.GIM.zones && me0 && me0.alive && teamOf(me0) !== 'impostor') (E.M.spots || []).forEach(function (q) { if (q.k === 'breaker' && !(st.bz && st.bz[q.z])) pts.push({ x: q.x, y: q.y, i: 9, t: E.GIM.zones[q.z].n }); });
   var mg = 56;
   pts.forEach(function (pt) {
     var i = pt.i;
@@ -7480,7 +7936,7 @@ function reticleTarget(st) {
   var best = null, bd = E.SNIPE_HIT; // 狙撃中は画面の中の全員が見えているので、誰でも捕捉できる(仲間は撃てない)
   st.order.forEach(function (id) {
     var p = st.players[id];
-    if (!p || id === S.pid || !p.alive || p.left || p.iv) return;
+    if (!p || id === S.pid || !p.alive || p.left || p.iv || p.tr) return;
     var v = S.vis[id]; if (!v) return;
     if (E.ROLES[p.role].team === 'impostor') return;
     var d = Math.hypot(v.x - S.ret.x, v.y - S.ret.y);
@@ -7528,6 +7984,7 @@ function moveMe(dt) {
     if (tpk !== S.lastTpKey) { S.lastTpKey = tpk; S.me.x = me.tp.x; S.me.y = me.tp.y; S.me.w = 0; }
   }
   if (me && me.iv && me.alive) { S.me.w = 0; return; } // ベントの中では歩けない
+  if (me && me.alive && (me.tr || me.pk)) { S.me.w = 0; return; } // 移動中・肖像画を覗いている間は、歩けない
   if (me && me.alive && st && st.phase === 'play' && !S.overlay && !E.canStand(S.me.x, S.me.y, 10)) { var ns = E.nearestStand(S.me.x, S.me.y, 16); S.me.x = ns.x; S.me.y = ns.y; } // 壁の中に挟まったときは、いちばん近い立てる場所へ出す
   var can = st && (st.phase === 'play' || (st.phase === 'lobby' && !S.lobbyPanel)) && !S.overlay;
   if (!can) { S.me.w = 0; return; }
@@ -7550,7 +8007,7 @@ function moveMe(dt) {
   if (!ghost && me && (me.wv || (me.sh || 0) > tnow() || E.dancing(me, tnow()) || E.onStage(S.state, me))) { S.me.w = 0; return; }
   if (len >= 0.12) {
     if (len > 1) { v[0] /= len; v[1] /= len; }
-    var sp = st.settings.speed * (ghost ? 1.15 : 1);
+    var bkm = ghost ? null : E.buffOf(me, tnow()), sp = st.settings.speed * (ghost ? 1.15 : 1) * (bkm === 'spd' ? 1.4 : bkm === 'slow' ? 0.6 : 1); // 薬の効果
     var nx = S.me.x + v[0] * sp * dt, ny = S.me.y + v[1] * sp * dt;
     if (ghost) { S.me.x = Math.max(20, Math.min(E.WORLD.w - 20, nx)); S.me.y = Math.max(20, Math.min(E.WORLD.h - 20, ny)); }
     else { if (E.canMove(S.me.x, S.me.y, nx, S.me.y, 14)) S.me.x = nx; if (E.canMove(S.me.x, S.me.y, S.me.x, ny, 14)) S.me.y = ny; }
@@ -7593,7 +8050,7 @@ function nearest(list, from, range) {
   return best;
 }
 function computeNear(st, me) {
-  var near = { task: -1, step: 0, table: false, ballbtn: false, vent: -1, body: null, portal: -1, panel: false, hall: -1, fix: -1, counter: false, d: {} }; // d: それぞれまでの距離(「使う」ボタンは、いちばん近いものに切り替わる)
+  var near = { task: -1, step: 0, table: false, ballbtn: false, spot: -1, vent: -1, body: null, portal: -1, panel: false, hall: -1, fix: -1, counter: false, d: {} }; // d: それぞれまでの距離(「使う」ボタンは、いちばん近いものに切り替わる)
   if (!me) return near;
   var G = E.GIM, now = tnow(), jamOn = st.jamUntil > now;
   if (me.alive && teamOf(me) !== 'impostor' && E.M.crisis && (st.crisis || jamOn)) {
@@ -7621,13 +8078,17 @@ function computeNear(st, me) {
   if (!near.counter && S.overlay === 'count') setOverlay(null); // 離れたら(通信妨害・倒れたときも)見えなくなる
   if (me.alive && G.panel && st.blackoutUntil > now && teamOf(me) !== 'impostor' && E.dist(S.me, G.panel) <= 110) { near.panel = true; near.d.panel = E.dist(S.me, G.panel); }
   if (me.alive && G.doors) near.hall = E.hallNear(S.me.x, S.me.y, 140);
+  if (me.alive && !me.iv && !me.tr && E.M.spots) { // マップ固有のしかけ(船外通路・肖像画・薬品棚・カジノ・跳ね橋・地下鉄・ブレーカー)
+    var spb = nearest(E.M.spots.map(function (q, i) { return { x: q.x, y: q.y, i: i, k: q.k }; }), S.me, 100);
+    if (spb) { near.spot = spb.i; near.d.spot = Math.hypot(spb.x - S.me.x, spb.y - S.me.y); }
+  }
   return near;
 }
 function nearestTarget(st, me, range, filter) {
   var cands = [];
   st.order.forEach(function (id) {
     var p = st.players[id];
-    if (!p || id === S.pid || !p.alive || p.left || p.iv) return;
+    if (!p || id === S.pid || !p.alive || p.left || p.iv || p.tr) return;
     if (E.onStage(S.state, p) && !(me && E.dancing(me, tnow()) && me.dn && me.dn.w === id)) return; // ダンスが成立した人は、見えない・狙えない(例外: 踊っている最中の相手)
     if (filter && !filter(p)) return;
     var v = S.vis[id]; if (!v) return;
@@ -7636,6 +8097,30 @@ function nearestTarget(st, me, range, filter) {
   });
   var b = nearest(cands, S.me, range);
   return b ? b.id : null;
+}
+// マップ固有のしかけに近づいたときの「使う」ボタン(ready=false なら、押せない理由を sub に出す)
+function spotItem(st, me, i) {
+  var sp = E.M.spots[i], now = tnow(), imp = teamOf(me) === 'impostor', S1 = E.SPOT;
+  function go(extra) { return function () { sendAct({ type: 'spot', i: i }); }; }
+  var cd = function (t) { return t > now ? Math.ceil((t - now) / 1000) + '秒' : ''; };
+  if (sp.k === 'hull') return { label: '船外通路', sub: '出る(戻れない)', color: 'var(--neu)', ready: true, press: go() };
+  if (sp.k === 'hullx') return { label: '船内へ', sub: sp.n.replace(/^船内へ\(|\)$/g, ''), color: 'var(--neu)', ready: true, press: go() };
+  if (sp.k === 'eye') { var ec = cd(me.ek || 0); return { label: '肖像画', sub: ec || '覗く', color: 'var(--neu)', ready: !ec, press: go() }; }
+  if (sp.k === 'potion') { var pc = cd(me.pc || 0); return { label: '薬品棚', sub: pc || '薬を飲む', color: 'var(--neu)', ready: !pc, press: go() }; }
+  if (sp.k === 'casino') { var busy = st.cs && st.cs[i] > now, cc = cd(me.cc || 0); return { label: 'スロット', sub: busy ? '使用中' : (cc || '回す'), color: 'var(--neu)', ready: !busy && !cc, press: go() }; }
+  if (sp.k === 'lever') { var lc = cd(st.br ? st.br.cd : 0), up = E.bridgeUp(now); return { label: '跳ね橋', sub: lc || (up ? '橋を降ろす' : '橋を上げる'), color: 'var(--neu)', ready: !lc, press: go() }; }
+  if (sp.k === 'metro') { var mt = E.metroAt(now), here = mt.at === sp.side; if (E.metroOutS(st, now)) return { label: '地下鉄', sub: '停電中', color: 'var(--neu)', ready: false, press: function () {} }; return { label: '地下鉄', sub: here ? '乗る' : '次まで' + Math.ceil(E.metroWait(now, sp.side) / 1000) + '秒', color: 'var(--neu)', ready: here, press: go() }; }
+  if (sp.k === 'breaker') {
+    var dark = st.pw && st.pw[sp.z] > now, bo = st.blackoutUntil > now, zn = E.GIM.zones[sp.z].n;
+    if (imp) {
+      var nd = (st.pw || []).filter(function (u) { return u > now; }).length, bc = cd((st.pwc && st.pwc[sp.z]) || 0);
+      return { label: '電力遮断', sub: dark ? '遮断中' : (bc || (nd >= S1.pwMax ? '上限' + S1.pwMax : zn)), color: 'var(--imp)', ready: !dark && !bc && nd < S1.pwMax, press: go() };
+    }
+    if (bo && !(st.bz && st.bz[sp.z])) return { label: 'タスク', sub: zn + 'の停電を復旧', color: 'var(--accent)', ready: true, press: function () { openPanel(sp.z); } };
+    if (dark) return { label: '電力復旧', sub: zn, color: 'var(--accent)', ready: true, press: go() };
+    return { label: '調べる', sub: zn + 'は正常', color: 'var(--accent)', ready: false, press: function () {} };
+  }
+  return null;
 }
 function computeActions(st, me) {
   var list = [];
@@ -7677,6 +8162,8 @@ function computeActions(st, me) {
     }
     return dlist;
   }
+  if (alive && me.tr) return []; // 船外通路・地下鉄で移動中は、なにもできない
+  if (alive && me.pk) return [{ id: 'use', label: 'やめる', sub: '覗き見', color: 'var(--warn)', ready: true, big: true, press: function () { sendAct({ type: 'peekend' }); } }]; // 肖像画を覗いている間は、やめるだけ
   if (alive && E.onStage(st, me)) return []; // 踊りおえて、ステージで会議を待っている間は、なにもできない
   // 狙撃のレティクルを出している間は、発射ややめるのボタンだけ(ほかの操作はできない)
   if (alive && S.ret && me.role === 'sniper') {
@@ -7704,6 +8191,7 @@ function computeActions(st, me) {
     if (near.counter) cands.push({ d: near.d.counter, o: 3, it: { label: '人数確認', color: 'var(--accent)', press: function () { setOverlay('count'); } } });
     if (portalOk) cands.push({ d: near.d.portal, o: 4, it: { label: '隠し扉', color: 'var(--neu)', press: function () { sendAct({ type: 'portal' }); } } });
     if (ventOk) cands.push({ d: near.d.vent, o: 5, it: { kind: 'vent', label: 'ベント', sub: ventSub, color: ventCol, press: function () { sendAct({ type: 'ventin', to: near.vent }); } } });
+    if (near.spot >= 0) { var spi = spotItem(st, me, near.spot); if (spi) cands.push({ d: near.d.spot, o: 3, it: spi }); }
     if (near.ballbtn) cands.push({ d: near.d.ballbtn, o: 3, it: { label: '舞踏会のベル', sub: '舞踏会を始める', color: 'var(--neu)', press: function () { sendAct({ type: 'ballbtn' }); } } });
     cands.sort(function (x, y) { return x.d - y.d || x.o - y.o; });
     if (cands.length) useItem = Object.assign({ ready: true }, cands[0].it);
@@ -7913,6 +8401,8 @@ function updateHud(st, me) {
   if (!me) txt = '観戦中(次の試合から参加できます)';
   else if (me.alive && me.iv) txt = me.role === 'sandworm' ? 'ベントの中です。赤い輪の中の人を「襲撃」できます。三角のマークを押すと、つながったベントへ移ります。「出る」で外に出ます' : 'ベントの中です。三角のマークを押すと、その方向のベントへ移ります。「出る」で、いまいるベントから外に出ます';
   else if (!me.alive) txt = 'あなたは死亡しました。幽霊として見守れます' + (me.tasks ? '。タスクは続けられます' : '');
+  else if (me.alive && me.tr) { txt = (me.tr.k === 'hull' ? 'エアロックを通過中' : '地下鉄に乗車中') + '(あと' + Math.max(0, Math.ceil((me.tr.until - tn) / 1000)) + '秒)'; }
+  else if (me.alive && me.pk) { txt = '肖像画の目で覗いています。動けません(あと' + Math.max(0, Math.ceil((me.pk.until - tn) / 1000)) + '秒)'; }
   else if (E.ballMasked(st)) {
     var bleft = Math.max(0, Math.ceil((st.ball.end - tn) / 1000));
     txt = E.dancing(me, tn) ? 'ダンス中! 相手だけが見えます(あと' + Math.max(0, Math.ceil((me.dn.until - tn) / 1000)) + '秒)'
@@ -7935,6 +8425,7 @@ function updateHud(st, me) {
     else { txt = msi.n + '! ' + msi.d + '(残り' + mleft + '秒)'; alert = true; }
   }
   else if (st.blackoutUntil > tn && teamOf(me) === 'impostor') { txt = '停電を起こしている(直されるまで続く)'; }
+  else if (st.blackoutUntil > tn && teamOf(me) === 'crew' && E.GIM.zones) { var nfz = (st.bz || []).filter(function (v) { return v; }).length, mzi = E.zoneIdxAt(S.me.x, S.me.y); txt = (mzi >= 0 && st.bz && st.bz[mzi] ? 'この区画は電気が戻った。ほかの区画のブレーカーも直そう ' : '停電中! 視界が狭いまま。この区画のブレーカーを直そう(西・中央・東) ') + nfz + '/' + E.GIM.zones.length; alert = true; }
   else if (st.blackoutUntil > tn && teamOf(me) === 'crew') { var pr = E.GIM.panel && E.roomAt(E.GIM.panel.x, E.GIM.panel.y); txt = '停電中! 視界が狭いまま。' + (pr ? pr.n + 'の' : '') + '配電盤で復旧しよう'; alert = true; }
   else if (S.ret) { txt = 'レティクルを動かして狙う(動けません)。相手に重ねて「発射」'; }
   else if (me.wv) { txt = '波動砲をためています…動けません'; }
