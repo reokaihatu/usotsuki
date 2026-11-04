@@ -193,6 +193,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 .card .tags { display: flex; gap: 4px; flex-wrap: wrap; min-height: 20px; }
 .card .tag { font-size: 11px; padding: 0 7px; border-radius: 999px; background: var(--panel2); color: var(--mute); }
 .card .tag.ally { background: rgba(234, 91, 111, .2); color: #ffb3bf; }
+.card .tag.guest { background: rgba(255, 210, 77, .2); color: #ffd24d; }
 .card .tag.voted { background: rgba(95, 208, 138, .18); color: var(--ok); }
 .card .vs { display: flex; gap: 3px; flex-wrap: wrap; min-height: 14px; }
 .card .vs .swatch { width: 14px; height: 14px; border-width: 1.5px; }
@@ -520,7 +521,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 .colcard { display: grid; justify-items: center; gap: 2px; padding: 8px 4px 6px; border-radius: 12px; border: 2px solid var(--line); background: var(--panel); font-size: 12px; font-weight: 700; }
 .colcard.on { border-color: var(--accent); background: var(--panel2); }
 .colcard[disabled] { opacity: .45; cursor: not-allowed; }
-.colcard canvas { width: 72px; height: 84px; }
+.colcard canvas { width: 72px; height: 88px; }
 .setview { display: grid; gap: 14px; }
 .sv-sec { display: grid; gap: 2px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
 .sv-sec h3 { font-size: 17px; margin-bottom: 4px; }
@@ -569,6 +570,35 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 .ballclock .bs { font-size: 11px; color: var(--mute); }
 .ballclock.mask { border-color: var(--neu); box-shadow: 0 0 18px rgba(171, 142, 255, .45); }
 .ballclock.mask .bt, .ballclock.mask .bs { color: #d7c8ff; }
+
+/* ---------- 追放の演出 ---------- */
+.fx-eject { position: fixed; inset: 0; z-index: 80; background: #05070f; cursor: pointer; overflow: hidden; }
+.fx-eject.go { animation: ejin .35s ease-out; }
+.fx-eject.out { animation: ejout .6s ease-in forwards; pointer-events: none; }
+.fx-eject canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.ej-bar { position: absolute; left: 0; right: 0; height: 9%; background: #000; z-index: 2; }
+.ej-bar.top { top: 0; display: flex; align-items: center; justify-content: center; transform: translateY(-100%); }
+.ej-bar.bot { bottom: 0; transform: translateY(100%); }
+.fx-eject.mk { background: rgba(5, 7, 15, .55); z-index: 79; }
+.fx-eject.go .ej-bar { transform: none; transition: transform .5s ease-out; }
+#ej-chip, #mk-chip { padding: 2px 16px; border-radius: 999px; border: 2px solid #ff5a6a; color: #ff8c96; font-weight: 800; letter-spacing: .14em; font-size: clamp(12px, 2.6vw, 15px); background: rgba(6, 9, 20, .8); }
+.ej-ttl { position: absolute; left: 0; right: 0; bottom: 11%; z-index: 3; display: grid; gap: 6px; justify-items: center; text-align: center; padding: 0 16px; opacity: 0; transform: translateY(14px) scale(.96); }
+.fx-eject.ttl .ej-ttl { opacity: 1; transform: none; transition: opacity .5s ease-out, transform .5s ease-out; }
+#ej-name, #mk-name { font-family: var(--font-d); font-size: clamp(22px, 5.6vw, 44px); line-height: 1.25; letter-spacing: .04em; color: #fff; padding: 4px 22px; border-radius: 14px; background: rgba(6, 9, 20, .72); border-bottom: 4px solid var(--c, #ff5a6a); text-shadow: 0 2px 8px #000; }
+#ej-sub { font-weight: 700; font-size: clamp(13px, 3vw, 18px); color: #ffe3e7; text-shadow: 0 1px 4px #000; background: rgba(6, 9, 20, .6); padding: 2px 14px; border-radius: 999px; }
+@keyframes ejin { 0% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes ejout { to { opacity: 0; } }
+
+/* 会議などで名前の横に出す、キャラクター(色の丸のかわり) */
+.swatch.chr { background: none; border: 0; border-radius: 0; display: block; flex: none; }
+.swatch.chr.speaking { box-shadow: none; filter: drop-shadow(0 0 2px rgba(95, 208, 138, .95)) drop-shadow(0 0 4px rgba(95, 208, 138, .8)); }
+.card .top .swatch.chr { margin: -4px 0 -4px -2px; }
+/* 鏡の小物 */
+.acc-h { margin: 18px 0 4px; font-size: 16px; }
+.acc-sec { margin-top: 10px; }
+.acc-ttl { font-size: 12px; color: var(--mute); letter-spacing: .08em; margin-bottom: 4px; }
+.acc-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 8px; }
+.colcard.acc canvas { width: 64px; height: 88px; }
 
 </style>
 </head>
@@ -753,6 +783,18 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     <div class="fx-in"><div class="fx-chip" id="fx-mc"></div><canvas id="fx-mcv" width="260" height="150"></canvas><div class="fx-t" id="fx-mt"></div><div class="fx-s" id="fx-ms"></div></div>
   </div>
 
+  <div id="fx-eject" class="fx-eject" hidden aria-live="assertive">
+    <canvas id="ej-cv"></canvas>
+    <div class="ej-bar top"><span id="ej-chip"></span></div><div class="ej-bar bot"></div>
+    <div class="ej-ttl"><div id="ej-name"></div><div id="ej-sub"></div></div>
+  </div>
+
+  <div id="fx-mk" class="fx-eject mk" hidden aria-live="assertive">
+    <canvas id="mk-cv"></canvas>
+    <div class="ej-bar top"><span id="mk-chip"></span></div><div class="ej-bar bot"></div>
+    <div class="ej-ttl"><div id="mk-name"></div></div>
+  </div>
+
   <!-- 役職カード -->
   <div id="ov-role" class="ov" hidden>
     <div class="box">
@@ -810,8 +852,10 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
   <div id="ov-color" class="ov solid" hidden>
     <div class="box">
       <div class="game-head"><h2 style="font-size:24px">着替え</h2><button id="btn-color-x" class="btn small" type="button">閉じる</button></div>
-      <p class="small mute">キャラクターの色を選べます。ほかの人が使っている色は選べません。</p>
+      <p class="small mute">キャラクターの色と小物を選べます。ほかの人が使っている色は選べません。小物は、あたま・かお・くびに1つずつ付けられます(もう一度押すと外れます)。</p>
       <div id="color-grid" class="color-grid"></div>
+      <h3 class="acc-h">小物</h3>
+      <div id="acc-grid"></div>
     </div>
   </div>
 
@@ -1620,6 +1664,9 @@ function grid(o) {
     shielder: { n: 'シールダー', team: 'crew', tasks: true, threat: false,
       d: 'シールドを張って、あらゆる襲撃・射撃を防ぐ。張っているあいだは動けない。張っているだけでは、まわりの人には見えない(防いだ瞬間だけ、光る)。波動砲だけは撃った相手に跳ね返す(跳ね返ったビームは撃った相手を貫いて、その後ろにいる人にも当たる)。', goal: 'クルーと同じ。',
       abil: ['シールド: 展開中は動けないが、襲撃や射撃を防ぐ。もう一度押すと解除(展開時間・クールタイムあり)', '波動砲を受けたときだけ、ビームを跳ね返して撃った相手を倒す。跳ね返ったビームは撃った相手を貫いて、その後ろにいる人にも当たる'] },
+    organizer: { n: '主催者', team: 'crew', tasks: true, threat: false,
+      d: '仮面舞踏会の主催者。舞踏会のあいだも、みんなの見た目が変わらず、誰が誰か分かる。「招待客」(ほかの役職と重なって配られる印)の人が誰かも分かる。', goal: 'クルーと同じ。',
+      abil: ['舞踏会が開かれても、ほかの人の見た目と名前は変わらずに見える', '招待客が誰か分かる(名前に「招待客」の印が付く)。招待客は、主催者が誰かは分からない', '追放投票の票が、2票分として数えられる(票数は設定で変えられる)。ほかの人には、1票としか見えない'] },
     wavecannon: { n: '波動砲', team: 'impostor', tasks: false, threat: true, wave: true, vent: true, sab: true,
       d: 'インポスター陣営。障害物を貫通するビームを撃つ。通常の襲撃ができるかは、設定で決まる(下の「このゲームの設定」を見てください)。', goal: '生き残りの数で、クルー側と並ぶか上回る。',
       abil: ['波動砲: 向いている方向に、壁を貫通するビームを放つ。ためているあいだは動けず、ビームの線が全員に見える。触れた人は倒れる', 'ベント・妨害(インポスターと同じ)'] },
@@ -1627,12 +1674,20 @@ function grid(o) {
       d: '誰とも組まない単独の殺し屋。壁を貫通するビームで倒していく。', goal: 'インポスターがいない状態で、生き残りの半数以上を自分たちにする。',
       abil: ['波動砲: 向いている方向に、壁を貫通するビームを放つ。ためているあいだは動けない。触れた人は(インポスター陣営も)倒れる'] }
   };
-  var ROLE_ORDER = ['impostor', 'assassin', 'maskmaker', 'cleaner', 'sandworm', 'sniper', 'wavecannon', 'vampire', 'accomplice', 'jackal', 'wavejackal', 'arsonist', 'jester', 'detective', 'sheriff', 'guardian', 'engineer', 'fortune', 'niceguesser', 'shielder'];
+  // 小物(待機室の鏡で付けられる)。スロットは あたま(h)・かお(f)・くび(n) で、それぞれ1つまで
+  var ACC_SLOTS = [['h', 'あたま'], ['f', 'かお'], ['n', 'くび']];
+  var ACCS = {
+    h: [['crown', '王冠'], ['party', 'パーティー帽'], ['ribbon', 'リボン'], ['flower', 'お花'], ['tophat', 'シルクハット'], ['phones', 'ヘッドホン']],
+    f: [['glasses', 'まるメガネ'], ['shades', 'サングラス'], ['mustache', 'ひげ'], ['blush', 'ほっぺ'], ['monocle', '片眼鏡']],
+    n: [['bowtie', 'ちょうネクタイ'], ['scarf', 'マフラー'], ['bell', 'すずの首輪']]
+  };
+  function accValid(slot, id) { return !!ACCS[slot] && ACCS[slot].some(function (a) { return a[0] === id; }); }
+  var ROLE_ORDER = ['impostor', 'assassin', 'maskmaker', 'cleaner', 'sandworm', 'sniper', 'wavecannon', 'vampire', 'accomplice', 'jackal', 'wavejackal', 'arsonist', 'jester', 'detective', 'sheriff', 'guardian', 'engineer', 'fortune', 'niceguesser', 'shielder', 'organizer'];
 
   // ---------- 設定 ----------
   var SETTING_DEFS = [
     { g: 'map', k: 'map', label: 'マップ', min: 0, max: Maps.list.length - 1, step: 1, def: 0, unit: '' },
-    { g: 'role', k: 'r_impostor', role: 'impostor', label: 'インポスター', min: 0, max: MAX_PLAYERS, step: 1, def: 1, unit: '人' },
+    { g: 'role', k: 'r_impostor', role: 'impostor', label: 'インポスター陣営の人数', min: 0, max: MAX_PLAYERS, step: 1, def: 1, unit: '人' },
     { g: 'role', k: 'r_assassin', role: 'assassin', label: 'イビルゲッサー', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_maskmaker', role: 'maskmaker', label: '仮面師', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_cleaner', role: 'cleaner', label: 'クリーナー', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
@@ -1652,11 +1707,13 @@ function grid(o) {
     { g: 'role', k: 'r_fortune', role: 'fortune', label: '占い師', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_niceguesser', role: 'niceguesser', label: 'ナイスゲッサー', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_shielder', role: 'shielder', label: 'シールダー', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_organizer', role: 'organizer', label: '主催者', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
 
     { g: 'task', k: 'tasksPer', label: 'タスクの数(1人あたり)', min: 1, max: 12, step: 1, def: 4, unit: '個' },
     { g: 'task', k: 'longTasks', label: 'うち長いタスク(複数の場所をまわる)', min: 0, max: 5, step: 1, def: 1, unit: '個' },
     { g: 'task', k: 'progMode', label: 'タスク進度の表示(0=会議のあと 1=完了するたび 2=表示なし)', min: 0, max: 2, step: 1, def: 1, unit: '' },
     { g: 'task', k: 'commonTasks', label: 'うち全員共通のタスク', min: 0, max: 3, step: 1, def: 0, unit: '個' },
+    { g: 'rule', k: 'ejectInfo', label: '追放された人の情報(0=明かさない 1=役職を明かす 2=陣営だけ明かす)', min: 0, max: 2, step: 1, def: 1, unit: '' },
     { g: 'rule', k: 'discussSec', label: '話し合いの時間', min: 10, max: 300, step: 10, def: 40, unit: '秒' },
     { g: 'rule', k: 'voteSec', label: '投票の時間', min: 10, max: 600, step: 5, def: 30, unit: '秒' },
     { g: 'rule', k: 'killCd', label: '襲撃のクールダウン', min: 10, max: 60, step: 5, def: 25, unit: '秒' },
@@ -1700,11 +1757,14 @@ function grid(o) {
     { g: 'abil', r: ['wavecannon', 'wavejackal'], k: 'waveCharge', label: '波動砲を放つまでの時間(ため)', min: 0.1, max: 8, step: 0.1, dec: 1, def: 3, unit: '秒' },
     { g: 'abil', r: ['wavecannon', 'wavejackal'], k: 'waveCd', label: '波動砲のクールタイム', min: 10, max: 90, step: 5, def: 35, unit: '秒' },
     { g: 'abil', r: 'vampire', k: 'vampireDelay', label: '噛んでから倒れる(遺体が出る)までの時間', min: 5, max: 60, step: 5, def: 20, unit: '秒' },
+    { g: 'abil', r: 'organizer', k: 'orgVotes', label: '主催者の票の数(追放投票で、何票分に数えるか。ほかの人には見えない)', min: 1, max: 3, step: 1, def: 2, unit: '票' },
+    { g: 'abil', r: 'organizer', k: 'guestN', label: '招待客の人数(ほかのクルー陣営の役職と重なって配られる。主催者がいないときは配られない)', min: 0, max: 8, step: 1, def: 2, unit: '人' },
     { g: 'abil', r: 'shielder', k: 'shieldSec', label: 'シールドの展開時間', min: 2, max: 15, step: 1, def: 8, unit: '秒' },
     { g: 'abil', r: 'shielder', k: 'shieldCd', label: 'シールドのクールタイム', min: 10, max: 60, step: 5, def: 25, unit: '秒' }
   ];
   var TOGGLES = [
-    { k: 'confirmEjects', label: '追放された人の役職を明かす', def: true },
+    { k: 'guestKnown', r: 'organizer', label: '招待客: 本人が、自分が招待客だと分かる(オフなら、本人も知らないまま。誰が主催者かは、どちらでも分からない)', def: true },
+    { k: 'voteLock', label: '追放投票をしたら、その会議では能力(占い・看破・役職当て)が使えなくなる', def: true },
     { k: 'anonVotes', label: '誰が誰に投票したかを隠す', def: false },
     { k: 'sheriffNeutral', r: 'sheriff', label: 'シェリフ: 第三陣営も撃って倒せる(オフなら撃っても倒せず、シェリフが倒れる)', def: true },
     { k: 'sheriffMisBoth', r: 'sheriff', label: 'シェリフ: クルー陣営を撃ったとき、相手も一緒に倒れる(オフなら自分だけ)', def: false },
@@ -1720,6 +1780,7 @@ function grid(o) {
     { k: 'ballOn', g: 'ball', label: '仮面舞踏会を開く(決まった時間に全員が同じ見た目になり、声も聞こえなくなる。2人1組で踊り、終わると会議が開かれる)', def: false },
     { k: 'ballBtn', g: 'ball', label: 'マップの「舞踏会のベル」でも、好きなタイミングで舞踏会を始められる(誰でも、1人1回まで)', def: true },
     { k: 'voiceProx', m: 'voice', label: 'ボイスチャット: ゲーム中は近くの人の声だけ聞こえる(オフなら常に全員)', def: true },
+    { k: 'deadVoiceImp', m: 'voice', label: 'ボイスチャット: 死んだ人の声が、生きているインポスター陣営にだけ聞こえる(聞こえ方は生きている人どうしと同じ。近くだけの設定なら、近くの声だけ)', def: false },
     { k: 'jamVoice', m: 'voice', label: '通信妨害のあいだ、クルー・第三陣営はボイスチャットが聞こえない(インポスター陣営には聞こえる)', def: true }
   ];
   function defaultSettings() {
@@ -2001,6 +2062,12 @@ function grid(o) {
     if (q.role === 'thrall') return q.tv === v.id;
     return true;
   }
+  // 招待客の印が見えるか。主催者には、招待客が全員分かる。招待客本人は、設定がオンのときだけ自分が分かる(主催者が誰かは、どちらも分からない)
+  function knowsGuest(v, q, s) {
+    if (!v || !q || !q.gz || !v.role) return false;
+    if (v.role === 'organizer') return true;
+    return v.id === q.id && !!(s && s.guestKnown);
+  }
   // 襲撃・噛みつきの対象にできるか。インポスター陣営は撃てないが、正体を知らない共犯者は、見た目で区別がつかないので対象にできる
   function canTarget(p, T) {
     var R = ROLES[p.role];
@@ -2119,27 +2186,69 @@ function grid(o) {
     SETTING_DEFS.forEach(function (d) { if (d.role) c[d.role] = settings[d.k] | 0; });
     return c;
   }
+  // ---- 陣営ごとの人数の枠と、役職の抽選 ----
+  // ・インポスター陣営: 「インポスター陣営の人数(r_impostor)」が枠。選んだ役職(イビルゲッサー・仮面師など)が枠より少なければ、
+  //   足りないぶんは普通のインポスター。選んだ役職が枠より多ければ、その中からランダムに選ぶ。(共犯者は枠に数えず、選んだ人数だけ追加される)
+  // ・クルー陣営: 枠は「参加人数 - インポスター陣営 - 共犯者 - 第三陣営」。選んだ役職が枠より多ければ、その中からランダムに選ぶ。足りないぶんは普通のクルー。
+  // ・第三陣営: 選んだ人数のとおり
+  function impPoolRoles(r) { return ROLES[r].team === 'impostor' && !ROLES[r].helper && r !== 'impostor' && r !== 'thrall'; }
+  function teamSlots(settings, n) {
+    var c = roleCounts(settings), help = 0, neu = 0, imp = c.impostor | 0;
+    Object.keys(c).forEach(function (r) {
+      if (ROLES[r].team === 'impostor' && ROLES[r].helper) help += c[r];
+      else if (ROLES[r].team === 'neutral') neu += c[r];
+    });
+    return { c: c, imp: imp, help: help, neu: neu, crew: n - imp - help - neu };
+  }
+  // 画面に出す内訳: 確定している役職(fixed)と、抽選になる役職(cand: 候補, pick: 選ばれる人数)
+  function rosterInfo(settings, n) {
+    var sl = teamSlots(settings, n), c = sl.c;
+    function team(total, roles, filler) {
+      var pool = [], sum = 0;
+      roles.forEach(function (r) { if (c[r] > 0) { pool.push([r, c[r]]); sum += c[r]; } });
+      total = Math.max(0, total);
+      if (sum <= total) { var fx = pool.slice(); if (total - sum > 0) fx.unshift([filler, total - sum]); return { total: total, fixed: fx, cand: [], pick: 0 }; }
+      return { total: total, fixed: [], cand: pool, pick: total };
+    }
+    var crewRoles = ROLE_ORDER.filter(function (r) { return ROLES[r].team === 'crew'; });
+    var out = {
+      imp: team(sl.imp, ROLE_ORDER.filter(impPoolRoles), 'impostor'),
+      crew: team(sl.crew, crewRoles, 'crew'),
+      help: ROLE_ORDER.filter(function (r) { return ROLES[r].team === 'impostor' && ROLES[r].helper && c[r] > 0; }).map(function (r) { return [r, c[r]]; }),
+      neu: ROLE_ORDER.filter(function (r) { return ROLES[r].team === 'neutral' && c[r] > 0; }).map(function (r) { return [r, c[r]]; }),
+      slots: sl
+    };
+    return out;
+  }
+  // 実際の配役(役職の一覧。人数ぶんの長さには満たなくてもよい。残りは普通のクルー)
+  function planRoles(settings, n, rand) {
+    rand = rand || Math.random;
+    var info = rosterInfo(settings, n), list = [];
+    [info.imp, info.crew].forEach(function (t) {
+      if (t.cand.length) {
+        var bag = []; t.cand.forEach(function (a) { for (var i = 0; i < a[1]; i++) bag.push(a[0]); });
+        shuffle(bag, rand).slice(0, t.pick).forEach(function (r) { list.push(r); });
+      } else t.fixed.forEach(function (a) { for (var i = 0; i < a[1]; i++) list.push(a[0]); });
+    });
+    info.help.concat(info.neu).forEach(function (a) { for (var i = 0; i < a[1]; i++) list.push(a[0]); });
+    return list.filter(function (r) { return r !== 'crew'; });
+  }
   // 開始前の検証。問題があれば文字列、なければ null
   // 危険な陣営が最初から半数以上いる「乱戦」か(波動砲を大量に入れた銃撃戦など)
   function isMelee(state) {
-    var n = state.order.length, c = roleCounts(state.settings), imp = 0, jk = 0;
-    Object.keys(c).forEach(function (r) {
-      if (ROLES[r].team === 'impostor' && !ROLES[r].helper) imp += c[r];
-      if (ROLES[r].jk) jk += c[r];
-    });
-    return imp * 2 >= n || jk * 2 >= n;
+    var n = state.order.length, sl = teamSlots(state.settings, n), jk = 0;
+    Object.keys(sl.c).forEach(function (r) { if (ROLES[r].jk) jk += sl.c[r]; });
+    return sl.imp * 2 >= n || jk * 2 >= n;
   }
   function validate(state) {
     var n = state.order.length;
     if (n < 4) return '4人以上で開始できます(ボットも人数に数えます)。';
-    var c = roleCounts(state.settings), sum = 0, threats = 0, imp = 0;
-    Object.keys(c).forEach(function (r) {
-      sum += c[r];
-      if (ROLES[r].threat) threats += c[r];
-      if (ROLES[r].team === 'impostor') imp += c[r];
-    });
-    if (sum > n) return '役職の合計(' + sum + '人)が参加人数(' + n + '人)を超えています。';
-    if (threats < 1) return 'インポスター・イビルゲッサー・仮面師・クリーナー・波動砲・ヴァンパイア・ジャッカル・波動砲ジャッカル・放火魔のどれかを1人以上入れてください。';
+    var sl = teamSlots(state.settings, n), threats = sl.imp;
+    Object.keys(sl.c).forEach(function (r) { if (ROLES[r].team === 'neutral' && ROLES[r].threat) threats += sl.c[r]; });
+    if (sl.imp + sl.help + sl.neu > n) return '役職の合計(' + (sl.imp + sl.help + sl.neu) + '人)が参加人数(' + n + '人)を超えています。(インポスター陣営の人数・共犯者・第三陣営の合計です)';
+    if (threats < 1) return 'インポスター陣営の人数を1人以上にするか、ジャッカル・波動砲ジャッカル・放火魔のどれかを1人以上入れてください。';
+    var neuThreat = threats - sl.imp;
+    if (sl.crew < 1 && neuThreat < 1) return 'クルー陣営が1人もいません(全員がインポスター陣営や、ピエロなどになる設定です)。インポスター陣営の人数を減らして、クルー陣営を1人以上にしてください。';
     return null;
   }
   function shuffle(a, rand) {
@@ -2153,6 +2262,12 @@ function grid(o) {
     p.msgs = (p.msgs || []).slice(-4);
     var last = p.msgs.length ? p.msgs[p.msgs.length - 1].i : 0;
     p.msgs.push({ i: last + 1, t: t });
+  }
+  // 全員に見せるお知らせ(退室など)。クライアントが i の新しいものだけを表示する
+  function pushNotice(state, t, pid) {
+    state.nn = (state.nn || 0) + 1;
+    state.nt = (state.nt || []).slice(-5);
+    state.nt.push({ i: state.nn, t: t, p: pid || null });
   }
   function pushNote(p, t) {
     p.notes = (p.notes || []).slice(-5);
@@ -2168,12 +2283,11 @@ function grid(o) {
     state.melee = isMelee(state);
     var now = ctx.now, rand = ctx.rand || Math.random, s = state.settings;
     var ids = shuffle(state.order.slice(), rand);
-    var c = roleCounts(s), list = [];
-    ROLE_ORDER.forEach(function (r) { for (var i = 0; i < c[r]; i++) list.push(r); });
+    var list = planRoles(s, state.order.length, rand);
     state.order.forEach(function (id) {
       var p = state.players[id];
       p.alive = true; p.left = false; p.notes = []; p.msgs = []; p.tp = null; p.kd = null;
-      ['ck', 'cw', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'tasks', 'wv', 'wf', 'wn', 'sh', 'sb', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc', 'iv', 'vx', 'ar', 'dg', 'ak', 'dn', 'dd', 'dl', 'bp', 'inv', 'inb', 'tr', 'pk', 'bf', 'cf', 'pc', 'cc', 'ek', 'cz'].forEach(function (k) { delete p[k]; });
+      ['ck', 'cw', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'tasks', 'wv', 'wf', 'wn', 'sh', 'sb', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc', 'iv', 'vx', 'ar', 'dg', 'ak', 'dn', 'dd', 'dl', 'bp', 'inv', 'inb', 'tr', 'pk', 'bf', 'cf', 'pc', 'cc', 'ek', 'cz', 'gz'].forEach(function (k) { delete p[k]; });
     });
     // タスクの割り当て: 全員共通 + 長いタスク(複数の場所) + 短いタスク。長いタスクは全体の半分まで
     var singles = [], longs = [];
@@ -2215,6 +2329,11 @@ function grid(o) {
       if (p.role === 'arsonist') { p.dz = []; p.ca = now; }
       if (p.role === 'guardian') { p.gu = false; }
     });
+    // 招待客: 主催者がいるときだけ、主催者以外のクルー陣営の中から、設定の人数をランダムに選ぶ(役職は元のまま、印が付くだけ)
+    if (state.order.some(function (id) { return state.players[id].role === 'organizer'; }) && (s.guestN | 0) > 0) {
+      var cand = shuffle(state.order.filter(function (id) { var q = state.players[id]; return ROLES[q.role].team === 'crew' && q.role !== 'organizer'; }), rand);
+      cand.slice(0, s.guestN | 0).forEach(function (id) { state.players[id].gz = 1; });
+    }
     state.order.forEach(function (id, i) {
       var sp = spawnPoint(i, state.order.length);
       tp(state.players[id], sp.x, sp.y);
@@ -2318,7 +2437,29 @@ function grid(o) {
     p.iv.at = now;
   }
   var SNIPE_HIT = 46; // レティクルの中心から、この距離にいる人が狙われる
+  // ヴァンパイアが倒れた(殺された・追放された・抜けた)とき: まだ遺体になっていない噛みつきは取り消され、まだ生きている眷属は道連れに倒れる
+  function vampFall(state, ctx, vamp) {
+    var now = ctx.now, fell = [];
+    state.order.forEach(function (id) {
+      var q = state.players[id];
+      if (!q || q.id === vamp.id) return;
+      if (q.bt && q.bt.by === vamp.id) delete q.bt; // 噛まれた人は倒れずにすむ(足跡の記録も止まる)
+      if (q.role === 'thrall' && q.tv === vamp.id && q.alive && !q.left) fell.push(q);
+    });
+    // 眷属の後追い: 会議中なら、会議のあいだは生きているふりのまま(票も、投票済みならそのまま数える)。会議が終わった瞬間に、静かに「死亡」になる(遺体・会議ログ・演出なし)。
+    // ふだんのフィールドなら、ヴァンパイアと同じく、その場で遺体が出る
+    fell.forEach(function (q) {
+      if (state.phase === 'meeting') q.pd = 1; // 後追い待ち(endMeeting で死亡にする)
+      else {
+        killBody(state, ctx, q, null, 'follow');
+        pushMsg(q, '主のヴァンパイアが倒れた。眷属も道連れになった。');
+      }
+    });
+    return fell.length;
+  }
   function killBody(state, ctx, victim, by, how, noBody) {
+    if (!victim.alive) return; // すでに倒れている(1回の波動砲や放火で、ヴァンパイアと眷属が同時に倒れるときなど)なら、二重に倒さない
+    delete victim.bt; // 噛まれている途中で別の方法で倒れたら、噛みつきの予約は消える(死体は1つだけ)
     var pos = ctx.pos(victim.id) || { x: TABLE.x, y: TABLE.y };
     if (victim.dn) { // 踊っている人が倒れたら、ダンスは終わる(記録は残らない)
       var dw = state.players[victim.dn.w];
@@ -2328,6 +2469,7 @@ function grid(o) {
     clearInvite(state, victim.id);
     victim.alive = false; victim.wv = null; victim.sh = 0; victim.dg = null; victim.iv = null; victim.tr = null; victim.pk = null; victim.ar = null; // (死ぬとベントの外へ。クールタイムは使わないので戻さない)
     victim.kd = { n: ((victim.kd && victim.kd.n) || 0) + 1, by: by || null, how: how || 'kill', at: ctx.now };
+    if (victim.role === 'vampire') vampFall(state, ctx, victim);
     if (state.ball && state.ball.stage === 'mask') (state.ball.dead = state.ball.dead || []).push(victim.id); // 舞踏会のあいだに倒れた人(会議で知らされる)
     if (noBody) return; // 踊っている最中に倒した場合は、遺体が出ない
     var near = [];
@@ -2344,17 +2486,35 @@ function grid(o) {
     state.bodies.push({ id: state.nextBody++, p: victim.id, x: Math.round(pos.x), y: Math.round(pos.y), t: ctx.now, near: near });
   }
   // 会議中に、誰かを倒す(役職当て・看破)。投票の残りがそろっていれば、すぐ次へ進める
-  function meetKill(state, mm, victim, text, now) {
+  function meetKill(state, mm, victim, text, now, kind) {
     victim.alive = false;
+    mm.dk = (mm.dk || []).concat([{ id: victim.id, k: kind, at: now, n: (mm.dk || []).length + 1, x: text }]); // 画面の「会議中に倒れた」演出のもと
     delete mm.votes[victim.id];
     mm.log.push(text);
+    if (victim.role === 'vampire') vampFall(state, { now: now }, victim); // 眷属も道連れ・噛みつきは取り消し
     checkWin(state, now);
-    if (state.phase === 'meeting' && mm.stage === 'vote' && alivePlayers(state).every(function (q) { return mm.votes[q.id] !== undefined; })) mm.end = now;
+    // 投票中に会議中の殺しがあったら、投票はぜんぶリセットして、生きている全員がもう一度投票する(死んだ人に入っていた票が宙に浮かないように)
+    if (state.phase === 'meeting' && mm.stage === 'vote') {
+      mm.votes = {};
+      mm.rv = (mm.rv || 0) + 1; // 画面が「やり直し」に気づくための回数
+      mm.end = Math.max(mm.end, now + 10000); // 時間が残り少なくても、やり直しの投票に最低10秒はある
+      mm.log.push('投票がリセットされた。もう一度投票してください。');
+    }
   }
   function act(state, pid, a, ctx) {
     // 待機室(ロビー)でできることは、色を変えることだけ。マップは切り替えない(待機室のマップのまま)
     if (state.phase === 'lobby') {
       var lp = state.players[pid];
+      if (a && a.type === 'setacc' && lp && !lp.left) { // 小物を付ける・外す(スロットごとに1つ。idが空なら外す)
+        var sl = String(a.r || ''); // r=スロット(h/f/n)
+        if (!ACCS[sl]) return { ok: false, err: 'acc' };
+        var av = a.t ? String(a.t) : ''; // t=小物のid(空なら外す)
+        if (av && !accValid(sl, av)) return { ok: false, err: 'acc' };
+        lp.ac = lp.ac || {};
+        if (av) lp.ac[sl] = av; else delete lp.ac[sl];
+        if (!Object.keys(lp.ac).length) delete lp.ac;
+        return { ok: true };
+      }
       if (a && a.type === 'setcolor' && lp && !lp.left) {
         var cc = a.c | 0;
         if (cc < 0 || cc >= COLORS.length) return { ok: false, err: 'color' };
@@ -2387,12 +2547,13 @@ function grid(o) {
     if (a.type === 'assassinate' || a.type === 'fortune' || a.type === 'nicekill') {
       var mm = state.meeting;
       if (state.phase !== 'meeting' || !mm || (mm.stage !== 'discuss' && mm.stage !== 'vote') || !p.alive) return { ok: false };
+      if (s.voteLock && mm.votes[pid] !== undefined) return { ok: false, err: 'voted' }; // 追放投票をしたあとは、この会議では能力が使えない
       if (!T || !T.alive || T.left || T.id === pid) return { ok: false };
       if (a.type === 'assassinate') {
         if (p.role !== 'assassin' || !(p.gs > 0) || (p.gm || 0) >= s.assassinPerMeeting || !ROLES[a.r]) return { ok: false };
         p.gs--; p.gm = (p.gm || 0) + 1;
         var hit = T.role === a.r;
-        meetKill(state, mm, hit ? T : p, hit ? COLORS[T.color].name + 'の' + T.name + 'が役職を当てられて倒れた。' : COLORS[p.color].name + 'の' + p.name + 'が役職を外して倒れた。', now);
+        meetKill(state, mm, hit ? T : p, hit ? COLORS[T.color].name + 'の' + T.name + 'が役職を当てられて倒れた。' : COLORS[p.color].name + 'の' + p.name + 'が役職を外して倒れた。', now, hit ? 'ag-hit' : 'ag-miss');
         pushMsg(p, hit ? '役職当て成功: ' + T.name + 'は ' + ROLES[a.r].n + ' だった。' : '役職当て失敗: ' + T.name + 'は ' + ROLES[a.r].n + ' ではなかった。');
         return { ok: true };
       }
@@ -2407,7 +2568,7 @@ function grid(o) {
       if (p.role !== 'niceguesser' || !(p.u > 0) ) return { ok: false };
       p.u--;
       var bad = ROLES[T.role].team !== 'crew';
-      meetKill(state, mm, bad ? T : p, bad ? COLORS[T.color].name + 'の' + T.name + 'が看破されて倒れた。' : COLORS[p.color].name + 'の' + p.name + 'が看破を外して倒れた。', now);
+      meetKill(state, mm, bad ? T : p, bad ? COLORS[T.color].name + 'の' + T.name + 'が看破されて倒れた。' : COLORS[p.color].name + 'の' + p.name + 'が看破を外して倒れた。', now, bad ? 'ng-hit' : 'ng-miss');
       pushMsg(p, bad ? '看破成功: ' + T.name + 'はクルー陣営ではなかった。' : '看破失敗: ' + T.name + 'はクルー陣営だった。');
       return { ok: true };
     }
@@ -2960,23 +3121,28 @@ function grid(o) {
       if (p.role === 'guardian') { p.gu = false; p.gt = null; }
     });
   }
+  // 追放投票で何票分に数えるか(主催者は設定の票数。ほかは1票)
+  function voteWeight(state, p) { return p && p.role === 'organizer' ? Math.max(1, state.settings.orgVotes | 0) : 1; }
   function resolveVotes(state, ctx) {
-    var m = state.meeting, tally = {}, skip = 0;
+    // tally・skip は画面に出す票の数(1人1票)。wt・wskip が、追放を決める票の数(主催者は複数票分。画面には出さない)
+    var m = state.meeting, tally = {}, skip = 0, wt = {}, wskip = 0;
     Object.keys(m.votes).forEach(function (v) {
-      var t = m.votes[v];
-      if (t === 'skip') skip++; else tally[t] = (tally[t] || 0) + 1;
+      var t = m.votes[v], vp = state.players[v], w = voteWeight(state, vp);
+      if (t === 'skip') { skip++; wskip += w; } else if (state.players[t] && state.players[t].alive) { tally[t] = (tally[t] || 0) + 1; wt[t] = (wt[t] || 0) + w; } // 死んだ人への票は数えない(念のため)
     });
     var top = 0, topIds = [];
-    Object.keys(tally).forEach(function (id) {
-      if (tally[id] > top) { top = tally[id]; topIds = [id]; } else if (tally[id] === top) topIds.push(id);
+    Object.keys(wt).forEach(function (id) {
+      if (wt[id] > top) { top = wt[id]; topIds = [id]; } else if (wt[id] === top) topIds.push(id);
     });
-    var ej = (topIds.length === 1 && top > skip) ? topIds[0] : null;
-    m.res = { tally: tally, skip: skip, ejected: ej, reveal: null, votes: Object.assign({}, m.votes) };
-    m.stage = 'result'; m.end = ctx.now + 8000;
+    var ej = (topIds.length === 1 && top > wskip) ? topIds[0] : null;
+    m.res = { tally: tally, skip: skip, wt: wt, wskip: wskip, ejected: ej, reveal: null, votes: Object.assign({}, m.votes) };
+    m.stage = 'result'; m.end = ctx.now + (ej ? 12000 : 8000); // 追放の演出のぶん、結果の画面を長くする
     if (ej) {
       var P = state.players[ej];
       P.alive = false;
-      if (state.settings.confirmEjects) m.res.reveal = P.role;
+      if (P.role === 'vampire') vampFall(state, ctx, P); // 追放されたヴァンパイアの眷属は、同時に倒れる(噛みつきも取り消し)
+      var ei = state.settings.ejectInfo | 0; // 追放された人の情報: 0=明かさない 1=役職 2=陣営だけ
+      if (ei === 1) m.res.reveal = P.role; else if (ei === 2) m.res.revealTeam = ROLES[P.role].team;
       if (P.role === 'jester') { finish(state, 'jester', 'ピエロが追放された', ej, ctx.now); return; }
     }
     checkWin(state, ctx.now);
@@ -2984,6 +3150,15 @@ function grid(o) {
   function endMeeting(state, ctx) {
     var now = ctx.now, s = state.settings;
     state.phase = 'play'; state.roundStart = now; state.meeting.stage = 'closed';
+    state.order.forEach(function (id) { // 会議中に主のヴァンパイアが倒れていた眷属は、ここで死亡になる(人数が減って、はじめて気づく)
+      var q = state.players[id];
+      if (!q || !q.pd) return;
+      delete q.pd;
+      if (!q.alive || q.left) return;
+      if (q.dn) { var dw = state.players[q.dn.w]; finishDance(q, now); if (dw && dw.dn && dw.dn.w === q.id) finishDance(dw, now); }
+      clearInvite(state, q.id);
+      q.alive = false; q.wv = null; q.sh = 0; q.dg = null; q.iv = null; q.tr = null; q.pk = null; q.ar = null;
+    });
     if (state.ball) { state.ball.run = true; state.ball.s0 = now; }
     (state.trails || []).forEach(function (e) { e.sh = true; }); // 会議のあと、足跡が見えるようになる
     state.order.forEach(function (id) { var q = state.players[id]; if (q && q.bt && !q.bt.until) { q.bt.until = now + (q.bt.rem || 5000); q.bt.tr.push(null); } });
@@ -3102,9 +3277,15 @@ function grid(o) {
     state.kicked[pid] = 1;
     return markLeft(state, pid, ctx || { now: 0 });
   }
-  function markLeft(state, pid, ctx) {
+  // why: 'drop'(通信が切れた・別アプリに移った等) / 'leave'(自分で退室) / なし(お知らせなし)
+  function markLeft(state, pid, ctx, why) {
     var p = state.players[pid];
     if (!p) return false;
+    if (why && !p.left && !p.bot) {
+      pushNotice(state, why === 'drop'
+        ? p.name + ' の通信が切れたため、退室扱いになりました(回線落ち・別アプリへの切り替えなど)。'
+        : p.name + ' が退室しました。', pid);
+    }
     if (state.phase === 'lobby' || state.phase === 'over') {
       if (state.phase === 'lobby') return removePlayer(state, pid);
       p.left = true; return true;
@@ -3114,6 +3295,7 @@ function grid(o) {
     if (p.dn) finishDance(p, ctx.now);
     if (lw && lw.dn && lw.dn.w === pid) finishDance(lw, ctx.now);
     p.left = true; p.alive = false; p.iv = null; p.tr = null; p.pk = null; p.ar = null;
+    if (p.role === 'vampire' && (state.phase === 'play' || state.phase === 'meeting')) vampFall(state, ctx, p);
     if (state.meeting && state.meeting.votes) delete state.meeting.votes[pid];
     recalcTasks(state);
     checkWin(state, ctx.now);
@@ -3126,11 +3308,12 @@ function grid(o) {
     state.order.forEach(function (id) {
       var p = state.players[id];
       p.role = null; p.alive = true; p.left = false;
-      ['tasks', 'ck', 'cw', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'notes', 'msgs', 'tp', 'kd', 'wv', 'wf', 'wn', 'sh', 'sb', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc', 'iv', 'vx', 'ar', 'dg', 'ak', 'dn', 'dd', 'dl', 'bp', 'inv', 'inb'].forEach(function (k) { delete p[k]; });
+      ['pd', 'tasks', 'ck', 'cw', 'ca', 'cs', 'cq', 'cp', 'u', 'gs', 'gm', 'ws', 'gt', 'gu', 'dz', 'shield', 'em', 'notes', 'msgs', 'tp', 'kd', 'wv', 'wf', 'wn', 'sh', 'sb', 'fr', 'bt', 'tv', 'tu', 'tt', 'rc', 'iv', 'vx', 'ar', 'dg', 'ak', 'dn', 'dd', 'dl', 'bp', 'inv', 'inb', 'gz'].forEach(function (k) { delete p[k]; });
     });
   }
 
   Object.assign(Engine, {
+    ACCS: ACCS, ACC_SLOTS: ACC_SLOTS, accValid: accValid,
     COLORS: COLORS, MAX_PLAYERS: MAX_PLAYERS, TEAMS: TEAMS, ROLES: ROLES, ROLE_ORDER: ROLE_ORDER,
     canNormalKill: canNormalKill, SNIPE_HIT: SNIPE_HIT, ventTargets: ventTargets, wormDist: wormDist,
     SETTING_DEFS: SETTING_DEFS, TOGGLES: TOGGLES, defaultSettings: defaultSettings, clampSetting: clampSetting,
@@ -3138,8 +3321,8 @@ function grid(o) {
     closedRects: closedRects, nearestStand: nearestStand, gateClosed: gateClosed, gateWarn: gateWarn, fogAt: fogAt, beltAt: beltAt, portalNear: portalNear, hallNear: hallNear,
     roomAt: roomAt, spawnPoint: spawnPoint, dist: dist,
     newLobby: newLobby, addPlayer: addPlayer, removePlayer: removePlayer, validate: validate, isMelee: isMelee, kickPlayer: kickPlayer, startGame: startGame,
-    act: act, tick: tick, markLeft: markLeft, backToLobby: backToLobby, recalcTasks: recalcTasks, evalWin: evalWin,
-    alivePlayers: alivePlayers, cleanName: cleanName, roleCounts: roleCounts, sabActive: sabActive, crisisMs: crisisMs,
+    act: act, tick: tick, markLeft: markLeft, pushNotice: pushNotice, backToLobby: backToLobby, recalcTasks: recalcTasks, evalWin: evalWin,
+    alivePlayers: alivePlayers, cleanName: cleanName, roleCounts: roleCounts, knowsGuest: knowsGuest, teamSlots: teamSlots, rosterInfo: rosterInfo, planRoles: planRoles, sabActive: sabActive, crisisMs: crisisMs,
     ballT: ballT, SPOT: SPOT, BUFFS: BUFFS, buffOf: buffOf, BUFF_GOOD: BUFF_GOOD, bridgeUp: bridgeUp, metroAt: metroAt, metroWait: metroWait, zoneDarkAt: zoneDarkAt, zoneIdxAt: zoneIdxAt, zoneBlackAt: zoneBlackAt, zoneOutS: zoneOutS, metroOutS: metroOutS, onStage: onStage, ballCan: ballCan, ballBtnCan: ballBtnCan, ballNextAt: ballNextAt, ballMasked: ballMasked, dancing: dancing, roomCounts: roomCounts, knowsAlly: knowsAlly, canTarget: canTarget, shownAs: shownAs, mapSabs: mapSabs, mapSabInfo: mapSabInfo, msOn: msOn, WAVE_LEN: WAVE_LEN, WAVE_HALF: WAVE_HALF
   });
   useMap(0);
@@ -3256,7 +3439,7 @@ function grid(o) {
       b.w = 0;
       var m = state.meeting;
       if (p.alive && m.stage === 'vote') {
-        if (b.voteMeeting !== m.n) { b.voteMeeting = m.n; b.voteAt = now + 2500 + rand() * 18000; }
+        var vk = m.n + ':' + (m.rv || 0); if (b.voteMeeting !== vk) { b.voteMeeting = vk; b.voteAt = now + (m.rv ? 2500 + rand() * 5000 : 2500 + rand() * 18000); }
         if (now >= b.voteAt && m.votes[b.id] === undefined) {
           var R = E.ROLES[p.role];
           var cand = E.alivePlayers(state).filter(function (q) {
@@ -3680,13 +3863,13 @@ var NET = (function () {
  *   ゲーム中(近くだけ) : 生きている人どうしは、距離に応じて小さくなり、届かない所では聞こえない
  *                       死んだ人どうしは自由に話せる。死んだ人には、近くの生きている人の声が聞こえる
  *   ゲーム中(常に全員) : 距離に関係なく聞こえる(生死のルールは同じ)
- * 生きている人に、死んだ人の声は聞こえない。
+ * 生きている人に、死んだ人の声は聞こえない(設定をオンにすると、生きているインポスター陣営にだけは聞こえる。聞こえ方は、ふつうの生きている人どうしと同じ)。
  * 通信妨害のあいだ(jam)は、インポスター陣営以外の生きている人に、だれの声も届かない(インポスター陣営には、いつもどおり聞こえる)。 */
 var VOICE = (function () {
   function gain(o) {
     var ph = o.phase;
     if (ph === 'lobby' || ph === 'over' || !ph) return 1;
-    if (o.lAlive && !o.sAlive) return 0;           // 生きている人に、死んだ人の声は届かない
+    if (o.lAlive && !o.sAlive && !o.deadHear) return 0; // 生きている人に、死んだ人の声は届かない(設定で、インポスター陣営だけは聞こえるようにできる: deadHear)
     if (ph === 'meeting') return 1;
     if (o.jam && o.lAlive && !o.lImp) return 0;    // 通信妨害中: インポスター陣営以外の生きている人には、だれの声も届かない
     if (!o.lAlive && !o.sAlive) return 1;          // 死んだ人どうしは自由に話せる
@@ -3703,7 +3886,10 @@ var VOICE = (function () {
     function c(x) { return typeof x === 'number' && isFinite(x) ? Math.max(0, Math.min(2, x)) : 1; }
     return Math.max(0, v) * c(per) * c(all);
   }
-  return { gain: gain, mix: mix };
+  // 死んだ人の声を、生きているインポスター陣営が聞くとき(エコーをかけて、音量を下げる)
+  var GHOST = { vol: 0.45, wet: 0.65 };
+  function ghost(o) { return !!(o.lAlive && !o.sAlive && o.deadHear); }
+  return { gain: gain, mix: mix, ghost: ghost, GHOST: GHOST };
 })();
 if (typeof module !== 'undefined' && module.exports && typeof window === 'undefined') module.exports = VOICE;
 
@@ -3858,6 +4044,62 @@ var SND = (function () {
     eject: function (c, d, t) { // 追放: 遠ざかる風切り音
       noise(c, d, { t: t, d: 1.6, v: 0.35, ft: 'bandpass', f: 300, f2: 3600, q: 1.2, a: 0.3 });
       tone(c, d, { type: 'sine', f: 440, f2: 70, t: t + 0.2, d: 1.4, v: 0.2 });
+    },
+    // ---- 追放の演出(ステージごと。約7秒) ----
+    mk_hit: function (c, d, t) { // 会議中に倒れた(ゲッサーの当て/外しのどれでも同じ音): 狙う → 銃声 → 重い音
+      noise(c, d, { t: t + 0.9, d: 0.22, v: 0.6, ft: 'lowpass', f: 6000, f2: 400 });
+      tone(c, d, { type: 'square', f: 900, f2: 120, t: t + 0.9, d: 0.16, v: 0.25 });
+      tone(c, d, { f: 70, f2: 32, t: t + 0.92, d: 0.55, v: 0.55 });
+      tone(c, d, { type: 'sawtooth', f: 180, f2: 40, t: t + 1.2, d: 0.7, v: 0.2, lp: 900 });
+      tone(c, d, { f: 330, f2: 330, t: t, d: 0.9, v: 0.05 }); tone(c, d, { f: 500, f2: 880, t: t + 0.1, d: 0.8, v: 0.06 });
+    },
+    ej_ship: function (c, d, t) { // 宇宙船: 警報 → 扉が開く → 吸い出される → 宇宙の静けさ
+      for (var i = 0; i < 4; i++) tone(c, d, { type: 'square', f: i % 2 ? 660 : 880, t: t + 0.3 + i * 0.5, d: 0.3, v: 0.12, lp: 2600 });
+      noise(c, d, { t: t + 1.5, d: 0.9, v: 0.2, ft: 'bandpass', f: 600, f2: 2400, q: 0.8, a: 0.2 });
+      tone(c, d, { f: 90, f2: 40, t: t + 2.5, d: 0.9, v: 0.55 });
+      noise(c, d, { t: t + 2.5, d: 1.3, v: 0.4, ft: 'lowpass', f: 3800, f2: 120, a: 0.02 });
+      tone(c, d, { type: 'sine', f: 700, f2: 120, t: t + 2.6, d: 3.4, v: 0.1, a: 0.1 });
+      tone(c, d, { type: 'sine', f: 220, f2: 180, t: t + 3.6, d: 3.2, v: 0.06, a: 0.6 });
+      arp(c, d, t + 4.9, [69, 65, 62], 0.34, { type: 'sine', d: 1.2, v: 0.1 });
+    },
+    ej_mansion: function (c, d, t) { // 洋館: 足音 → 蹴り → 飛ぶ → バウンド → 扉 → 鍵 → ひよこ
+      for (var i = 0; i < 6; i++) noise(c, d, { t: t + 0.35 + i * 0.26, d: 0.08, v: 0.2, ft: 'lowpass', f: 600, f2: 200 });
+      noise(c, d, { t: t + 1.7, d: 0.4, v: 0.18, ft: 'bandpass', f: 400, f2: 1800, q: 1, a: 0.2 });
+      tone(c, d, { f: 160, f2: 60, t: t + 2.2, d: 0.35, v: 0.6 }); noise(c, d, { t: t + 2.2, d: 0.2, v: 0.4, ft: 'lowpass', f: 2500, f2: 300 });
+      tone(c, d, { type: 'sine', f: 900, f2: 300, t: t + 2.3, d: 0.9, v: 0.12 });
+      [[3.15, 220], [3.7, 190], [4.1, 160]].forEach(function (b) { tone(c, d, { f: b[1], f2: b[1] * 0.5, t: t + b[0], d: 0.22, v: 0.4 }); });
+      tone(c, d, { f: 70, f2: 38, t: t + 3.3, d: 0.5, v: 0.7 }); noise(c, d, { t: t + 3.3, d: 0.3, v: 0.5, ft: 'lowpass', f: 1800, f2: 150 });
+      tone(c, d, { type: 'square', f: 1700, t: t + 3.85, d: 0.04, v: 0.14, lp: 3500 }); tone(c, d, { type: 'square', f: 1300, t: t + 4.0, d: 0.06, v: 0.14, lp: 3500 });
+      [4.5, 4.8, 5.3, 5.55].forEach(function (x, k) { tone(c, d, { f: k % 2 ? 3100 : 2500, f2: k % 2 ? 2600 : 3300, t: t + x, d: 0.12, v: 0.06 }); });
+    },
+    ej_lab: function (c, d, t) { // 研究所: うなり → スキャン → 粒子化 → 転送 → 警告音
+      tone(c, d, { type: 'sawtooth', f: 62, f2: 70, t: t, d: 2.6, v: 0.12, lp: 320, a: 0.5 });
+      tone(c, d, { type: 'sine', f: 300, f2: 1300, t: t + 1.0, d: 0.7, v: 0.1 }); tone(c, d, { type: 'sine', f: 1300, f2: 300, t: t + 1.75, d: 0.7, v: 0.1 });
+      for (var i = 0; i < 12; i++) noise(c, d, { t: t + 2.5 + i * 0.12, d: 0.07, v: 0.1, ft: 'highpass', f: 4000 });
+      tone(c, d, { type: 'sawtooth', f: 200, f2: 3200, t: t + 3.0, d: 1.5, v: 0.12, lp: 4000, a: 0.3 });
+      tone(c, d, { type: 'square', f: 2200, f2: 180, t: t + 4.5, d: 0.35, v: 0.2, lp: 4000 }); noise(c, d, { t: t + 4.5, d: 0.5, v: 0.3, ft: 'highpass', f: 1500, f2: 300 });
+      for (var j = 0; j < 4; j++) tone(c, d, { type: 'square', f: 880, t: t + 5.2 + j * 0.4, d: 0.18, v: 0.1, lp: 2600 });
+    },
+    ej_queen: function (c, d, t) { // 客船: 波の音・板のきしみ → ボヨン → 落下 → ざぱーん → 汽笛
+      noise(c, d, { t: t, d: 6.5, v: 0.07, ft: 'bandpass', f: 500, f2: 380, q: 0.5, a: 0.8 });
+      for (var i = 0; i < 6; i++) tone(c, d, { type: 'square', f: 170 + (i % 3) * 25, t: t + 0.5 + i * 0.45, d: 0.12, v: 0.06, lp: 700 });
+      tone(c, d, { type: 'sine', f: 420, f2: 160, t: t + 3.9, d: 0.35, v: 0.25 }); tone(c, d, { type: 'sine', f: 900, f2: 160, t: t + 3.95, d: 0.6, v: 0.12 });
+      noise(c, d, { t: t + 4.55, d: 0.9, v: 0.55, ft: 'lowpass', f: 6000, f2: 300, a: 0.01 }); tone(c, d, { f: 110, f2: 45, t: t + 4.55, d: 0.5, v: 0.5 });
+      [5.2, 5.5, 5.8, 6.1].forEach(function (x, k) { tone(c, d, { type: 'sine', f: 500 + k * 90, f2: 900 + k * 90, t: t + x, d: 0.1, v: 0.08 }); });
+      tone(c, d, { type: 'sawtooth', f: 110, t: t + 5.0, d: 1.6, v: 0.16, lp: 420, a: 0.1 }); tone(c, d, { type: 'sawtooth', f: 165, t: t + 5.0, d: 1.6, v: 0.1, lp: 420, a: 0.1 });
+    },
+    ej_castle: function (c, d, t) { // 古城: 巻き上げ → ビヨーン → 風を切る → キラーン
+      for (var i = 0; i < 8; i++) tone(c, d, { type: 'triangle', f: 90 + i * 8, t: t + 0.4 + i * 0.2, d: 0.14, v: 0.12, lp: 600 });
+      tone(c, d, { type: 'triangle', f: 700, f2: 110, t: t + 2.6, d: 0.35, v: 0.3 }); noise(c, d, { t: t + 2.6, d: 0.18, v: 0.35, ft: 'lowpass', f: 3000, f2: 400 });
+      tone(c, d, { type: 'sine', f: 400, f2: 2400, t: t + 2.8, d: 2.2, v: 0.12, a: 0.2 });
+      [96, 100, 103, 108].forEach(function (m, k) { tone(c, d, { type: 'sine', f: mtof(m - 12), t: t + 5.2 + k * 0.09, d: 0.9, v: 0.12 }); });
+    },
+    ej_city: function (c, d, t) { // 研究都市: サイレン → ハッチ → 落下の風 → 遠くのドスン
+      for (var i = 0; i < 8; i++) tone(c, d, { type: 'sawtooth', f: i % 2 ? 640 : 960, f2: i % 2 ? 960 : 640, t: t + i * 0.3, d: 0.3, v: 0.12, lp: 2200, a: 0.02 });
+      noise(c, d, { t: t + 2.0, d: 0.5, v: 0.3, ft: 'bandpass', f: 700, f2: 300, q: 1 }); tone(c, d, { f: 80, f2: 50, t: t + 2.0, d: 0.5, v: 0.4 });
+      noise(c, d, { t: t + 2.4, d: 4.0, v: 0.28, ft: 'bandpass', f: 300, f2: 2800, q: 0.9, a: 1.2 });
+      tone(c, d, { type: 'sine', f: 680, f2: 70, t: t + 2.5, d: 4.2, v: 0.1, a: 0.2 });
+      tone(c, d, { f: 62, f2: 32, t: t + 6.8, d: 1.2, v: 0.6 }); noise(c, d, { t: t + 6.8, d: 0.8, v: 0.3, ft: 'lowpass', f: 1500, f2: 120 });
     },
     sab: function (c, d, t) { // 緊急事態・マップ妨害: サイレン
       for (var i = 0; i < 6; i++) tone(c, d, { type: 'sawtooth', f: i % 2 ? 640 : 960, f2: i % 2 ? 960 : 640, t: t + i * 0.26, d: 0.26, v: 0.15, lp: 2200, a: 0.02 });
@@ -4270,7 +4512,7 @@ async function electionTick() {
 
 /* ---------- ホストの処理 ---------- */
 function cleanAct(x) {
-  var types = ['aim', 'nkill', 'task', 'report', 'emergency', 'kill', 'shoot', 'guard', 'inspect', 'vent', 'sab', 'douse', 'ignite', 'vote', 'assassinate', 'fortune', 'nicekill', 'shield', 'wave', 'seal', 'fixlights', 'portal', 'ventin', 'ventout', 'fixcrisis', 'thrall', 'setcolor', 'snipe', 'disguise', 'clean'];
+  var types = ['aim', 'nkill', 'task', 'report', 'emergency', 'kill', 'shoot', 'guard', 'inspect', 'vent', 'sab', 'douse', 'ignite', 'vote', 'assassinate', 'fortune', 'nicekill', 'shield', 'wave', 'seal', 'fixlights', 'portal', 'ventin', 'ventout', 'fixcrisis', 'thrall', 'setcolor', 'setacc', 'snipe', 'disguise', 'clean'];
   if (!x || types.indexOf(x.type) < 0) return null;
   var a = { type: x.type };
   if (typeof x.t === 'string' && x.t.length <= 48) a.t = x.t;
@@ -4304,7 +4546,7 @@ function hostPoll() {
     if (!gone) return;
     var limit = d ? 0 : (st.phase === 'lobby' ? 25000 : 20000);
     if (st.phase === 'over') return;
-    if (now - S.lastSeen[pid] >= limit) { if (E.markLeft(st, pid, ctx)) changed = true; }
+    if (now - S.lastSeen[pid] >= limit) { if (E.markLeft(st, pid, ctx, d ? 'leave' : 'drop')) changed = true; }
   });
 
   // 狙撃手のレティクルの動き(行動より先に反映する)
@@ -4436,7 +4678,7 @@ function leaveRoom() {
   if (typeof vcStop === 'function') vcStop();
   if (S.standalone) { try { NET.leave(); } catch (e) {} S.room = null; S.db = null; S.roomCode = ''; S.canHost = false; S.subscribed = false; S.snapData = null; S.snapLoaded = false; S.peerMap = {}; S.pos = {}; S.lastSeen = {}; S.skew = 0; }
   S.mode = null; S.isHost = false; S.hostState = null; S.state = null; S.bots = {}; S.acts = []; S.overlay = null;
-  S.cardRound = 0; S.lastTpKey = ''; S.dirty = false;
+  S.cardRound = 0; S.lastTpKey = ''; S.dirty = false; S.ntSeen = null;
   S.uiRev = -1;
 }
 
@@ -5082,11 +5324,15 @@ function vcAttach(id, rs) {
   var src = VC.ctx.createMediaStreamSource(rs), g = VC.ctx.createGain(), an = VC.ctx.createAnalyser();
   g.gain.value = 0; an.fftSize = 512;
   src.connect(an); src.connect(g); g.connect(VC.ctx.destination);
-  VC.peers[id] = { stream: rs, audio: a, src: src, gain: g, an: an, buf: new Uint8Array(an.fftSize), vol: 0 };
+  // 死んだ人の声用のエコー(ふだんは音量0。聞こえ方がゴーストのときだけ上げる): 声 → 遅れて何度か戻ってくる → こもらせる
+  var wet = VC.ctx.createGain(), dl = VC.ctx.createDelay(1), fb = VC.ctx.createGain(), lp = VC.ctx.createBiquadFilter();
+  wet.gain.value = 0; dl.delayTime.value = 0.27; fb.gain.value = 0.5; lp.type = 'lowpass'; lp.frequency.value = 1900;
+  src.connect(wet); wet.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(VC.ctx.destination);
+  VC.peers[id] = { stream: rs, audio: a, src: src, gain: g, wet: wet, nodes: [dl, fb, lp], an: an, buf: new Uint8Array(an.fftSize), vol: 0 };
 }
 function vcDetach(id) {
   var p = VC.peers[id]; if (!p) return;
-  try { p.src.disconnect(); p.gain.disconnect(); } catch (e) {}
+  try { p.src.disconnect(); p.gain.disconnect(); if (p.wet) p.wet.disconnect(); (p.nodes || []).forEach(function (n) { n.disconnect(); }); } catch (e) {}
   try { p.audio.srcObject = null; } catch (e) {}
   delete VC.peers[id];
 }
@@ -5126,12 +5372,16 @@ function vcTick() {
     var p = VC.peers[id], pid = owners[id], sp0 = pid && st && st.players[pid], pos = pid && S.pos[pid], v = 0;
     if (pid) {
       var d = pos ? Math.hypot(pos.x - S.me.x, pos.y - S.me.y) : null;
-      v = VOICE.gain({ phase: phase, lAlive: me ? me.alive : true, sAlive: sp0 ? sp0.alive : true, dist: d, prox: prox, range: range, jam: jam, lImp: lImp });
+      v = VOICE.gain({ phase: phase, lAlive: me ? me.alive : true, sAlive: sp0 ? sp0.alive : true, dist: d, prox: prox, range: range, jam: jam, lImp: lImp, deadHear: lImp && !!(st && st.settings && st.settings.deadVoiceImp) });
       if (phase === 'play' && !pos && prox) v = 0;
       if (ballMute) v = 0;
     }
     p.vol = v;
-    p.gain.gain.setTargetAtTime(VOICE.mix(v, pid ? VOL.m[pid] : 1, VOL.all), t, 0.07);
+    // 死んだ人の声がインポスター陣営に聞こえるとき: 音量を下げて、エコーをかける
+    var gh = !!(pid && v > 0 && VOICE.ghost({ lAlive: me ? me.alive : true, sAlive: sp0 ? sp0.alive : true, deadHear: lImp && !!(st && st.settings && st.settings.deadVoiceImp) }));
+    var mixed = VOICE.mix(v, pid ? VOL.m[pid] : 1, VOL.all);
+    p.gain.gain.setTargetAtTime(gh ? mixed * VOICE.GHOST.vol : mixed, t, 0.07);
+    if (p.wet) p.wet.gain.setTargetAtTime(gh ? mixed * VOICE.GHOST.wet : 0, t, 0.12);
     if (pid && v > 0.04 && vcRms(p.an, p.buf) > 0.02) hold[pid] = now + 350; // 声の合間にちらつかないよう、少し残す
     if (pid && v <= 0.04) delete hold[pid];
   });
@@ -5628,6 +5878,17 @@ function checkMsgs(me) {
   me.msgs.forEach(function (m) { if (m.i > S.seenMsg) { S.seenMsg = m.i; toast(m.t); } });
 }
 
+// 全員向けのお知らせ(退室など)。入室したときまでの分は出さない
+function checkNotices(st) {
+  if (!st) return;
+  var cur = st.nn || 0;
+  if (S.ntSeen == null) { S.ntSeen = cur; return; }
+  (st.nt || []).forEach(function (n) {
+    if (n.i > S.ntSeen) { S.ntSeen = n.i; if (n.p !== S.pid) toast(n.t); }
+  });
+  if (cur < S.ntSeen) S.ntSeen = cur;
+}
+
 /* ---------- 入室画面 ---------- */
 var ROT_NAMES = { auto: '自動(端末のまま)', cw: '横向き(左に倒す)', ccw: '横向き(右に倒す)' };
 function renderRotSeg() {
@@ -5725,6 +5986,13 @@ function readName() {
 }
 
 /* ---------- ロビー ---------- */
+var EJ_OPTS = [[0, '明かさない', '追放されても、役職も陣営も分かりません。'], [1, '役職を明かす', '追放された人の役職が、追放の演出と結果で明かされます。'], [2, '陣営だけ明かす', '追放された人の役職は伏せて、クルー陣営・インポスター陣営・第三陣営のどれだったかだけが明かされます。']];
+// 追放された人について、結果画面や演出で明かす文(明かさない設定なら空)
+function ejInfoText(res) {
+  if (res && res.reveal) return '役職は「' + E.ROLES[res.reveal].n + '」だった。';
+  if (res && res.revealTeam) return '陣営は「' + E.TEAMS[res.revealTeam].name + '」だった。';
+  return '';
+}
 var PROG_OPTS = [[0, '会議のあとに表示', '進み具合は、会議が始まるたびに更新されます。それまでは前回の会議の時点の値です。'], [1, '完了するたび動く', 'タスクが終わるたびに、画面上部のバーがすぐ動きます。'], [2, '表示しない', '進み具合は出ません。決着はこれまでどおり、全タスク完了で付きます。']];
 var TABS = [{ id: 'crew', n: 'クルー陣営' }, { id: 'impostor', n: 'インポスター陣営' }, { id: 'neutral', n: '第三陣営' }, { id: 'task', n: 'タスク' }, { id: 'rule', n: 'ルール' }, { id: 'ball', n: '舞踏会' }];
 function setSetting(k, v) {
@@ -5758,15 +6026,19 @@ function renderSettings(st, canEdit) {
   var body = $('set-body'); clear(body);
   var s = st.settings;
   if (E.TEAMS[S.tab]) { // 陣営ごとの役職の人数
-    var n = st.order.length, sum = 0, c = E.roleCounts(s), tm = S.tab, teamSum = 0;
-    Object.keys(c).forEach(function (r) { sum += c[r]; if (E.ROLES[r].team === tm) teamSum += c[r]; });
-    var crewLeft = Math.max(0, n - sum);
-    body.appendChild(h('p', { class: 'small mute', text: tm === 'crew' ? 'クルー陣営の役職です。選ばれなかった人は、全員が普通のクルーになります(いまは ' + crewLeft + '人)。' : E.TEAMS[tm].name + 'の役職です。この陣営は合計 ' + teamSum + '人です。' }));
+    var n = st.order.length, c = E.roleCounts(s), tm = S.tab, RI = E.rosterInfo(s, n), teamSum = 0;
+    Object.keys(c).forEach(function (r) { if (E.ROLES[r].team === tm) teamSum += c[r]; });
+    var crewLeft = RI.crew.fixed.filter(function (a) { return a[0] === 'crew'; }).reduce(function (x, a) { return x + a[1]; }, 0);
+    var note;
+    if (tm === 'crew') note = 'クルー陣営の役職です。この陣営は ' + RI.crew.total + '人(参加人数から、インポスター陣営・共犯者・第三陣営を引いた人数)。' + (RI.crew.cand.length ? '選んだ役職の合計(' + teamSum + '人)が多いので、ここからランダムに ' + RI.crew.pick + '人が選ばれます。' : '選ばれなかった人は、普通のクルーになります(いまは ' + crewLeft + '人)。');
+    else if (tm === 'impostor') note = 'インポスター陣営の人数を決めて、その中に入れる役職を選びます(共犯者だけは人数に数えず、選んだ人数が追加されます)。選んだ役職が人数より少ないぶんは普通のインポスター、多いときは選んだ役職の中からランダムに ' + RI.imp.total + '人が選ばれます。';
+    else note = E.TEAMS[tm].name + 'の役職です。この陣営は合計 ' + teamSum + '人です。';
+    body.appendChild(h('p', { class: 'small mute', text: note }));
     E.ROLE_ORDER.filter(function (r) { return E.ROLES[r].team === tm; }).forEach(function (r) {
       var def = E.SETTING_DEFS.filter(function (d) { return d.role === r; })[0], R = E.ROLES[r], T = E.TEAMS[R.team];
-      var cnt = c[r] | 0;
+      var cnt = c[r] | 0, isTotal = r === 'impostor';
       body.appendChild(h('div', { class: 'set-row role-main' + (cnt > 0 ? ' on' : '') }, [
-        h('div', { class: 'lb' }, [h('span', { class: 'team-dot', style: 'background:' + T.hex }), h('span', { text: R.n }), h('span', { class: 'ds', text: R.d })]),
+        h('div', { class: 'lb' }, [h('span', { class: 'team-dot', style: 'background:' + T.hex }), h('span', { text: isTotal ? 'インポスター陣営の人数' : R.n }), h('span', { class: 'ds', text: isTotal ? '陣営全体の人数です。下で選んだ役職がこの人数に満たないぶんは、普通のインポスターになります。' : R.d })]),
         stepper(def, s[def.k], canEdit)
       ]));
       // この役職だけの設定(人数を1人以上にしたときに、すぐ下に出る)
@@ -5784,7 +6056,7 @@ function renderSettings(st, canEdit) {
       }
     });
     if (tm === 'crew') body.appendChild(h('div', { class: 'set-row' }, [
-      h('div', { class: 'lb' }, [h('span', { class: 'team-dot', style: 'background:' + E.TEAMS.crew.hex }), h('span', { text: 'クルー' }), h('span', { class: 'ds', text: '役職に選ばれなかった人は、全員クルーになります。' })]),
+      h('div', { class: 'lb' }, [h('span', { class: 'team-dot', style: 'background:' + E.TEAMS.crew.hex }), h('span', { text: 'クルー' }), h('span', { class: 'ds', text: '役職に選ばれなかった人は、全員クルーになります。(クルー陣営の役職が人数を超えるときは、役職の人だけでクルーはいません)' })]),
       h('output', { class: 'mute', style: 'font-family:var(--font-d);font-size:18px', text: crewLeft + '人' })
     ]));
   } else if (S.tab === 'task') {
@@ -5806,10 +6078,15 @@ function renderSettings(st, canEdit) {
     });
     else body.appendChild(h('p', { class: 'small mute', text: 'オンにすると、時間や回数の設定がここに出ます。' }));
   } else if (S.tab === 'rule') {
-    E.SETTING_DEFS.filter(function (d) { return d.g === 'rule' && (!d.m || (d.m === 'doors' ? !!(E.GIM && E.GIM.doors) : d.m === 'voice' ? !!S.standalone : d.m === 'mapsab' ? E.mapSabs().length > 0 : d.m === E.M.id)); }).forEach(function (d) {
+    E.SETTING_DEFS.filter(function (d) { return d.g === 'rule' && d.k !== 'ejectInfo' && (!d.m || (d.m === 'doors' ? !!(E.GIM && E.GIM.doors) : d.m === 'voice' ? !!S.standalone : d.m === 'mapsab' ? E.mapSabs().length > 0 : d.m === E.M.id)); }).forEach(function (d) {
       if (d.lv) { body.appendChild(levelRow(d, s[d.k], canEdit)); return; }
       body.appendChild(h('div', { class: 'set-row' }, [h('div', { class: 'lb', text: d.label }), stepper(d, s[d.k], canEdit)]));
     });
+    var eseg = h('div', { class: 'seg', role: 'group', 'aria-label': '追放された人の情報' });
+    EJ_OPTS.forEach(function (o) {
+      eseg.appendChild(h('button', { type: 'button', 'aria-pressed': (s.ejectInfo | 0) === o[0] ? 'true' : 'false', disabled: !canEdit, text: o[1], onclick: function () { setSetting('ejectInfo', o[0]); } }));
+    });
+    body.appendChild(h('div', { class: 'set-row col' }, [h('div', { class: 'lb' }, [h('span', { text: '追放された人の情報' }), h('span', { class: 'ds', text: EJ_OPTS[s.ejectInfo | 0][2] })]), eseg]));
     E.TOGGLES.filter(function (d) { return !d.r && d.g !== 'ball' && (d.m !== 'voice' || S.standalone); }).forEach(function (d) { body.appendChild(toggleRow(d, s, canEdit)); });
     var sabs = E.mapSabs();
     if (sabs.length) body.appendChild(h('p', { class: 'small mute', text: 'このマップ固有の妨害: ' + sabs.map(function (k) { var i = E.mapSabInfo(k); return i.n + '(' + i.d + ')'; }).join(' / ') }));
@@ -5905,9 +6182,7 @@ function renderLobbyBody(st) {
   renderSettings(st, !!isH);
   renderMapPick(st, !!isH);
 
-  var c = E.roleCounts(st.settings), n = st.order.length, imp = 0, neu = 0;
-  Object.keys(c).forEach(function (r) { var tm = E.ROLES[r].team; if (tm === 'impostor') imp += c[r]; else if (tm === 'neutral') neu += c[r]; });
-  var sum = 0; Object.keys(c).forEach(function (r) { sum += c[r]; });
+  var SL = E.teamSlots(st.settings, st.order.length), n = st.order.length, imp = SL.imp + SL.help, neu = SL.neu;
   var crewN = Math.max(0, n - imp - neu);
   var sm = $('summary'); clear(sm);
   [['クルー陣営', crewN, E.TEAMS.crew.hex], ['インポスター陣営', imp, E.TEAMS.impostor.hex], ['第三陣営', neu, E.TEAMS.neutral.hex]].forEach(function (a) {
@@ -5951,6 +6226,11 @@ function roleNotes(role, s) {
   if (role === 'accomplice') n.push(s.accompliceKnown ? 'インポスター陣営の側もあなたの正体を知っています。' : 'インポスター陣営の側は、あなたの正体を知りません(あなただけが知っています)。インポスターに襲撃されることもあります。');
   if (role === 'fortune') n.push('占いはゲーム中に ' + s.fortuneUses + ' 回まで(1回の会議で何回使ってもかまいません)。');
   if (role === 'niceguesser') n.push('看破はゲーム中に ' + s.niceShots + ' 回まで(1回の会議で何回使ってもかまいません)。');
+  if (role === 'organizer') {
+    n.push('追放投票で、あなたの票は ' + Math.max(1, s.orgVotes | 0) + ' 票分に数えられます。投票の画面では、ほかの人には1票としか見えません。');
+    n.push(s.guestN > 0 ? '招待客は ' + s.guestN + ' 人です(あなた以外のクルー陣営から、ランダムに選ばれます)。誰が招待客かは、ゲームの最初に分かります。' : '招待客はいません(人数が0人の設定です)。');
+    n.push(s.ballOn ? '仮面舞踏会が開かれても、あなたにはみんなの本当の姿と名前が見えます。' : 'この設定では、仮面舞踏会が開かれません(舞踏会タブでオンにすると、主催者の力が使えます)。');
+  }
   if (role === 'shielder') n.push('シールドは ' + s.shieldSec + ' 秒展開できます。終わってから ' + s.shieldCd + ' 秒はもう一度張れません。 張っていることは、まわりの人には見えません。攻撃を防いだ瞬間だけ、光のエフェクトが出ます。');
   if (E.ROLES[role].wave) {
     n.push('ビームは、動いた向きに飛びます(先に向きたい方向へ動いてから押してください)。ためるのに ' + s.waveCharge + ' 秒、撃ったあと ' + s.waveCd + ' 秒はクールタイムです。');
@@ -5986,6 +6266,14 @@ function showRoleCard() {
   var notes = roleNotes(me.role, st.settings);
   if (notes.length) box.appendChild(h('div', {}, [h('div', { class: 'lbl', text: 'このゲームの設定' }), h('ul', {}, notes.map(function (t) { return h('li', { text: t }); }))]));
   if (!R.tasks) box.appendChild(h('p', { class: 'small mute', text: R.team === 'impostor' ? 'ダミーのタスクがあります。やってもクルーのタスクの進み具合には数えません(クルーに紛れるために使えます)。ベントの中にいるあいだ、襲撃・能力のクールタイムは進みません(妨害は進みます)。' : 'あなたにタスクはありません。' }));
+  if (me.role === 'organizer') {
+    var guests = st.order.filter(function (id) { return E.knowsGuest(me, st.players[id], st.settings); });
+    box.appendChild(h('div', {}, [h('div', { class: 'lbl', text: '招待客' }),
+      guests.length ? h('div', { class: 'mates' }, guests.map(function (id) { var p = st.players[id]; return h('span', { class: 'mini' }, [h('span', { class: 'swatch', style: 'background:' + C[p.color].hex }), p.name]); }))
+        : h('p', { class: 'small mute', text: '招待客はいません。' })]));
+  } else if (E.knowsGuest(me, me, st.settings)) {
+    box.appendChild(h('div', {}, [h('div', { class: 'lbl', text: '招待客' }), h('p', { text: 'あなたは「招待客」でもあります(役職は上のままです)。主催者が誰かは分かりませんが、主催者にはあなたが招待客だと分かっています。' })]));
+  }
   if (R.team === 'impostor') {
     var mates = st.order.filter(function (id) { return E.knowsAlly(me, st.players[id]); });
     box.appendChild(h('div', {}, [h('div', { class: 'lbl', text: '仲間' }),
@@ -5999,22 +6287,31 @@ function setOverlay(name) { S.overlay = name; applyOverlays(); }
 function showRoleList() {
   var st = S.state;
   if (!st || !st.settings) return;
-  var c = E.roleCounts(st.settings), n = st.order.length, sum = 0, box = $('roles-list'); clear(box);
-  Object.keys(c).forEach(function (r) { sum += c[r]; });
+  var n = st.order.length, RI = E.rosterInfo(st.settings, n), box = $('roles-list'); clear(box);
   var me = myPlayer(), mine = me && me.role;
   ['crew', 'impostor', 'neutral'].forEach(function (tm) {
-    var T = E.TEAMS[tm], items = [];
-    E.ROLE_ORDER.filter(function (r) { return E.ROLES[r].team === tm && (c[r] | 0) > 0; }).forEach(function (r) { items.push([r, c[r]]); });
-    if (tm === 'crew' && n - sum > 0) items.unshift(['crew', n - sum]);
-    if (!items.length) return;
-    box.appendChild(h('div', { class: 'roles-team', style: '--c:' + T.hex }, [h('h3', { text: T.name })].concat(items.map(function (it) {
+    var T = E.TEAMS[tm], items = [], cands = null;
+    if (tm === 'crew') { items = RI.crew.fixed.slice(); if (RI.crew.cand.length) cands = RI.crew; }
+    else if (tm === 'impostor') { items = RI.imp.fixed.concat(RI.help); if (RI.imp.cand.length) { cands = RI.imp; items = RI.help.slice(); } }
+    else items = RI.neu;
+    items = items.filter(function (a) { return a[1] > 0; });
+    if (!items.length && !cands) return;
+    function card(it, cand) {
       var R = E.ROLES[it[0]];
       return h('div', { class: 'roles-item', style: '--c:' + T.hex }, [
-        h('div', { class: 'rn' }, [h('span', { text: R.n }), h('b', { text: '×' + it[1] + (mine === it[0] ? '(あなた)' : '') })]),
+        h('div', { class: 'rn' }, [h('span', { text: R.n }), h('b', { text: (cand ? '候補 ×' : '×') + it[1] + (mine === it[0] ? '(あなた)' : '') })]),
         h('p', { text: R.d }),
         R.abil.length ? h('ul', {}, R.abil.map(function (t) { return h('li', { text: t }); })) : null
       ]);
-    }))));
+    }
+    var kids = [h('h3', { text: T.name })];
+    items.forEach(function (it) { kids.push(card(it, false)); });
+    if (cands) {
+      kids.push(h('p', { class: 'small mute', text: '次の役職の候補から、ランダムに ' + cands.pick + '人がこの陣営に入ります(誰が何になるかは、始まるまで分かりません)。' }));
+      cands.cand.forEach(function (it) { kids.push(card(it, true)); });
+    }
+    if (tm === 'crew' && (st.settings.r_organizer | 0) > 0 && (st.settings.guestN | 0) > 0) kids.push(h('p', { class: 'small mute', text: '主催者がいるので、クルー陣営のうち ' + st.settings.guestN + '人(主催者以外)が「招待客」にもなります。役職は変わらず、主催者にだけ招待客だと分かります。' + (st.settings.guestKnown ? '招待客本人にも分かります。' : '招待客本人には分かりません。') }));
+    box.appendChild(h('div', { class: 'roles-team', style: '--c:' + T.hex }, kids));
   });
   $('roles-note').textContent = '参加' + n + '人のうち、役職ごとの人数です。誰がどの役職かは、ここでは分かりません。';
   setOverlay('roles');
@@ -6176,7 +6473,15 @@ function drawCountOverlay() {
 
 /* ---------- 会議 ---------- */
 var WIN = { crew: ['クルーの勝利', 'crew'], impostor: ['インポスターの勝利', 'impostor'], jackal: ['ジャッカルの勝利', 'neutral'], arsonist: ['放火魔の勝利', 'neutral'], jester: ['ピエロの勝利', 'neutral'] };
-function swatch(p) { return h('span', { class: 'swatch', 'data-pid': p.id, style: 'background:' + C[p.color].hex }); }
+// 会議などで、名前の横に出すキャラクター(色の丸のかわり。付けている小物もいっしょに出る)
+function swatch(p, sm) {
+  var W = sm ? 24 : 34, H = sm ? 31 : 44, cv = document.createElement('canvas');
+  cv.className = 'swatch chr'; cv.setAttribute('data-pid', p.id);
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  var c = cv.getContext('2d'); c.scale(DPR, DPR); c.translate(W / 2, H * 0.6); var k = W / 34 * 0.6; c.scale(k, k);
+  drawBlob(c, 0, 0, C[p.color].hex, 1, 0, p.alive ? 1 : 0.55, !p.alive, false, null, p.ac);
+  return cv;
+}
 function renderMeeting() {
   var st = S.state, m = st && st.meeting, me = myPlayer();
   if (!m) return;
@@ -6195,9 +6500,10 @@ function renderMeeting() {
   var cards = $('mt-cards'); clear(cards);
   var res = m.res;
   var mtOpen = m.stage === 'discuss' || m.stage === 'vote';
-  var fort = !!(me && me.role === 'fortune' && me.alive && (me.u || 0) > 0 && mtOpen);
-  var nice = !!(me && me.role === 'niceguesser' && me.alive && (me.u || 0) > 0 && mtOpen);
-  var asn = !!(me && me.role === 'assassin' && me.alive && (me.gs || 0) > 0 && (me.gm || 0) < st.settings.assassinPerMeeting && (m.stage === 'discuss' || m.stage === 'vote'));
+  var locked = !!(st.settings.voteLock && me && m.votes[S.pid] !== undefined); // 追放投票をしたら、この会議では能力が使えない
+  var fort = !!(me && me.role === 'fortune' && me.alive && (me.u || 0) > 0 && mtOpen && !locked);
+  var nice = !!(me && me.role === 'niceguesser' && me.alive && (me.u || 0) > 0 && mtOpen && !locked);
+  var asn = !!(me && me.role === 'assassin' && me.alive && (me.gs || 0) > 0 && (me.gm || 0) < st.settings.assassinPerMeeting && (m.stage === 'discuss' || m.stage === 'vote') && !locked);
   st.order.forEach(function (id) {
     var p = st.players[id];
     if (p.left) return;
@@ -6205,12 +6511,13 @@ function renderMeeting() {
     if (id === S.pid) tags.push(h('span', { class: 'tag', text: 'あなた' }));
     if (!p.alive) tags.push(h('span', { class: 'tag', text: '死亡' }));
     if (me && R && E.knowsAlly(me, p)) tags.push(h('span', { class: 'tag ally', text: '仲間' }));
+    if (me && E.knowsGuest(me, p, st.settings)) tags.push(h('span', { class: 'tag guest', text: '招待客' }));
     if (myDl.some(function (d) { return d.w === id; })) tags.push(h('span', { class: 'tag', text: 'いっしょに踊った' }));
     if (m.stage === 'vote' && p.alive && m.votes[id] !== undefined) tags.push(h('span', { class: 'tag voted', text: '投票済' }));
     var vs = [];
     if (res) {
       Object.keys(res.votes).forEach(function (v) {
-        if (res.votes[v] === id && !st.settings.anonVotes) vs.push(swatch(st.players[v]));
+        if (res.votes[v] === id && !st.settings.anonVotes) vs.push(swatch(st.players[v], true));
       });
       if (st.settings.anonVotes && res.tally[id]) vs.push(h('span', { class: 'small mute', text: res.tally[id] + '票' }));
     }
@@ -6231,14 +6538,16 @@ function renderMeeting() {
   skip.hidden = !(me && me.alive && m.stage === 'vote');
   $('btn-skip').disabled = !canVote;
   var mv = m.votes[S.pid];
-  $('mt-voted').textContent = mv === undefined ? '' : (mv === 'skip' ? 'スキップに投票しました' : (st.players[mv] ? st.players[mv].name + ' に投票しました' : ''));
+  var hasAbil = !!(me && me.alive && ((me.role === 'fortune' && (me.u || 0) > 0) || (me.role === 'niceguesser' && (me.u || 0) > 0) || (me.role === 'assassin' && (me.gs || 0) > 0)));
+  var orgHint = (me && me.role === 'organizer' && me.alive && m.stage === 'vote') ? 'あなたの票は ' + Math.max(1, st.settings.orgVotes | 0) + ' 票分として数えられます(ほかの人には見えません)。' : '';
+  $('mt-voted').textContent = mv === undefined ? (orgHint + (hasAbil && st.settings.voteLock && m.stage === 'vote' ? ' 投票すると、この会議では能力が使えなくなります。' : '')).trim() : (mv === 'skip' ? 'スキップに投票しました' : (st.players[mv] ? st.players[mv].name + ' に投票しました' : '')) + (orgHint ? '(' + orgHint + ')' : '') + (hasAbil && st.settings.voteLock ? ' この会議では、もう能力は使えません。' : '');
   var log = $('mt-log'); clear(log);
   if (m.log.length) log.appendChild(h('div', { class: 'log' }, m.log.map(function (t) { return h('div', { text: t }); })));
   var rs = $('mt-result'); clear(rs);
   if (res) {
     var ej = res.ejected && st.players[res.ejected];
     var big = ej ? cname(ej) + 'の ' + ej.name + ' が追放された' : '誰も追放されなかった';
-    var sub = ej ? (res.reveal ? '役職は「' + E.ROLES[res.reveal].n + '」だった。' : '役職は明かされない。') : (res.skip ? 'スキップ ' + res.skip + ' 票' : '');
+    var sub = ej ? (ejInfoText(res) || '正体は明かされない。') : (res.skip ? 'スキップ ' + res.skip + ' 票' : '');
     rs.appendChild(h('div', { class: 'result' }, [h('div', { class: 'big', text: big }), h('div', { class: 'mute', text: sub })]));
   }
   // 占い師・ナイスゲッサーの確認パネル
@@ -6345,8 +6654,7 @@ function renderSetView(st) {
   E.useMap(st.settings.map | 0); // 設定の項目は、選んでいるゲームのマップに合わせて出す
   try {
     clear(box);
-    var s = st.settings, n = st.order.length, c = E.roleCounts(s), M = E.MAPS[s.map | 0], sum = 0, imp = 0, neu = 0;
-    Object.keys(c).forEach(function (r) { sum += c[r]; var tm = E.ROLES[r].team; if (tm === 'impostor') imp += c[r]; else if (tm === 'neutral') neu += c[r]; });
+    var s = st.settings, n = st.order.length, c = E.roleCounts(s), M = E.MAPS[s.map | 0], SL = E.teamSlots(s, n), RI = E.rosterInfo(s, n), imp = SL.imp + SL.help, neu = SL.neu;
     function sec(title, rows, note) {
       var d = h('div', { class: 'sv-sec' }, [h('h3', { text: title })]);
       if (note) d.appendChild(h('p', { class: 'small mute', text: note }));
@@ -6361,14 +6669,18 @@ function renderSetView(st) {
     E.ROLE_ORDER.forEach(function (r) {
       var cnt = c[r] | 0; if (!cnt) return;
       var R = E.ROLES[r];
-      roleRows.push([R.n + '(' + E.TEAMS[R.team].name + ')', cnt + '人']);
+      var inPool = (R.team === 'impostor' && RI.imp.cand.length && r !== 'impostor' && !R.helper) || (R.team === 'crew' && RI.crew.cand.length);
+      roleRows.push([R.n + '(' + E.TEAMS[R.team].name + ')', r === 'impostor' ? '陣営の人数 ' + cnt + '人' : inPool ? '候補 ' + cnt + '人' : cnt + '人']);
       E.SETTING_DEFS.filter(function (d) { return d.g === 'abil' && d.r && [].concat(d.r).indexOf(r) >= 0; }).forEach(function (d) { roleRows.push(['　' + d.label, val(d), 'sub']); });
       E.TOGGLES.filter(function (d) { return d.r && [].concat(d.r).indexOf(r) >= 0; }).forEach(function (d) { var t = tog(d); roleRows.push(['　' + t[0], t[1], 'sub ' + t[2]]); });
     });
-    if (n - sum > 0) roleRows.unshift(['クルー(役職なし)', Math.max(0, n - sum) + '人']);
+    var plainCrew = RI.crew.fixed.filter(function (a) { return a[0] === 'crew'; }).reduce(function (x, a) { return x + a[1]; }, 0);
+    if (plainCrew > 0) roleRows.unshift(['クルー(役職なし)', plainCrew + '人']);
+    if (RI.imp.cand.length) roleRows.push(['インポスター陣営の役職', '候補から ' + RI.imp.pick + '人をランダム']);
+    if (RI.crew.cand.length) roleRows.push(['クルー陣営の役職', '候補から ' + RI.crew.pick + '人をランダム']);
     sec('役職', roleRows.length ? roleRows : [['役職', 'なし']]);
     sec('タスク', E.SETTING_DEFS.filter(function (d) { return d.g === 'task' && d.k !== 'progMode'; }).map(function (d) { return [d.label, val(d)]; }).concat([['タスク進度の表示', PROG_OPTS[s.progMode | 0][1]]]));
-    var rules = E.SETTING_DEFS.filter(function (d) { return d.g === 'rule' && (!d.m || (d.m === 'doors' ? !!(E.GIM && E.GIM.doors) : d.m === 'voice' ? !!S.standalone : d.m === 'mapsab' ? E.mapSabs().length > 0 : d.m === E.M.id)); }).map(function (d) { return [d.label, val(d)]; });
+    var rules = E.SETTING_DEFS.filter(function (d) { return d.g === 'rule' && d.k !== 'ejectInfo' && (!d.m || (d.m === 'doors' ? !!(E.GIM && E.GIM.doors) : d.m === 'voice' ? !!S.standalone : d.m === 'mapsab' ? E.mapSabs().length > 0 : d.m === E.M.id)); }).map(function (d) { return [d.label, val(d)]; }).concat([['追放された人の情報', EJ_OPTS[s.ejectInfo | 0][1]]]);
     E.TOGGLES.filter(function (d) { return !d.r && (d.m !== 'voice' || S.standalone); }).forEach(function (d) { rules.push(tog(d)); });
     sec('ルール', rules);
     if (E.isMelee(st)) box.appendChild(h('p', { class: 'small mute', text: '乱戦ルール: 危険な陣営が半数以上います。人数が並んでも終わらず、相手を全滅させた陣営が勝ちます。' }));
@@ -6386,11 +6698,41 @@ function renderColor(st) {
   C.forEach(function (col, i) {
     var owner = null;
     st.order.forEach(function (id) { if (id !== S.pid && st.players[id] && st.players[id].color === i) owner = st.players[id]; });
-    var cvs = h('canvas', { width: 72, height: 84 });
+    var cvs = h('canvas', { width: 72, height: 88 });
     box.appendChild(h('button', { type: 'button', class: 'colcard' + (me.color === i ? ' on' : ''), disabled: !!owner, 'aria-pressed': me.color === i ? 'true' : 'false',
       'aria-label': col.name + (owner ? '(' + owner.name + 'さんが使用中)' : ''), onclick: function () { pickColor(i); } }, [cvs, h('span', { text: col.name }), owner ? h('small', { class: 'mute', text: owner.name }) : null]));
-    var c = cvs.getContext('2d'); c.save(); c.translate(36, 48); c.scale(1.7, 1.7); drawBlob(c, 0, 0, col.hex, 1, 0, 1, false, false); c.restore();
+    var c = cvs.getContext('2d'); c.save(); c.translate(36, 54); c.scale(1.4, 1.4); drawBlob(c, 0, 0, col.hex, 1, 0, 1, false, false, null, me.ac); c.restore();
   });
+  // 小物: あたま・かお・くびに、1つずつ付けられる(もう一度押すと外れる)
+  var ab = $('acc-grid'); clear(ab);
+  E.ACC_SLOTS.forEach(function (sl) {
+    var slot = sl[0], cur = (me.ac && me.ac[slot]) || '';
+    var row = h('div', { class: 'acc-row' });
+    function card(id, name) {
+      var cv = h('canvas', { width: 64, height: 88 }), ac = id ? (function (o) { o[slot] = id; return o; })({}) : null, on = cur === id;
+      var b = h('button', { type: 'button', class: 'colcard acc' + (on ? ' on' : ''), 'aria-pressed': on ? 'true' : 'false', onclick: function () { pickAcc(slot, on ? '' : id); } }, [cv, h('span', { text: name })]);
+      var c = cv.getContext('2d'); c.save(); c.translate(32, 54); c.scale(1.3, 1.3); drawBlob(c, 0, 0, C[me.color].hex, 1, 0, 1, false, false, null, ac); c.restore();
+      return b;
+    }
+    row.appendChild(card('', 'なし'));
+    E.ACCS[slot].forEach(function (a) { row.appendChild(card(a[0], a[1])); });
+    ab.appendChild(h('div', { class: 'acc-sec' }, [h('div', { class: 'acc-ttl', text: sl[1] }), row]));
+  });
+}
+function pickAcc(slot, id) {
+  var me = myPlayer(); if (!me) return;
+  var r = sendAct({ type: 'setacc', r: slot, t: id });
+  if (r && r.ok === false) { toast('小物を変えられませんでした'); return; }
+  var cur = {}; E.ACC_SLOTS.forEach(function (sl) { if (me.ac && me.ac[sl[0]]) cur[sl[0]] = me.ac[sl[0]]; });
+  if (id) cur[slot] = id; else delete cur[slot];
+  store('uso_ac', JSON.stringify(cur)); // 次にあそぶときも、同じ小物を付ける
+  S.uiRev = -1;
+}
+// 前回の小物を、入室したときに付け直す
+function applyStoredAcc(me) {
+  var saved = null; try { saved = JSON.parse(store('uso_ac') || 'null'); } catch (e) { saved = null; }
+  if (!saved || typeof saved !== 'object') return;
+  E.ACC_SLOTS.forEach(function (sl) { var v = saved[sl[0]]; if (typeof v === 'string' && E.accValid(sl[0], v) && !(me.ac && me.ac[sl[0]])) sendAct({ type: 'setacc', r: sl[0], t: v }); });
 }
 function pickColor(i) {
   var me = myPlayer();
@@ -6411,8 +6753,11 @@ function renderUI() {
   $('s-entry').hidden = !!S.mode; $('s-lobby').hidden = !showPanel; $('s-game').hidden = !showGame;
   if (!S.mode) updateEntryStatus();
   if (showPanel) renderLobby(st);
+  if (!S.mode) S.acFor = null;
+  if (inLobby && me && S.acFor !== S.pid) { S.acFor = S.pid; applyStoredAcc(me); }
   if (inLobby && S.overlay === 'color') renderColor(st);
   if (inLobby && S.overlay === 'setview') renderSetView(st);
+  if (showGame) checkNotices(st);
   if (showGame && !inLobby) {
     if (me && me.role && (S.cardRound !== st.round || S.cardRc !== (me.rc || 0)) && st.phase === 'play') { S.cardRound = st.round; S.cardRc = me.rc || 0; showRoleCard(); }
     if (!S.hintShown && VH > VW * 1.1) { S.hintShown = true; toast('横向きにすると広く見渡せて遊びやすくなります。縦のまま固定されるときは、入室画面の「画面の向き」で横向き表示にできます。'); }
@@ -6440,16 +6785,17 @@ function playKillFx(st, me) {
   c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cvs.width, cvs.height);
   var mis = kd.how === 'misfire';
   if (killer) {
-    c.save(); c.translate(96, 118); c.scale(3.3, 3.3); drawBlob(c, 0, 0, C[killer.color].hex, 1, 0, 1, false, false); c.restore();
+    c.save(); c.translate(96, 118); c.scale(3.3, 3.3); drawBlob(c, 0, 0, C[killer.color].hex, 1, 0, 1, false, false, null, killer.ac); c.restore();
     c.strokeStyle = '#ff2f4a'; c.lineWidth = 7; c.lineCap = 'round';
     [[150, 40, 236, 96], [160, 28, 246, 84], [170, 16, 252, 72]].forEach(function (l) { c.beginPath(); c.moveTo(l[0], l[1]); c.lineTo(l[2], l[3]); c.stroke(); });
-    c.save(); c.translate(188, 156); c.scale(1.25, 1.25); drawBlob(c, 0, 0, C[me.color].hex, 1, 0, 1, false, true); c.restore();
+    c.save(); c.translate(188, 156); c.scale(1.25, 1.25); drawBlob(c, 0, 0, C[me.color].hex, 1, 0, 1, false, true, null, me.ac); c.restore();
   } else {
-    c.save(); c.translate(122, 128); c.scale(2.5, 2.5); drawBlob(c, 0, 0, C[me.color].hex, 1, 0, 1, false, true); c.restore();
+    c.save(); c.translate(122, 128); c.scale(2.5, 2.5); drawBlob(c, 0, 0, C[me.color].hex, 1, 0, 1, false, true, null, me.ac); c.restore();
   }
   $('fx-kt').textContent = mis ? '誤射…' : 'やられた…';
   if (kd.how === 'bite') $('fx-kt').textContent = '毒が回った…';
-  $('fx-ks').textContent = kd.how === 'bite' ? 'ヴァンパイアに噛まれていた。倒れてしまった' : mis ? '撃つべきでない相手を撃ってしまった(または撃たれた)' : kd.how === 'wave' && killer ? cname(killer) + 'の ' + killer.name + ' の波動砲に貫かれた' : kd.how === 'reflect' && killer ? cname(killer) + 'の ' + killer.name + ' のシールドに波動砲を跳ね返された' : killer ? cname(killer) + 'の ' + killer.name + (kd.how === 'shot' ? ' に撃たれた' : ' に倒された') : '倒された';
+  if (kd.how === 'follow') $('fx-kt').textContent = '道連れ…';
+  $('fx-ks').textContent = kd.how === 'follow' ? 'ヴァンパイアが倒れたので、眷属も倒れた' : kd.how === 'bite' ? 'ヴァンパイアに噛まれていた。倒れてしまった' : mis ? '撃つべきでない相手を撃ってしまった(または撃たれた)' : kd.how === 'wave' && killer ? cname(killer) + 'の ' + killer.name + ' の波動砲に貫かれた' : kd.how === 'reflect' && killer ? cname(killer) + 'の ' + killer.name + ' のシールドに波動砲を跳ね返された' : killer ? cname(killer) + 'の ' + killer.name + (kd.how === 'shot' ? ' に撃たれた' : ' に倒された') : '倒された';
   showFx('fx-kill', 2800);
   SND.play('kill');
   if (kd.how === 'wave') SND.play('wavehit', { vol: 0.9 });
@@ -6463,7 +6809,7 @@ function playMeetFx(st, m) {
   c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cvs.width, cvs.height);
   var box = $('fx-meet'); box.classList.toggle('body', body); box.classList.toggle('btn', !body);
   if (body && vic) {
-    c.save(); c.translate(124, 92); c.scale(2.3, 2.3); drawBlob(c, 0, 0, C[vic.color].hex, 1, 0, 1, false, true); c.restore();
+    c.save(); c.translate(124, 92); c.scale(2.3, 2.3); drawBlob(c, 0, 0, C[vic.color].hex, 1, 0, 1, false, true, null, vic.ac); c.restore();
   } else {
     c.fillStyle = '#4a3f6e'; c.beginPath(); c.ellipse(130, 96, 100, 46, 0, 0, 6.2832); c.fill();
     c.strokeStyle = '#0b1020'; c.lineWidth = 5; c.stroke();
@@ -6484,10 +6830,436 @@ function checkFx(st, me) {
     if (S.fxKd !== k1) { S.fxKd = k1; if (tn - me.kd.at < 6000) playKillFx(st, me); }
   }
   var m = st.meeting;
+  if (m && st.phase === 'meeting' && m.dk && m.dk.length) { // 会議中に倒れた人の演出(ゲームに入ったあとに起きたものだけ)
+    var ev = m.dk[m.dk.length - 1], k4 = st.round + ':' + m.n + ':mk' + ev.n;
+    if (S.fxMk !== k4) { S.fxMk = k4; if (tn - ev.at < 1500) playMeetKill(st, m, ev); }
+  }
+  if (m && m.stage === 'result' && m.res && m.res.ejected && (st.phase === 'meeting' || st.phase === 'over')) { // 追放の演出(結果が出た直後だけ。あとから入った人には出さない)
+    var k3 = st.round + ':' + m.n + ':ej';
+    if (S.fxEj !== k3) { S.fxEj = k3; var el = (tn - (m.end - EJ_TOTAL)) / 1000; if (el < 2.5) playEject(st, m, el); }
+  }
   if (m && st.phase === 'meeting') {
     var k2 = st.round + ':' + m.n;
     if (S.fxMeet !== k2) { S.fxMeet = k2; if (tn - (m.end - st.settings.discussSec * 1000) < 5000) playMeetFx(st, m); }
   }
+}
+
+/* ---------- 追放の演出 ----------
+ * 投票で追放された人を、ステージごとの違うアニメーションで追い出す(約7秒)。
+ *  宇宙船: エアロックから宇宙へ / 洋館: 玄関から蹴り出される / 研究所: 転送装置で消える
+ *  大型客船: 板を歩かされて海へ / 古城: カタパルトで空の彼方へ / 研究都市: 排出ハッチから深層へ落とされる
+ * 場面は 640×360 の仮想の画面に描き、画面にあわせて拡大する(縦長の画面では、上下は背景だけがのびる)。
+ */
+var EJ = { raf: 0, t0: 0, dur: 7.4, scene: null, hex: '#fff', key: '', stage: 0 };
+var EJ_TOTAL = 12000; // 追放のあと、結果の画面が出ている長さ(エンジンの m.end と同じ)
+var EJ_DUR = 7.4;
+function ejCl(v, a, b) { return Math.max(a == null ? 0 : a, Math.min(b == null ? 1 : b, v)); }
+function ejSeg(t, a, b) { return ejCl((t - a) / (b - a)); }
+function ejEO(x) { x = ejCl(x); return 1 - (1 - x) * (1 - x); }
+function ejEI(x) { x = ejCl(x); return x * x; }
+function ejEIO(x) { x = ejCl(x); return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; }
+function ejLerp(a, b, k) { return a + (b - a) * k; }
+function ejRnd(i) { var s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
+function ejRR(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+function ejFill(c, col) { c.fillStyle = col; c.fillRect(-1200, -1400, 3040, 3160); }
+function ejGrad(c, y0, y1, stops) { var g = c.createLinearGradient(0, y0, 0, y1); stops.forEach(function (s) { g.addColorStop(s[0], s[1]); }); c.fillStyle = g; c.fillRect(-1200, y0, 3040, y1 - y0); }
+// 本体(ねこ)を描く。(x, y)は体の中心、sc は大きさ、rot は回転
+function ejBlob(c, x, y, sc, rot, ph, alpha, f) { c.save(); c.translate(x, y); c.rotate(rot || 0); c.scale(sc, sc); drawBlob(c, 0, 0, EJ.hex, f || 1, ph || 0, alpha == null ? 1 : alpha, false, false, null, EJ.ac); c.restore(); }
+function ejStar(c, x, y, r, rot, col) { c.save(); c.translate(x, y); c.rotate(rot || 0); c.fillStyle = col; c.beginPath(); for (var i = 0; i < 8; i++) { var rr = i % 2 ? r * 0.28 : r; c.lineTo(Math.cos(i * Math.PI / 4) * rr, Math.sin(i * Math.PI / 4) * rr); } c.closePath(); c.fill(); c.restore(); }
+function ejText(c, s, x, y, size, col, rot, stroke) {
+  c.save(); c.translate(x, y); c.rotate(rot || 0); c.font = '900 ' + size + 'px "Zen Maru Gothic", sans-serif'; c.textAlign = 'center'; c.lineJoin = 'round'; c.lineWidth = size * 0.22; c.strokeStyle = stroke || 'rgba(8,12,24,.9)'; c.strokeText(s, 0, 0); c.fillStyle = col; c.fillText(s, 0, 0); c.restore();
+}
+function ejShake(c, amp, t, k) { if (k <= 0) return; c.translate(Math.sin(t * 61) * amp * k, Math.cos(t * 53) * amp * k); }
+
+/* ===== 宇宙船: エアロックから宇宙へ ===== */
+function ejShip(c, t) {
+  var push = 2.5, tau = Math.max(0, t - push), drift = 1 + ejSeg(t, push, push + 1) * 5;
+  ejGrad(c, -400, 760, [[0, '#02030c'], [0.5, '#070c26'], [1, '#101a46']]);
+  for (var i = 0; i < 90; i++) { // 星(ふっ飛ばされたあと、うしろに流れる)
+    var sx = ((ejRnd(i) * 900 - t * (6 + ejRnd(i + 9) * 14) * drift) % 900 + 900) % 900 - 130, sy = ejRnd(i + 40) * 520 - 80;
+    c.fillStyle = 'rgba(220,235,255,' + (0.35 + 0.5 * ejRnd(i + 7)) + ')'; c.fillRect(sx, sy, 1.5 + ejRnd(i + 3) * 1.8, 1.5);
+  }
+  var pg = c.createRadialGradient(520, 105, 6, 520, 105, 82); pg.addColorStop(0, '#6aa8ff'); pg.addColorStop(0.7, '#2c4f9a'); pg.addColorStop(1, '#14224d');
+  c.fillStyle = pg; c.beginPath(); c.arc(520, 105, 70, 0, 6.2832); c.fill();
+  c.strokeStyle = 'rgba(190,210,255,.35)'; c.lineWidth = 3; c.beginPath(); c.ellipse(520, 105, 108, 22, -0.35, 0, 6.2832); c.stroke();
+  c.save(); ejShake(c, 7, t, ejSeg(t, push, push + 0.5) * (1 - ejSeg(t, push + 0.5, push + 0.9)));
+  // 船内(左)
+  c.fillStyle = '#18203d'; c.fillRect(-1200, 20, 1550, 250);
+  c.fillStyle = '#222c52'; for (i = -8; i < 6; i++) c.fillRect(i * 70 + 20, 20, 8, 230);
+  c.fillStyle = '#2f3a66'; c.fillRect(-1200, 250, 1550, 30);
+  c.fillStyle = '#ffcc4d'; for (i = -14; i < 8; i++) c.fillRect(i * 46, 262, 24, 6);
+  var al = (Math.sin(t * 9) > 0 && t < push + 0.9) ? 1 : 0.25; // 警報灯
+  c.fillStyle = 'rgba(255,60,70,' + al + ')'; c.beginPath(); c.arc(240, 42, 11, 0, 6.2832); c.fill();
+  if (al > 0.9) { c.fillStyle = 'rgba(255,60,70,.16)'; c.fillRect(-1200, 20, 1550, 250); }
+  ejText(c, '気密室 ─ 排出', 110, 70, 15, '#ff8c96', 0);
+  // 壁と扉
+  c.fillStyle = '#39456f'; c.fillRect(350, -400, 70, 440); c.fillRect(350, 270, 70, 400);
+  c.fillStyle = '#ffcc4d'; for (i = 0; i < 9; i++) c.fillRect(350, 28 + i * 24, 70, 8);
+  var open = ejSeg(t, 1.5, 2.2) * (1 - ejSeg(t, push + 0.9, push + 1.6));
+  c.fillStyle = '#4a5788'; c.fillRect(352, 40, 66, 232 * (1 - open)); c.fillStyle = '#ff6a6f'; c.fillRect(380, 40, 10, 232 * (1 - open));
+  c.restore();
+  // 空気がふきだす
+  if (t > push - 0.1 && t < push + 1.3) for (i = 0; i < 26; i++) {
+    var pr = ejSeg(t, push - 0.1 + i * 0.01, push + 0.9 + i * 0.01), px = 380 + pr * (140 + ejRnd(i) * 360), py = 150 + (ejRnd(i + 5) - 0.5) * 150 * (0.3 + pr);
+    c.fillStyle = 'rgba(235,245,255,' + (0.55 * (1 - pr)) + ')'; c.beginPath(); c.arc(px, py, 3 + ejRnd(i + 2) * 5, 0, 6.2832); c.fill();
+  }
+  // 本体
+  var x, y, sc, rot, ph = t * 11;
+  if (t < push) { var wk = ejSeg(t, 0.3, 2.0); x = ejLerp(120, 296, ejEIO(wk)); y = 226 + Math.sin(t * 22) * (wk < 1 ? 2.5 : 0); sc = 2.1; rot = t > 2.0 ? Math.sin(t * 40) * 0.05 : 0; if (wk >= 1) ph = 0; }
+  else { var k = ejEO(tau / 3.6); x = ejLerp(296, 540, k); y = ejLerp(226, 96, k) + Math.sin(tau * 2.4) * 8; sc = ejLerp(2.1, 0.32, ejEO(tau / 4.4)); rot = tau * 5.2; }
+  ejBlob(c, x, y, sc, rot, ph, 1, 1);
+  if (tau > 0 && tau < 0.5) { c.strokeStyle = 'rgba(255,255,255,' + (0.7 - tau) + ')'; c.lineWidth = 3; for (i = 0; i < 6; i++) { c.beginPath(); c.moveTo(310 - i * 14, 150 + (i - 3) * 22); c.lineTo(250 - i * 14, 150 + (i - 3) * 22); c.stroke(); } }
+  if (t < push) { var cd = Math.ceil(push - t); if (t > 0.6) ejText(c, String(cd), 480, 120, 70, 'rgba(255,120,130,.9)', 0); }
+}
+
+/* ===== 洋館: 玄関から蹴り出される ===== */
+function ejMansion(c, t) {
+  var kick = 2.2, slam = 3.3;
+  function gy(x) { return x < 450 ? 250 : x < 500 ? 264 : x < 550 ? 278 : 292; }
+  // 庭(右)
+  ejGrad(c, -400, 292, [[0, '#8fd0ff'], [1, '#e8f6ff']]);
+  c.fillStyle = '#7cc462'; c.fillRect(550, 292, 800, 400); c.fillRect(500, 278, 50, 14); c.fillStyle = '#8cd072'; c.fillRect(550, 292, 800, 8);
+  c.fillStyle = '#8f897c'; c.fillRect(450, 294, 100, 400); c.fillStyle = '#b6b0a2'; c.fillRect(450, 264, 50, 30); c.fillRect(500, 278, 50, 16); c.fillStyle = '#cdc7b9'; c.fillRect(450, 262, 50, 4); c.fillRect(500, 276, 50, 4);
+  c.fillStyle = '#6fbf5a'; for (var i = 0; i < 5; i++) { c.beginPath(); c.arc(590 + i * 34, 100 + (i % 2) * 24, 26 + (i % 3) * 5, 0, 6.2832); c.fill(); } // 木
+  c.fillStyle = '#8a5a34'; for (i = 0; i < 5; i++) c.fillRect(586 + i * 34, 124 + (i % 2) * 24, 8, 50);
+  // 屋敷の壁と床
+  c.fillStyle = '#e6d3a8'; c.fillRect(-1200, -100, 1650, 350);
+  c.fillStyle = '#d4bf8e'; for (i = -10; i < 8; i++) c.fillRect(i * 64, -100, 4, 350);
+  c.fillStyle = '#b5894f'; c.fillRect(-1200, 250, 1650, 140); c.strokeStyle = '#8f6a38'; c.lineWidth = 2; for (i = -20; i < 12; i++) { c.beginPath(); c.moveTo(i * 54, 250); c.lineTo(i * 54 - 20, 390); c.stroke(); }
+  c.fillStyle = '#a8323c'; c.fillRect(-1200, 262, 1650, 34); c.fillStyle = '#d8aa4a'; c.fillRect(-1200, 262, 1650, 3); c.fillRect(-1200, 293, 1650, 3);
+  c.fillStyle = 'rgba(255,240,170,.28)'; c.beginPath(); c.moveTo(60, 20); c.lineTo(150, 20); c.lineTo(250, 250); c.lineTo(130, 250); c.fill(); // 日差し
+  c.fillStyle = '#8f6a38'; c.fillRect(66, 20, 90, 150); c.fillStyle = '#bfe6ff'; c.fillRect(72, 26, 78, 138); c.fillStyle = '#8f6a38'; c.fillRect(108, 26, 6, 138); c.fillRect(72, 92, 78, 6);
+  c.fillStyle = '#6a4a28'; c.fillRect(240, 52, 72, 92); c.fillStyle = '#d8aa4a'; c.fillRect(244, 56, 64, 84); c.fillStyle = '#9fc6a2'; c.fillRect(250, 62, 52, 72); c.fillStyle = '#e8b88a'; c.beginPath(); c.arc(276, 94, 14, 0, 6.2832); c.fill();
+  // 玄関の扉(両開き)
+  c.fillStyle = '#6a4a28'; c.beginPath(); c.moveTo(356, 250); c.lineTo(356, 90); c.quadraticCurveTo(405, 20, 454, 90); c.lineTo(454, 250); c.fill();
+  var dopen = ejSeg(t, kick - 0.5, kick - 0.2) * (1 - ejSeg(t, slam, slam + 0.12));
+  c.fillStyle = 'rgba(255,250,210,' + (0.9 * dopen) + ')'; c.beginPath(); c.moveTo(364, 250); c.lineTo(364, 94); c.quadraticCurveTo(405, 34, 446, 94); c.lineTo(446, 250); c.fill();
+  var dw = 41 * (1 - dopen * 0.92);
+  c.fillStyle = '#8a5a34'; c.fillRect(364, 90, dw, 160); c.fillRect(446 - dw, 90, dw, 160);
+  c.fillStyle = '#d8aa4a'; c.beginPath(); c.arc(364 + dw - 4, 175, 4, 0, 6.2832); c.arc(446 - dw + 4, 175, 4, 0, 6.2832); c.fill();
+  // 出入り禁止の札
+  if (t > slam + 0.35) { var sw = Math.sin((t - slam) * 5) * 0.28 * Math.exp(-(t - slam - 0.35) * 0.55); c.save(); c.translate(405, 112); c.rotate(sw); c.strokeStyle = '#3a2a18'; c.lineWidth = 2; c.beginPath(); c.moveTo(-16, -8); c.lineTo(0, 0); c.lineTo(16, -8); c.stroke();
+    c.fillStyle = '#f7f1e0'; c.fillRect(-34, 0, 68, 34); c.strokeStyle = '#c0392b'; c.lineWidth = 3; c.strokeRect(-34, 0, 68, 34); ejText(c, '出入り禁止', 0, 22, 12, '#c0392b', 0, 'rgba(255,255,255,.9)'); c.restore(); }
+  // 本体
+  var x, y, sc = 2, rot = 0, ph = t * 10, ground = 0, f = 1, tau = t - kick;
+  function feet(px) { return gy(px) - 24 * sc; }
+  if (t < kick) { var wk = ejSeg(t, 0.3, 1.7); x = ejLerp(110, 300, ejEIO(wk)); y = feet(x) + Math.sin(t * 20) * (wk < 1 ? 2 : 0); if (wk >= 1) ph = 0; }
+  else if (tau < 0.95) { var a = tau / 0.95; x = ejLerp(300, 520, a); y = ejLerp(feet(300), feet(520), a) - Math.sin(a * Math.PI) * 150; rot = a * 9; }
+  else if (tau < 1.5) { var b = (tau - 0.95) / 0.55; x = ejLerp(520, 560, b); y = feet(x) - Math.sin(b * Math.PI) * 56; rot = 9 + b * 3; }
+  else if (tau < 1.9) { var d2 = (tau - 1.5) / 0.4; x = ejLerp(560, 584, d2); y = feet(x) - Math.sin(d2 * Math.PI) * 22; rot = 12 + d2 * 1.4; }
+  else { x = 584; y = feet(x) + 18; ph = 0; } // 横たおし
+  if (tau >= 1.9) rot = -1.45;
+  ejBlob(c, x, y, sc, rot, ph, 1, f);
+  // 突き飛ばす手(袖から出る大きな手のひら)
+  if (t > kick - 0.6 && t < kick + 0.45) { var kk = ejSeg(t, kick - 0.6, kick - 0.02), kb = ejSeg(t, kick + 0.1, kick + 0.45), hx = ejLerp(60, 186, ejEO(kk)) - 130 * kb;
+    c.save(); c.translate(hx, 214); c.rotate(-0.1 + ejEO(kk) * 0.1);
+    c.fillStyle = '#4b5f96'; c.beginPath(); c.moveTo(-340, -34); c.lineTo(-40, -26); c.lineTo(-40, 26); c.lineTo(-340, 40); c.closePath(); c.fill(); // 袖
+    c.fillStyle = '#3a4b7c'; c.fillRect(-340, 2, 300, 3);
+    c.fillStyle = '#f4f1ea'; ejRR(c, -46, -28, 18, 56, 5); c.fill(); // カフス
+    c.lineWidth = 2.5; c.strokeStyle = '#b98a63'; c.fillStyle = '#f2c9a2';
+    for (var fi = 0; fi < 4; fi++) { var fy = -24 + fi * 15 - (fi === 3 ? 1 : 0), fl = [56, 64, 60, 46][fi]; ejRR(c, 8, fy, fl + 20, 14, 7); c.fill(); c.stroke(); } // 指
+    ejRR(c, -30, -27, 56, 54, 12); c.fill(); c.stroke(); // てのひら
+    c.save(); c.translate(-6, -26); c.rotate(-0.5); ejRR(c, 0, -14, 46, 16, 8); c.fill(); c.stroke(); c.restore(); // 親指
+    c.strokeStyle = 'rgba(160,110,80,.55)'; c.lineWidth = 2; c.beginPath(); c.moveTo(-14, -6); c.quadraticCurveTo(2, 4, 10, 14); c.stroke(); // 手相
+    c.restore(); }
+  if (tau > 0 && tau < 0.35) { ejStar(c, 305, 214, 34 * (1 - tau / 0.5), tau * 3, '#ffe27a');  }
+  if (tau > 1.9) { for (i = 0; i < 4; i++) { var ang = t * 3.4 + i * 1.57; ejStar(c, x + 4 + Math.cos(ang) * 34, y - 52 + Math.sin(ang) * 9, 7, ang, '#ffe27a'); } }
+}
+
+/* ===== 研究所: 転送装置で消える ===== */
+var EJ_OC = null;
+function ejLab(c, t) {
+  var scanA = 1.0, disA = 2.5, flash = 4.5;
+  ejGrad(c, -400, 760, [[0, '#eef3f8'], [1, '#d5dfe9']]);
+  c.strokeStyle = 'rgba(120,150,180,.25)'; c.lineWidth = 1; for (var i = -20; i < 40; i++) { c.beginPath(); c.moveTo(i * 40, -400); c.lineTo(i * 40, 760); c.stroke(); c.beginPath(); c.moveTo(-1200, i * 40); c.lineTo(1840, i * 40); c.stroke(); }
+  c.fillStyle = '#9fb3c8'; c.fillRect(-1200, 268, 3040, 160);
+  c.fillStyle = 'rgba(255,255,255,.5)'; for (i = -20; i < 40; i++) c.fillRect(i * 80, 268, 3, 160);
+  // 窓と画面
+  c.fillStyle = '#7e93ab'; ejRR(c, 40, 30, 150, 86, 6); c.fill(); c.fillStyle = '#bfe6ff'; ejRR(c, 46, 36, 138, 74, 4); c.fill(); c.fillStyle = 'rgba(255,255,255,.6)'; c.fillRect(56, 48, 40, 5); c.fillRect(56, 60, 70, 5);
+  var lost = t > flash + 0.3, blink = Math.sin(t * 10) > 0;
+  c.fillStyle = '#1b2a44'; ejRR(c, 450, 30, 160, 90, 6); c.fill();
+  ejText(c, lost ? 'SUBJECT LOST' : (t > disA ? 'TRANSFER...' : 'SCANNING'), 530, 64, 14, lost ? (blink ? '#ff6a6f' : '#7a2a30') : '#6fe3c8', 0, 'rgba(0,0,0,0)');
+  ejText(c, lost ? '被験体 転送失敗' : (t > disA ? '転送を開始' : 'スキャン中'), 530, 92, 15, '#d8f3ff', 0, 'rgba(0,0,0,0)');
+  // 転送装置
+  var padY = 262;
+  c.fillStyle = '#7e8fa4'; c.beginPath(); c.ellipse(320, padY + 12, 132, 32, 0, 0, 6.2832); c.fill();
+  c.fillStyle = '#5b6b80'; c.beginPath(); c.ellipse(320, padY + 4, 122, 28, 0, 0, 6.2832); c.fill();
+  var gl = 0.35 + 0.35 * Math.sin(t * 6) + 0.4 * ejSeg(t, disA, flash); c.fillStyle = 'rgba(80,220,255,' + ejCl(gl, 0, 1) + ')'; c.beginPath(); c.ellipse(320, padY, 100, 22, 0, 0, 6.2832); c.fill();
+  // 本体を別の画面に描いて、切り分ける
+  if (!EJ_OC) EJ_OC = document.createElement('canvas'); EJ_OC.width = 140; EJ_OC.height = 150;
+  var oc = EJ_OC.getContext('2d'); oc.setTransform(1, 0, 0, 1, 0, 0); oc.clearRect(0, 0, 140, 150); oc.save(); oc.translate(70, 78); drawBlob(oc, 0, 0, EJ.hex, 1, 0, 1, false, false, null, EJ.ac); oc.restore();
+  var sc = 2.2, bx = 320, by = padY - 6 - 24 * sc; // 足が装置の上に乗る
+  var sl = 0, SH = 3, sy;
+  if (t < disA) {
+    var scan = ejSeg(t, scanA, disA - 0.2), sweep = 0.5 + 0.5 * Math.sin(scan * Math.PI * 3 - Math.PI / 2); // 光の線が上下に動く
+    c.save(); c.translate(bx - 70 * sc, by - 78 * sc); c.scale(sc, sc); c.drawImage(EJ_OC, 0, 0); c.restore();
+    if (t > scanA - 0.1) { var ly = by - 78 * sc + 12 * sc + sweep * 120 * sc; c.fillStyle = 'rgba(90,240,255,.85)'; c.fillRect(bx - 70, ly, 140, 3); c.fillStyle = 'rgba(90,240,255,.18)'; c.fillRect(bx - 70, ly - 18, 140, 18); }
+  } else {
+    var N = 50;
+    for (sl = 0; sl < N; sl++) {
+      var sy0 = sl * 3, dly = (1 - sl / N) * 1.2 + ejRnd(sl) * 0.25, q = ejCl((t - disA - dly) / 0.85), al = 1 - q; if (al <= 0.01) continue;
+      var dx = (ejRnd(sl + 11) - 0.5) * 80 * q, dy = -q * q * 240;
+      c.globalAlpha = al; c.drawImage(EJ_OC, 0, sy0, 140, SH, bx - 70 * sc + dx, by - 78 * sc + sy0 * sc + dy, 140 * sc, SH * sc); c.globalAlpha = 1;
+    }
+  }
+  // ガラス管と光の柱
+  var tube = ejSeg(t, 0.1, 0.9), ty = ejLerp(-120, 52, ejEO(tube));
+  c.fillStyle = 'rgba(160,225,255,.20)'; c.fillRect(220, ty, 200, padY - ty); c.strokeStyle = 'rgba(120,200,235,.8)'; c.lineWidth = 3; c.strokeRect(220, ty, 200, padY - ty);
+  c.fillStyle = '#6f8196'; c.fillRect(214, ty - 10, 212, 14);
+  var beam = ejSeg(t, disA + 0.4, disA + 1.6) * (1 - ejSeg(t, flash, flash + 0.9));
+  if (beam > 0) { var bg2 = c.createLinearGradient(0, ty, 0, padY); bg2.addColorStop(0, 'rgba(255,255,255,0)'); bg2.addColorStop(1, 'rgba(150,245,255,' + (0.9 * beam) + ')'); c.fillStyle = bg2; c.fillRect(236, ty, 168, padY - ty); }
+  for (i = 0; i < 30; i++) { // 粒
+    var life = ((t * 0.9 + ejRnd(i) * 3) % 1.6) / 1.6; if (t < disA - 0.2 || t > flash + 0.8) break;
+    c.fillStyle = 'rgba(150,245,255,' + ((1 - life) * 0.9) + ')'; c.fillRect(240 + ejRnd(i + 20) * 160, padY - life * 210, 3, 3);
+  }
+  // 光のわっか
+  if (t > scanA && t < flash + 0.6) for (i = 0; i < 3; i++) { var rp = ((t * 0.7 + i / 3) % 1), ry = padY - rp * 190; c.strokeStyle = 'rgba(100,230,255,' + (0.7 * (1 - rp)) + ')'; c.lineWidth = 3; c.beginPath(); c.ellipse(320, ry, 98, 20, 0, 0, 6.2832); c.stroke(); }
+  if (t > flash && t < flash + 0.7) { c.fillStyle = 'rgba(255,255,255,' + (0.95 * (1 - (t - flash) / 0.7)) + ')'; ejFill(c, c.fillStyle); }
+  if (lost) { c.fillStyle = 'rgba(255,60,70,' + (blink ? 0.9 : 0.2) + ')'; c.beginPath(); c.arc(590, 150, 9, 0, 6.2832); c.fill(); }
+}
+
+/* ===== 大型客船: 板を歩かされて海へ ===== */
+function ejQueen(c, t) {
+  var fall = 3.9, water = 4.55;
+  var pan = ejSeg(t, water, water + 2.5) * 120; // 落ちたあと、船がゆっくり離れていく
+  ejGrad(c, -400, 235, [[0, '#4a3a8c'], [0.55, '#e2688a'], [1, '#ffb066']]);
+  c.fillStyle = 'rgba(255,230,160,.9)'; c.beginPath(); c.arc(500, 228, 46, 0, 6.2832); c.fill(); c.fillStyle = 'rgba(255,200,120,.3)'; c.beginPath(); c.arc(500, 228, 78, 0, 6.2832); c.fill();
+  for (var i = 0; i < 4; i++) { c.fillStyle = 'rgba(255,210,200,.55)'; ejRR(c, 60 + i * 140 + Math.sin(t * 0.3 + i) * 10, 50 + (i % 2) * 36, 90, 14, 7); c.fill(); }
+  ejGrad(c, 235, 760, [[0, '#2a3f7a'], [1, '#0e1a3e']]);
+  c.fillStyle = 'rgba(255,200,130,.25)'; c.fillRect(440, 235, 120, 6); c.fillRect(455, 247, 90, 4);
+  for (i = 0; i < 16; i++) { var wx = ((i * 83 + t * 24) % 760) - 60, wy = 250 + (i % 5) * 18; c.strokeStyle = 'rgba(190,220,255,.28)'; c.lineWidth = 2; c.beginPath(); c.moveTo(wx, wy); c.quadraticCurveTo(wx + 14, wy - 4, wx + 28, wy); c.stroke(); }
+  // 船(左。落ちたあとは遠ざかる)
+  c.save(); c.translate(-pan, 0);
+  c.fillStyle = '#f2f4f8'; c.beginPath(); c.moveTo(-1200, 188); c.lineTo(262, 188); c.lineTo(250, 300); c.lineTo(-1200, 300); c.fill();
+  c.fillStyle = '#c33a4a'; c.fillRect(-1200, 290, 1450, 14);
+  c.fillStyle = '#26395e'; for (i = -14; i < 5; i++) { c.beginPath(); c.arc(i * 44 + 30, 232, 9, 0, 6.2832); c.fill(); }
+  c.fillStyle = '#d8dde8'; c.fillRect(-1200, 172, 1462, 16); c.fillStyle = '#9aa4b8'; for (i = -28; i < 6; i++) c.fillRect(i * 40 + 12, 130, 4, 44); c.fillRect(-1200, 128, 1462, 4);
+  c.fillStyle = '#b07a44'; c.fillRect(-1200, 168, 1462, 6);
+  // 板(板の先は、体重でたわむ)
+  var bend = Math.sin(t * 7) * 2 * ejSeg(t, 2.9, 3.8) * (1 - ejSeg(t, fall, fall + 0.1)) + ejSeg(t, 3.2, fall) * 8 - (t > fall ? Math.sin((t - fall) * 24) * 14 * Math.exp(-(t - fall) * 4) : 0);
+  c.fillStyle = '#9a6a3a'; c.beginPath(); c.moveTo(236, 166); c.lineTo(430, 166 + bend); c.lineTo(430, 175 + bend); c.lineTo(236, 174); c.fill(); c.fillStyle = '#6f4a26'; c.fillRect(236, 172, 194, 3);
+  c.restore();
+  // 本体
+  var x, y, sc = 2, rot = 0, ph = t * 9, wob = 0, tau = t - fall;
+  if (t < fall) {
+    var wk = ejSeg(t, 0.3, 3.0), fx = ejLerp(110, 404, wk); // 板の上を歩く
+    x = fx; y = (fx < 236 ? 130 : ejLerp(130, 130 + 6, ejSeg(fx, 236, 404))) - 24 * sc + 46 + Math.sin(t * 16) * 2 - 8;
+    y = 168 - 24 * sc - 2 + (fx > 236 ? (fx - 236) / 194 * (6 + bend) : 0);
+    if (wk >= 1) { ph = 0; rot = Math.sin(t * 19) * 0.22; x += Math.sin(t * 13) * 3; }
+    x -= pan;
+  } else if (tau < 0.7) { var a = tau / 0.7; x = ejLerp(404, 430, a) - pan; y = ejLerp(168 - 48, 276 - 24 * sc + 30, ejEI(a)); rot = a * 4.2; }
+  else { x = 430 - pan; y = 400; rot = 4.2; }
+  if (t < water || y < 300) { c.save(); c.beginPath(); c.rect(-1200, -600, 3040, 276 + 600); c.clip(); ejBlob(c, x, y, sc, rot, ph, 1, 1); c.restore(); }
+  // 水しぶき・波紋
+  if (t >= water) {
+    var wt = t - water, sx2 = 430 - pan;
+    for (i = 0; i < 4; i++) { var rp = ejCl((wt - i * 0.2) / 1.6); if (rp <= 0 || rp >= 1) continue; c.strokeStyle = 'rgba(220,240,255,' + (0.7 * (1 - rp)) + ')'; c.lineWidth = 2.5; c.beginPath(); c.ellipse(sx2, 280, 14 + rp * 100, 4 + rp * 20, 0, 0, 6.2832); c.stroke(); }
+    for (i = 0; i < 34; i++) { var vx = (ejRnd(i) - 0.5) * 150, vy = -(120 + ejRnd(i + 3) * 190), px = sx2 + vx * wt, py = 280 + vy * wt + 330 * wt * wt, al = 1 - ejCl(wt / 1.1); if (al <= 0 || py > 292) continue; c.fillStyle = 'rgba(235,248,255,' + al + ')'; c.beginPath(); c.arc(px, py, 2.4 + ejRnd(i + 8) * 3, 0, 6.2832); c.fill(); }
+    var col = ejSeg(wt, 0, 0.18) * (1 - ejSeg(wt, 0.18, 0.7)); if (col > 0) { c.fillStyle = 'rgba(235,248,255,' + (0.85 * col) + ')'; c.beginPath(); c.moveTo(sx2 - 26, 284); c.quadraticCurveTo(sx2 - 16, 284 - 90 * col, sx2, 284 - 120 * col); c.quadraticCurveTo(sx2 + 16, 284 - 90 * col, sx2 + 26, 284); c.fill(); }
+    for (i = 0; i < 7; i++) { var bt = ((wt * 0.8 + ejRnd(i)) % 1); if (wt < 0.5 || wt > 3) break; c.strokeStyle = 'rgba(210,235,255,' + (0.8 * (1 - bt)) + ')'; c.lineWidth = 1.5; c.beginPath(); c.arc(sx2 + (ejRnd(i + 4) - 0.5) * 24, 330 - bt * 46, 2 + ejRnd(i) * 3, 0, 6.2832); c.stroke(); }
+    // 浮き輪が投げ込まれる
+    var lb = ejSeg(wt, 0.7, 1.5), lx = ejLerp(300 - pan, 480 - pan, lb), ly = ejLerp(150, 283, lb) - Math.sin(lb * Math.PI) * 50 + (lb >= 1 ? Math.sin(t * 3) * 2 : 0);
+    if (wt > 0.7) { c.save(); c.translate(lx, ly); c.rotate(lb * 6); c.strokeStyle = '#fff'; c.lineWidth = 9; c.beginPath(); c.ellipse(0, 0, 15, 8, 0, 0, 6.2832); c.stroke(); c.strokeStyle = '#e84a5a'; c.setLineDash([9, 9]); c.beginPath(); c.ellipse(0, 0, 15, 8, 0, 0, 6.2832); c.stroke(); c.restore(); }
+  }
+}
+
+/* ===== 古城: カタパルトで空の彼方へ ===== */
+function ejCastle(c, t) {
+  var rel = 2.6, tau = Math.max(0, t - rel), zoom = ejLerp(1, 0.55, ejEO(ejSeg(t, rel + 0.2, rel + 2.4)));
+  ejGrad(c, -900, 300, [[0, '#4ea4ee'], [1, '#cfe9ff']]);
+  for (var i = 0; i < 6; i++) { var cx = ((i * 190 + t * 6) % 960) - 160, cy = 40 + (i % 3) * 52; c.fillStyle = 'rgba(255,255,255,.9)'; c.beginPath(); c.arc(cx, cy, 22, 0, 6.2832); c.arc(cx + 24, cy + 4, 26, 0, 6.2832); c.arc(cx + 50, cy, 20, 0, 6.2832); c.fill(); }
+  c.save(); c.translate(320, 300); c.scale(zoom, zoom); c.translate(-320, -300);
+  // 古城(左)
+  c.fillStyle = '#f4f2ee'; c.strokeStyle = '#a9a699'; c.lineWidth = 2;
+  [[40, 120, 70], [120, 80, 56], [190, 140, 66]].forEach(function (b, k) { c.fillRect(b[0], b[1], b[2], 292 - b[1]); c.strokeRect(b[0], b[1], b[2], 292 - b[1]); for (var m = 0; m < 5; m++) c.fillRect(b[0] + m * (b[2] / 4.5), b[1] - 10, b[2] / 9, 10); c.fillStyle = '#6a84c0'; c.beginPath(); c.moveTo(b[0] - 6, b[1]); c.lineTo(b[0] + b[2] / 2, b[1] - 46 - k * 8); c.lineTo(b[0] + b[2] + 6, b[1]); c.fill(); c.fillStyle = '#f4f2ee'; });
+  c.fillStyle = '#6a84c0'; c.fillRect(70, 160, 8, 24); c.fillRect(146, 120, 8, 22); c.fillRect(216, 180, 8, 24);
+  c.fillStyle = '#e85a5a'; c.fillRect(158, 12, 2, 24); c.beginPath(); c.moveTo(160, 14); c.lineTo(186, 22); c.lineTo(160, 30); c.fill();
+  // 地面と堀
+  c.fillStyle = '#7cc462'; c.fillRect(-1200, 292, 3040, 400); c.fillStyle = '#8cd072'; c.fillRect(-1200, 292, 3040, 8);
+  c.fillStyle = '#3f86c6'; c.fillRect(268, 292, 70, 30); c.fillStyle = 'rgba(255,255,255,.5)'; c.fillRect(278, 300, 20, 3); c.fillRect(306, 308, 18, 3);
+  // カタパルト
+  var px = 450, py = 244, L = 86, arm, cock = ejSeg(t, 0.4, 1.9), rls = ejSeg(t, rel - 0.02, rel + 0.22);
+  arm = ejLerp(3.5, 1.25, ejEI(rls)); if (t < 1.9) arm = ejLerp(3.9, 3.5, ejEIO(cock)); // 引き絞る(うしろに倒れる)→ 一気にふり上がる
+  if (t >= rel + 0.22) arm = 1.25 - Math.sin((t - rel - 0.22) * 18) * 0.06 * Math.exp(-(t - rel) * 3);
+  c.fillStyle = '#8a5a34'; c.beginPath(); c.moveTo(px - 70, 292); c.lineTo(px - 18, py); c.lineTo(px + 18, py); c.lineTo(px + 70, 292); c.lineTo(px + 50, 292); c.lineTo(px, py + 18); c.lineTo(px - 50, 292); c.fill();
+  c.fillStyle = '#5a3a1c'; c.fillRect(px - 82, 284, 164, 10); c.beginPath(); c.arc(px - 52, 296, 15, 0, 6.2832); c.arc(px + 52, 296, 15, 0, 6.2832); c.fill(); c.fillStyle = '#a97a4a'; c.beginPath(); c.arc(px - 52, 296, 7, 0, 6.2832); c.arc(px + 52, 296, 7, 0, 6.2832); c.fill();
+  var ax = px + Math.cos(arm) * L, ay = py - Math.sin(arm) * L;
+  c.strokeStyle = '#6a4424'; c.lineWidth = 10; c.lineCap = 'round'; c.beginPath(); c.moveTo(px - Math.cos(arm) * 34, py + Math.sin(arm) * 34); c.lineTo(ax, ay); c.stroke(); c.lineCap = 'butt';
+  c.fillStyle = '#4a2c14'; c.beginPath(); c.arc(px, py, 9, 0, 6.2832); c.fill();
+  c.fillStyle = '#6a4424'; c.beginPath(); c.ellipse(ax, ay + 4, 22, 10, 0, 0, Math.PI); c.fill(); c.fillRect(ax - 22, ay - 2, 44, 6);
+  // 本体(飛んでいくあいだは、拡大縮小の外(画面の座標)で描く)
+  if (t < rel) { var bsc = 1.8; ejBlob(c, ax + Math.sin(t * 40) * (t > 2 ? 1.2 : 0), ay - 24 * bsc + 14, bsc, ejSeg(t, 0, 2) * 0.1, 0, 1, 1); }
+  if (tau > 0 && tau < 0.45) { for (i = 0; i < 6; i++) { c.fillStyle = 'rgba(255,255,255,' + (0.6 * (1 - tau / 0.45)) + ')'; c.beginPath(); c.arc(px - 40 + i * 20 + ejRnd(i) * 10, 288 - tau * 30, 10 + tau * 22, 0, 6.2832); c.fill(); } }
+  c.restore();
+  if (t >= rel) { // 空を飛んでいく: 発射の位置から、右上の遠くの一点へ。だんだん小さくなる
+    var sx0 = px + Math.cos(1.25) * L, sy0 = py - Math.sin(1.25) * L - 24 * 1.8 + 14, fa = ejCl(tau / 3.0), fx = ejLerp(sx0, 585, ejEO(fa)), fy = ejLerp(sy0, 52, ejEO(fa)) - Math.sin(fa * Math.PI) * 96;
+    ejBlob(c, fx, fy, ejLerp(1.8, 0.28, ejEO(fa)), tau * 7, 0, 1 - ejSeg(fa, 0.93, 1) * 1, 1);
+  }
+  // キラーン
+  var kt = t - (rel + 2.85);
+  if (kt > 0) { var kk = Math.sin(ejCl(kt / 1.1) * Math.PI), kx = 580, ky = 46; ejStar(c, kx, ky, 8 + 40 * kk, 0.3, 'rgba(255,255,255,' + (0.4 + 0.6 * kk) + ')'); ejStar(c, kx, ky, 5 + 22 * kk, 0.3 + Math.PI / 4, 'rgba(255,240,150,' + kk + ')');
+    c.strokeStyle = 'rgba(255,255,255,' + kk * 0.8 + ')'; c.lineWidth = 2; c.beginPath(); c.moveTo(kx - 70 * kk, ky); c.lineTo(kx + 70 * kk, ky); c.stroke(); c.beginPath(); c.moveTo(kx, ky - 70 * kk); c.lineTo(kx, ky + 70 * kk); c.stroke();
+  }
+}
+
+/* ===== 研究都市: 排出ハッチから深層へ ===== */
+function ejCity(c, t) {
+  var open = 2.0, fall = 2.4, tau = Math.max(0, t - fall);
+  var v = Math.min(1100, tau * 650), off = (tau * tau * 325 > 3300 ? 3300 + (tau - Math.sqrt(3300 / 325)) * 1100 : tau * tau * 325), depth = Math.round(off * 0.45);
+  ejFill(c, '#06090f');
+  // 縦穴のかべ
+  var L = 150, R = 490, i;
+  for (i = -2; i < 12; i++) {
+    var yy = ((i * 64 + off) % 704) - 64; c.fillStyle = (i % 2) ? '#141c2c' : '#101726'; c.fillRect(-1200, yy, L + 1200, 60); c.fillRect(R, yy, 1200, 60);
+    c.fillStyle = (i % 3 === 0) ? '#ffb24d' : '#3d9bd8'; c.fillRect(L - 8, yy + 24, 8, 10); c.fillRect(R, yy + 24, 8, 10);
+    c.strokeStyle = '#26324c'; c.lineWidth = 2; c.strokeRect(L - 40, yy + 4, 40, 52); c.strokeRect(R, yy + 4, 40, 52);
+  }
+  c.fillStyle = '#26324c'; c.fillRect(L - 18, -400, 6, 1200); c.fillRect(R + 12, -400, 6, 1200); c.fillStyle = '#4a5a7c'; c.fillRect(L - 4, -400, 4, 1200); c.fillRect(R, -400, 4, 1200);
+  // 警報灯
+  var sir = Math.sin(t * 8) > 0; c.fillStyle = 'rgba(255,50,60,' + (t < fall + 1 ? (sir ? 0.2 : 0.05) : 0.08) + ')'; ejFill(c, c.fillStyle);
+  // 速度線
+  if (tau > 0.1) { c.strokeStyle = 'rgba(190,225,255,' + ejCl(v / 1100 * 0.55) + ')'; c.lineWidth = 1.5; for (i = 0; i < 26; i++) { var lx = L + 10 + ejRnd(i) * (R - L - 20), ly = ((ejRnd(i + 9) * 760 + off * 1.6 + i * 70) % 760) - 120, ll = 30 + v * 0.14; c.beginPath(); c.moveTo(lx, ly); c.lineTo(lx, ly + ll); c.stroke(); } }
+  // ハッチ(上へ流れていく)
+  var hy = 250 + off, hs = ejEO((t - open) / 0.35);
+  if (hy < 520) {
+    c.fillStyle = '#39456a'; c.fillRect(L, hy, R - L, 22); c.fillStyle = '#ffcc4d'; for (i = 0; i < 12; i++) c.fillRect(L + 8 + i * 27, hy + 5, 14, 5);
+    c.fillStyle = '#26314e'; c.fillRect(L + (R - L) / 2 - hs * 120, hy - 2, 240 * (1 - hs) / 2 + 0, 26); c.fillRect(L + (R - L) / 2 + 0, hy - 2, 0, 26);
+    // 左右にわれて開く
+    c.fillStyle = '#06090f'; c.fillRect(L + (R - L) / 2 - hs * 96, hy - 4, hs * 192, 30);
+  }
+  // 本体
+  var x = 320, y, sc = 2, rot = 0, ph = 0;
+  if (t < fall) { y = 250 - 24 * sc + Math.sin(t * 24) * (t > open ? 2 : 0); if (t < open) ph = 0; }
+  else { y = ejLerp(226, 170, ejEO(tau / 0.5)); rot = Math.sin(tau * 1.6) * 0.5 + tau * 0.25; sc = 2 - ejSeg(t, 5.4, 6.8) * 1.45; x = 320 + Math.sin(tau * 2) * 10; y += ejSeg(t, 5.6, 6.8) * 150; }
+  ejBlob(c, x, y, sc, rot, ph, 1 - ejSeg(t, 6.5, 6.9), 1);
+  // 数字・警告
+  if (t < open) { var cd = Math.ceil(open - t) + 0; if (t > 0.3) ejText(c, String(Math.max(1, cd)), 560, 110, 60, 'rgba(255,100,110,.9)', 0); ejText(c, '緊急排出 ─ 準備中', 150, 52, 16, '#ff8c96', 0); }
+  else if (t < fall + 1.2) ejText(c, '強制排出!', 320, 64, 30, sir ? '#ff6a6f' : '#ffb3bf', 0);
+  c.font = '800 15px monospace'; c.textAlign = 'right'; c.fillStyle = '#6fe3c8'; if (tau > 0) c.fillText('深度 -' + depth + ' m', 612, 30);
+  // 底の光
+  var fl = ejSeg(t, 5.8, 6.9); if (fl > 0) { var rg = c.createRadialGradient(320, 380, 4, 320, 380, 40 + fl * 260); rg.addColorStop(0, 'rgba(255,255,255,' + fl + ')'); rg.addColorStop(1, 'rgba(255,200,120,0)'); c.fillStyle = rg; c.fillRect(-1200, 100, 3040, 800); }
+  if (t > 6.7) { c.fillStyle = 'rgba(6,9,15,' + (0.95 * ejSeg(t, 6.7, 7.2)) + ')'; ejFill(c, c.fillStyle); ejText(c, '反応消失', 320, 150, 26, 'rgba(255,120,130,' + ejSeg(t, 6.9, 7.2) + ')', 0, 'rgba(8,12,24,' + ejSeg(t, 6.9, 7.2) + ')'); }
+}
+
+var EJ_SCENES = { ship: ejShip, mansion: ejMansion, lab: ejLab, queen: ejQueen, castle: ejCastle, city: ejCity };
+var EJ_NAMES = { ship: '宇宙船', mansion: '洋館', lab: '研究所', queen: '大型客船', castle: '古城', city: '研究都市' };
+
+function ejStop() {
+  if (EJ.raf) cancelAnimationFrame(EJ.raf); EJ.raf = 0;
+  var box = $('fx-eject'); if (box) { box.hidden = true; box.classList.remove('go', 'out', 'ttl'); }
+}
+function ejFrame() {
+  EJ.raf = 0;
+  var box = $('fx-eject'); if (!box || box.hidden) return;
+  var t = (tnow() - EJ.t0) / 1000;
+  if (t >= EJ_DUR + 0.6 || !S.state || (S.state.phase !== 'meeting' && S.state.phase !== 'over')) { ejStop(); return; }
+  var cv = $('ej-cv'), dpr = Math.min(2, window.devicePixelRatio || 1), W = cv.clientWidth, H = cv.clientHeight;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  var c = cv.getContext('2d'), s = Math.min(W / 560, H / 360);
+  c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
+  c.save(); c.translate(W / 2 - 320 * s, H / 2 - 180 * s - H * 0.03); c.scale(s, s);
+  try { EJ.scene(c, Math.max(0, t)); } catch (e) { /* 演出の失敗でゲームを止めない */ }
+  c.restore();
+  if (t > 5.4 && !box.classList.contains('ttl')) box.classList.add('ttl');
+  if (t > EJ_DUR && !box.classList.contains('out')) box.classList.add('out');
+  EJ.raf = requestAnimationFrame(ejFrame);
+}
+// 追放の演出をはじめる(el: 結果が出てからの経過秒)
+function playEject(st, m, el) {
+  var ej = st.players[m.res.ejected]; if (!ej) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var id = (E.M && E.M.id) || 'ship'; if (!EJ_SCENES[id]) id = 'ship';
+  var box = $('fx-eject'); if (!box) return;
+  if (!EJ.bound) { EJ.bound = true; box.addEventListener('click', function () { ejStop(); }); } // タップで飛ばせる
+  ejStop();
+  EJ.scene = EJ_SCENES[id]; EJ.hex = C[ej.color].hex; EJ.ac = ej.ac || null; EJ.t0 = m.end - EJ_TOTAL;
+  var res = m.res;
+  $('ej-name').textContent = ej.name + 'が追放された。';
+  $('ej-name').style.setProperty('--c', EJ.hex);
+  // 役職開示・陣営開示のときだけ、ここで出す
+  var ejSub = ejInfoText(res); $('ej-sub').textContent = ejSub; $('ej-sub').hidden = !ejSub;
+  $('ej-chip').textContent = '追放 ─ ' + EJ_NAMES[id];
+  box.hidden = false; box.classList.remove('out', 'ttl'); box.classList.remove('go'); void box.offsetWidth; box.classList.add('go');
+  buzz([40, 30, 40]);
+  EJ.raf = requestAnimationFrame(ejFrame);
+  void el;
+}
+
+
+/* ---------- 会議中に倒れた演出(イビルゲッサー・ナイスゲッサーの当て/外し) ----------
+ * 約3秒。画面を暗くして、狙いを定める → 命中(または自爆) → 倒れる → 魂が昇る。会議の画面のうえにかぶせる。
+ */
+var MK = { raf: 0, t0: 0, hex: '#fff', k: 'ag-hit', key: '' };
+var MK_DUR = 3.2;
+function mkBlob(c, x, y, sc, rot, alpha, ghost, dead) { c.save(); c.translate(x, y); c.rotate(rot || 0); c.scale(sc, sc); drawBlob(c, 0, 0, MK.hex, 1, 0, alpha, !!ghost, !!dead, null, MK.ac); c.restore(); }
+function mkBolt(c, x0, y0, x1, y1, seed, col, w) {
+  c.strokeStyle = col; c.lineWidth = w; c.lineJoin = 'round'; c.beginPath(); c.moveTo(x0, y0);
+  for (var i = 1; i < 7; i++) { var k = i / 7; c.lineTo(ejLerp(x0, x1, k) + (ejRnd(seed + i) - 0.5) * 46, ejLerp(y0, y1, k)); }
+  c.lineTo(x1, y1); c.stroke();
+}
+function mkScene(c, t, k) {
+  var hit = true, nice = false, col = '255,70,90', colS = '#ff5a6a'; // 当て・外し、イビル・ナイスのどれでも、同じ演出にする
+  var imp = 1.0, ti = t - imp;
+  ejFill(c, 'rgba(4,6,14,' + (0.78 * ejSeg(t, 0, 0.3)) + ')');
+  var vg = c.createRadialGradient(320, 180, 90, 320, 180, 420); vg.addColorStop(0, 'rgba(' + col + ',0)'); vg.addColorStop(1, 'rgba(' + col + ',' + (0.38 * ejSeg(t, 0, 0.5)) + ')'); c.fillStyle = vg; c.fillRect(-1200, -1400, 3040, 3160);
+  c.save();
+  if (ti > 0 && ti < 0.6) ejShake(c, 9, t, 1 - ti / 0.6);
+  // 本体: 命中のあと のけぞって、よこたおしになり、魂がぬける
+  var x = 320, y = 176, rot = 0, a = ejSeg(t, 0.05, 0.3), sc = 2.3, dead = false;
+  if (ti > 0 && ti < 0.18) { rot = -ejEO(ti / 0.18) * 0.5; x -= ejEO(ti / 0.18) * 14; } // 命中: のけぞる
+  else if (ti >= 0.18) { dead = true; var dk = ti - 0.18; x = 320 - 14 + ejEO(dk / 0.5) * 34; y = 176 + 34 - Math.sin(ejCl(dk / 0.4) * Math.PI) * 26; } // 倒れて、はねて、横たわる
+  var soul = ejSeg(t, 1.9, 3.0);
+  if (soul > 0) { mkBlob(c, 320, ejLerp(190, 24, soul), 1.5, Math.sin(t * 6) * 0.1, 0.8 * (1 - ejSeg(soul, 0.65, 1)), true, false); }
+  mkBlob(c, x, y, sc, rot, a, false, dead);
+  // ねらい(照準)
+  if (t < imp + 0.08) {
+    var rr = ejLerp(170, 52, ejEO(ejSeg(t, 0.15, 0.95))), wob = (hit ? 0 : 1) * Math.sin(t * 17) * (1 - ejSeg(t, 0.15, 0.95)) * 34, cx = 320 + wob, cy = 170 - wob * 0.5;
+    c.strokeStyle = colS; c.lineWidth = 3.2; c.beginPath(); c.arc(cx, cy, rr, 0, 6.2832); c.stroke();
+    c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, rr * 0.45, 0, 6.2832); c.stroke();
+    c.beginPath(); c.moveTo(cx - rr - 26, cy); c.lineTo(cx - rr * 0.3, cy); c.moveTo(cx + rr * 0.3, cy); c.lineTo(cx + rr + 26, cy); c.moveTo(cx, cy - rr - 26); c.lineTo(cx, cy - rr * 0.3); c.moveTo(cx, cy + rr * 0.3); c.lineTo(cx, cy + rr + 26); c.stroke();
+  }
+  // 命中
+  if (ti > 0 && ti < 0.5) {
+    var k2 = 1 - ti / 0.5;
+    c.strokeStyle = 'rgba(255,255,255,' + k2 + ')'; c.lineWidth = 12 * k2 + 2; c.beginPath(); c.moveTo(130, 70); c.lineTo(520, 290); c.stroke(); c.strokeStyle = 'rgba(255,70,90,' + k2 + ')'; c.lineWidth = 5 * k2; c.beginPath(); c.moveTo(150, 60); c.lineTo(540, 280); c.stroke();
+    for (var i = 0; i < 10; i++) { var ang = ejRnd(i * 3) * 6.2832, dd = 24 + ti * 220 * (0.5 + ejRnd(i)); ejStar(c, 320 + Math.cos(ang) * dd, 170 + Math.sin(ang) * dd, 7 * k2 + 1, ang, 'rgba(255,255,255,' + k2 + ')'); }
+  }
+  c.restore();
+  if (ti > 0 && ti < 0.22) { c.fillStyle = 'rgba(255,255,255,' + (0.8 * (1 - ti / 0.22)) + ')'; ejFill(c, c.fillStyle); }
+}
+function mkStop() {
+  if (MK.raf) cancelAnimationFrame(MK.raf); MK.raf = 0;
+  var box = $('fx-mk'); if (box) { box.hidden = true; box.classList.remove('go', 'out', 'ttl'); }
+}
+function mkFrame() {
+  MK.raf = 0;
+  var box = $('fx-mk'); if (!box || box.hidden) return;
+  var t = (tnow() - MK.t0) / 1000;
+  if (t >= MK_DUR + 0.5 || !S.state || S.state.phase !== 'meeting') { mkStop(); return; }
+  var cv = $('mk-cv'), dpr = Math.min(2, window.devicePixelRatio || 1), W = cv.clientWidth, H = cv.clientHeight;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  var c = cv.getContext('2d'), s = Math.min(W / 560, H / 360);
+  c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
+  c.save(); c.translate(W / 2 - 320 * s, H / 2 - 180 * s); c.scale(s, s);
+  try { mkScene(c, Math.max(0, t), MK.k); } catch (e) { /* 演出の失敗でゲームを止めない */ }
+  c.restore();
+  if (t > 1.2 && !box.classList.contains('ttl')) box.classList.add('ttl');
+  if (t > MK_DUR && !box.classList.contains('out')) box.classList.add('out');
+  MK.raf = requestAnimationFrame(mkFrame);
+}
+var MK_CHIP = { 'ag-hit': '会議中に倒れた', 'ag-miss': '会議中に倒れた', 'ng-hit': '会議中に倒れた', 'ng-miss': '会議中に倒れた' };
+function playMeetKill(st, m, ev) {
+  var v = st.players[ev.id]; if (!v || !MK_CHIP[ev.k]) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var box = $('fx-mk'); if (!box) return;
+  if (!MK.bound) { MK.bound = true; box.addEventListener('click', function () { mkStop(); }); }
+  mkStop();
+  MK.k = ev.k; MK.hex = C[v.color].hex; MK.ac = v.ac || null; MK.t0 = ev.at;
+  $('mk-chip').textContent = MK_CHIP[ev.k]; $('mk-name').textContent = ev.x; $('mk-name').style.setProperty('--c', '#ff5a6a');
+  box.hidden = false; box.classList.remove('out', 'ttl', 'go'); void box.offsetWidth; box.classList.add('go');
+  SND.play('mk_hit', { vol: 0.95 });
+  buzz([60, 40, 90]);
+  MK.raf = requestAnimationFrame(mkFrame);
 }
 
 /* ---------- 音(BGM・効果音)をゲームの出来事につなぐ ---------- */
@@ -6542,7 +7314,7 @@ function sndSync() {
   // 会議
   if (cur.phase === 'meeting') {
     if (cur.votes > pv.votes && cur.mn === pv.mn) SND.play('vote');
-    if (cur.stage === 'result' && pv.stage !== 'result') SND.play(st.meeting.res && st.meeting.res.ejected ? 'eject' : 'vote', { vol: 0.9 });
+    if (cur.stage === 'result' && pv.stage !== 'result') SND.play(st.meeting.res && st.meeting.res.ejected ? 'ej_' + ((E.M && E.M.id) || 'ship') : 'vote', { vol: 0.9 });
     var m = st.meeting, left = Math.ceil((m.end - now) / 1000);
     if ((m.stage === 'vote' || m.stage === 'discuss') && left > 0 && left <= 5 && cur.tick !== m.n * 1000 + m.end % 997 + left) { cur.tick = m.n * 1000 + m.end % 997 + left; SND.play('tick'); }
   }
@@ -6780,7 +7552,7 @@ function shade(hex, amt) {
 function ell(c, x, y, rx, ry) { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 6.2832); }
 // キャラクター「かめん狐(めんこ)」: 仮面をつけた、まるいキツネ風の生き物。体の色がプレイヤーの色。
 //   f: 向き(1=右 -1=左)、ph: 歩きの位相、ghost: 幽霊(浮かぶ)、dead: 倒れた姿
-function drawBlob(c, x, y, hex, f, ph, alpha, ghost, dead, dz) { // dz: ダンス中のポーズ {t: 経過秒}
+function drawBlob(c, x, y, hex, f, ph, alpha, ghost, dead, dz, ac) { // dz: ダンス中のポーズ {t: 経過秒}
   c.save(); c.globalAlpha = alpha; c.translate(x, y);
   var OUT = 'rgba(8,12,24,.9)', light = shade(hex, 0.3), dark = shade(hex, -0.3), CREAM = '#fbf6ea';
   if (!dead) { c.fillStyle = 'rgba(0,0,0,.3)'; ell(c, 0, ghost ? 29 : 24, ghost ? 11 : 15, 5); c.fill(); }
@@ -6846,6 +7618,75 @@ function drawBlob(c, x, y, hex, f, ph, alpha, ghost, dead, dz) { // dz: ダン�
     c.beginPath(); c.arc(-2.4 + f * 1.5, 9.5, 2.4, 0.1, 3.0); c.stroke(); c.beginPath(); c.arc(2.4 + f * 1.5, 9.5, 2.4, 0.1, 3.0); c.stroke(); c.lineCap = 'butt';  // 口(ちいさな ω)
   }
   c.restore();
+  if (ac) drawAcc(c, ac, f, dead); // 小物(待機室の鏡で付けたもの)
+  c.restore();
+}
+// ---------- 小物(あたま・かお・くび) ----------
+// ac = { h: 'crown', f: 'glasses', n: 'bowtie' } 。キャラクターの座標(からだの中心が原点、顔は少し上)で描く。f は向き(1 / -1)
+function drawAcc(c, ac, f, dead) {
+  var OUT = 'rgba(8,12,24,.9)', ex = function (sd) { return sd * 4.08 + f * 2.22; }, ey = -6.2;
+  c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
+  function st(w) { c.lineWidth = w || 1.8; c.strokeStyle = OUT; c.stroke(); }
+  // くび(からだの前。顔のあとに描く)
+  if (ac.n === 'scarf') {
+    c.beginPath(); c.ellipse(0, 1.6, 15.4, 6.2, 0, 0.1 * Math.PI, 0.9 * Math.PI); c.lineWidth = 5.4; c.strokeStyle = OUT; c.stroke();
+    c.lineWidth = 3.2; c.strokeStyle = '#e8553f'; c.stroke();
+    c.save(); c.translate(f * 8, 6.6); c.rotate(-f * 0.18); c.fillStyle = '#e8553f'; c.beginPath(); c.rect(-2.6, 0, 5.2, 10); c.fill(); st(1.6);
+    c.fillStyle = '#fff3d6'; c.fillRect(-2.6, 3, 5.2, 1.8); c.fillRect(-2.6, 7, 5.2, 1.8); c.restore();
+  } else if (ac.n === 'bowtie') {
+    c.save(); c.translate(f * 1.2, 4.2); c.fillStyle = '#e8495f';
+    c.beginPath(); c.moveTo(0, 0); c.lineTo(-7.4, -3.8); c.lineTo(-7.4, 3.8); c.closePath(); c.fill(); st(1.6);
+    c.beginPath(); c.moveTo(0, 0); c.lineTo(7.4, -3.8); c.lineTo(7.4, 3.8); c.closePath(); c.fill(); st(1.6);
+    c.fillStyle = '#c42f46'; c.beginPath(); c.arc(0, 0, 2.3, 0, 6.2832); c.fill(); st(1.4); c.restore();
+  } else if (ac.n === 'bell') {
+    c.beginPath(); c.ellipse(0, 1.6, 15.2, 5.4, 0, 0.12 * Math.PI, 0.88 * Math.PI); c.lineWidth = 4; c.strokeStyle = OUT; c.stroke();
+    c.lineWidth = 2.2; c.strokeStyle = '#e8495f'; c.stroke();
+    c.save(); c.translate(f * 1.2, 8.2); c.fillStyle = '#ffd24d'; c.beginPath(); c.arc(0, 0, 3.1, 0, 6.2832); c.fill(); st(1.5);
+    c.strokeStyle = '#a97b12'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-2.6, 0.6); c.lineTo(2.6, 0.6); c.stroke(); c.fillStyle = '#7a5a0e'; c.beginPath(); c.arc(0, 1.9, 0.9, 0, 6.2832); c.fill(); c.restore();
+  }
+  // かお
+  if (ac.f === 'blush') {
+    c.fillStyle = 'rgba(255,110,145,.6)'; [-1, 1].forEach(function (sd) { c.beginPath(); c.ellipse(sd * 8.6 + f * 2, -2.6, 2.6, 1.8, 0, 0, 6.2832); c.fill(); });
+  } else if (ac.f === 'glasses') {
+    [-1, 1].forEach(function (sd) { c.beginPath(); c.arc(ex(sd), ey, 4.6, 0, 6.2832); c.fillStyle = 'rgba(190,225,255,.28)'; c.fill(); c.lineWidth = 1.8; c.strokeStyle = '#2b3150'; c.stroke(); });
+    c.beginPath(); c.moveTo(ex(-1) + 4.6, ey - 0.4); c.lineTo(ex(1) - 4.6, ey - 0.4); c.lineWidth = 1.6; c.strokeStyle = '#2b3150'; c.stroke();
+    [-1, 1].forEach(function (sd) { c.beginPath(); c.moveTo(ex(sd) + sd * 4.6, ey - 0.6); c.lineTo(ex(sd) + sd * 8, ey - 2.4); c.stroke(); });
+  } else if (ac.f === 'shades') {
+    [-1, 1].forEach(function (sd) { c.beginPath(); c.moveTo(ex(sd) - 4.9, ey - 3); c.lineTo(ex(sd) + 4.9, ey - 3); c.lineTo(ex(sd) + 4.2, ey + 3.4); c.quadraticCurveTo(ex(sd), ey + 5.6, ex(sd) - 4.2, ey + 3.4); c.closePath(); c.fillStyle = '#12162a'; c.fill(); st(1.4); c.strokeStyle = 'rgba(255,255,255,.5)'; c.lineWidth = 1.1; c.beginPath(); c.moveTo(ex(sd) - 3, ey - 1.6); c.lineTo(ex(sd) - 0.6, ey - 1.6); c.stroke(); });
+    c.beginPath(); c.moveTo(ex(-1) + 4.9, ey - 2.4); c.lineTo(ex(1) - 4.9, ey - 2.4); c.lineWidth = 1.8; c.strokeStyle = '#12162a'; c.stroke();
+  } else if (ac.f === 'monocle') {
+    var mx = ex(1), my = ey; c.beginPath(); c.arc(mx, my, 5, 0, 6.2832); c.fillStyle = 'rgba(255,240,180,.25)'; c.fill(); c.lineWidth = 1.9; c.strokeStyle = '#d9a82a'; c.stroke();
+    c.beginPath(); c.moveTo(mx + 3.6, my + 3.6); c.quadraticCurveTo(mx + 9, my + 8, mx + 7, my + 17); c.lineWidth = 1.1; c.strokeStyle = '#d9a82a'; c.stroke();
+  } else if (ac.f === 'mustache') {
+    c.save(); c.translate(f * 1.6, -0.6); c.fillStyle = '#5b3a24';
+    [-1, 1].forEach(function (sd) { c.beginPath(); c.moveTo(0, -1.2); c.quadraticCurveTo(sd * 3.6, -3.6, sd * 8.2, -0.4); c.quadraticCurveTo(sd * 9.6, 1.6, sd * 7.2, 2.2); c.quadraticCurveTo(sd * 5, 0.2, sd * 3, 1); c.quadraticCurveTo(sd * 1.2, 1.8, 0, 1.2); c.closePath(); c.fill(); st(1.2); });
+    c.restore();
+  }
+  // あたま(耳のあいだ。からだの上は y=-19)
+  if (ac.h === 'crown') {
+    c.beginPath(); c.moveTo(-8.4, -16.6); c.lineTo(-9.2, -27.4); c.lineTo(-4.4, -22); c.lineTo(0, -29.6); c.lineTo(4.4, -22); c.lineTo(9.2, -27.4); c.lineTo(8.4, -16.6); c.closePath(); c.fillStyle = '#ffd24d'; c.fill(); st(1.8);
+    c.fillStyle = '#e8495f'; c.beginPath(); c.arc(0, -20.6, 1.7, 0, 6.2832); c.fill(); c.fillStyle = '#4aa8ff'; [-5, 5].forEach(function (x) { c.beginPath(); c.arc(x, -19.4, 1.2, 0, 6.2832); c.fill(); });
+  } else if (ac.h === 'party') {
+    c.beginPath(); c.moveTo(-7.4, -17.4); c.lineTo(0.6, -37.6); c.lineTo(7.4, -17.4); c.closePath(); c.fillStyle = '#ff6fb1'; c.fill(); st(1.8);
+    c.strokeStyle = '#ffe066'; c.lineWidth = 2; c.beginPath(); c.moveTo(-5.2, -22.4); c.lineTo(5, -24.2); c.moveTo(-3, -28.4); c.lineTo(3.2, -29.4); c.stroke();
+    c.fillStyle = '#ffe066'; c.beginPath(); c.arc(0.6, -37.8, 3, 0, 6.2832); c.fill(); st(1.5);
+  } else if (ac.h === 'ribbon') {
+    c.save(); c.translate(10.4, -21.6); c.rotate(0.28); c.fillStyle = '#ff5c8a';
+    [-1, 1].forEach(function (sd) { c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(sd * 8, -8.6, sd * 10.4, -1); c.quadraticCurveTo(sd * 10, 7.2, 0, 0); c.closePath(); c.fill(); st(1.6); });
+    c.fillStyle = '#d93a69'; c.beginPath(); c.arc(0, 0, 2.5, 0, 6.2832); c.fill(); st(1.4); c.restore();
+  } else if (ac.h === 'flower') {
+    c.save(); c.translate(-9.4, -21.4); c.fillStyle = '#ffb8d6';
+    for (var i = 0; i < 5; i++) { var a = i * 1.2566 - 1.57; c.beginPath(); c.arc(Math.cos(a) * 3.8, Math.sin(a) * 3.8, 3, 0, 6.2832); c.fill(); st(1.2); }
+    c.fillStyle = '#ffe066'; c.beginPath(); c.arc(0, 0, 2.5, 0, 6.2832); c.fill(); st(1.2); c.restore();
+  } else if (ac.h === 'tophat') {
+    c.fillStyle = '#20243a'; c.beginPath(); c.ellipse(0, -18.4, 12.6, 3.2, 0, 0, 6.2832); c.fill(); st(1.7);
+    c.beginPath(); c.moveTo(-7.4, -18.8); c.lineTo(-7, -33.6); c.quadraticCurveTo(0, -35.4, 7, -33.6); c.lineTo(7.4, -18.8); c.closePath(); c.fill(); st(1.7);
+    c.fillStyle = '#e8495f'; c.fillRect(-7.3, -23.4, 14.6, 3.4);
+    c.fillStyle = '#20243a'; c.beginPath(); c.ellipse(0, -18.6, 12.4, 2.8, 0, 0, Math.PI); c.fill();
+  } else if (ac.h === 'phones') {
+    c.beginPath(); c.arc(0, -2.4, 20.2, 1.08 * Math.PI, 1.92 * Math.PI); c.lineWidth = 4.6; c.strokeStyle = OUT; c.stroke(); c.lineWidth = 2.6; c.strokeStyle = '#4a5072'; c.stroke();
+    [-1, 1].forEach(function (sd) { c.fillStyle = '#e85d75'; c.beginPath(); c.ellipse(sd * 19.4, -4.6, 4.2, 6.2, 0, 0, 6.2832); c.fill(); st(1.7); });
+  }
   c.restore();
 }
 // ---------- ダンスの専用ステージ(踊っている2人にだけ見える。マップや、ほかの人は見せない) ----------
@@ -6945,7 +7786,7 @@ function drawDanceStage(c, st, me, now, uni, alpha) {
     var hop = wait ? Math.abs(Math.sin(dt * 2.2)) * 1.5 * k : Math.abs(Math.sin(dt * 6.4)) * 5 * k;
     c.save(); c.translate(o.x, o.y - hop); c.scale(k * 1.15, k * 1.15);
     if (wait) c.rotate(Math.sin(dt * 1.7 + o.sg) * 0.04);
-    drawBlob(c, 0, 0, uni ? '#dfe4f4' : C[pl.color].hex, o.f, wait ? 0 : dt * 9, 1, false, false, wait ? null : { t: dt });
+    drawBlob(c, 0, 0, uni ? '#dfe4f4' : C[pl.color].hex, o.f, wait ? 0 : dt * 9, 1, false, false, wait ? null : { t: dt }, uni ? null : pl.ac);
     c.restore();
     if (wait && o.id !== S.pid) label(c, C[pl.color].name + 'の ' + pl.name, o.x, o.y - 62 * k * 1.15, '#ffd6f0'); // 踊りおえたら、相手がわかる
     else if (!uni) label(c, pl.name, o.x, o.y - 62 * k * 1.15, o.id === S.pid ? '#fff' : '#e9eef9');
@@ -7368,7 +8209,7 @@ function drawSpotOverlays(c, st, me, now) {
       c.fillStyle = '#17243f'; c.fillRect(0, VH * 0.18, VW, 8); c.fillRect(0, VH * 0.8, VW, 8);
       c.fillStyle = '#1b2a44'; c.fillRect(VW * 0.2, VH * 0.3, VW * 0.6, VH * 0.4); c.fillStyle = '#6fe3c8'; for (i = 0; i < 5; i++) c.fillRect(VW * 0.22 + i * VW * 0.118, VH * 0.34, VW * 0.09, VH * 0.14);
     }
-    drawBlob(c, VW / 2, VH * 0.58 + Math.sin(now / 300) * 4, C[me.color].hex, 1, now / 90, 1, false, false);
+    drawBlob(c, VW / 2, VH * 0.58 + Math.sin(now / 300) * 4, C[me.color].hex, 1, now / 90, 1, false, false, null, me.ac);
     c.font = '900 22px "Zen Maru Gothic", sans-serif'; c.textAlign = 'center'; c.fillStyle = '#e9eef9'; c.lineWidth = 4; c.strokeStyle = 'rgba(6,9,20,.9)';
     var tt = tr.k === 'hull' ? 'エアロックを通過中…' : '地下鉄に乗車中…'; c.strokeText(tt, VW / 2, VH * 0.22); c.fillText(tt, VW / 2, VH * 0.22);
     c.font = '700 14px "Zen Maru Gothic", sans-serif'; c.fillStyle = '#9fb3e6'; c.fillText('あと' + Math.ceil(left) + '秒(その間は何もできず、だれにも見えません)', VW / 2, VH * 0.22 + 26);
@@ -7603,7 +8444,7 @@ function renderLobbyScene(c, st, now) {
   list.sort(function (a, b) { return a.v.y - b.v.y; });
   list.forEach(function (o) {
     var v = o.v, host = o.id === st.hostId;
-    drawBlob(c, v.x, v.y, C[o.p.color].hex, v.f || 1, v.ph || 0, 1, false, false);
+    drawBlob(c, v.x, v.y, C[o.p.color].hex, v.f || 1, v.ph || 0, 1, false, false, null, o.p.ac);
     label(c, o.p.name, v.x, v.y - 34, o.id === S.pid ? '#ffffff' : '#e9eef9');
     if (host) label(c, 'HOST', v.x, v.y - 50, '#ffd24d');
     if (S.speaking[o.id]) drawSpeak(c, v.x + (host ? 30 : 0), v.y - 52, now);
@@ -7642,7 +8483,7 @@ function lobbyPlace(st) {
 }
 function updateLobbyHud(st) {
   var isH = !!(S.isHost && S.mode), near = S.nearInfo && S.nearInfo.station, txt = '';
-  if (near === 'wardrobe') txt = '鏡の前です。ボタンでキャラクターの色を変えられます';
+  if (near === 'wardrobe') txt = '鏡の前です。ボタンでキャラクターの色や小物を変えられます';
   else if (near === 'config') txt = isH ? 'ゲームの設定やマップを変えられます' : 'いまのゲームの設定を見られます(変えられるのはホストだけ)';
   else if (near === 'launch') txt = isH ? 'ボタンでゲームを開始します' : 'ゲームを始めるのはホストです';
   var ch = $('lob-chip'), t = (S.roomCode ? '部屋コード ' + S.roomCode + '  ' : '') + st.order.length + '人';
@@ -7724,7 +8565,7 @@ function render(dt) {
   drawWorld(c, st, me, vr, watching, ghost, now);
 
   var meDance = !!(me && me.alive && E.dancing(me, tnow())); // 踊っているあいだは、相手のほかは見えない
-  var uniform = E.ballMasked(st) && !!(me && me.alive) && teamOf(me) !== 'impostor'; // 舞踏会: 全員が同じ姿(インポスター陣営からは、いつもの姿のまま)
+  var uniform = E.ballMasked(st) && !!(me && me.alive) && teamOf(me) !== 'impostor' && me.role !== 'organizer'; // 舞踏会: 全員が同じ姿(インポスター陣営からは、いつもの姿のまま)
   var seeAll = ghost || watching || !!S.ret;
   var vpt = vpOf();
   function visible(x, y) { return seeAll || (Math.hypot(x - vpt.x, y - vpt.y) <= vr + 12 && !hiddenAt(x, y)); }
@@ -7739,7 +8580,7 @@ function render(dt) {
       c.fillStyle = gl; c.fillRect(b.x - 70, b.y - 58, 140, 136);
       c.strokeStyle = 'rgba(255,90,110,' + (0.5 + 0.45 * pulse) + ')'; c.lineWidth = 3.5; c.beginPath(); c.ellipse(b.x, b.y + 12, 31 + 6 * pulse, 12.5 + 2.5 * pulse, 0, 0, 6.2832); c.stroke();
     }
-    drawBlob(c, b.x, b.y, C[p.color].hex, 1, 0, 1, false, true);
+    drawBlob(c, b.x, b.y, C[p.color].hex, 1, 0, 1, false, true, null, p.ac);
   });
   // プレイヤー(奥から手前の順)
   var list = [];
@@ -7790,11 +8631,12 @@ function render(dt) {
     var dOn = E.dancing(p, tnow());
     var dz = o.dz;
     if (dOn && dz) v = { x: v.x, y: v.y - Math.abs(Math.sin(dz.t * 6.4)) * 5, f: dz.fx, ph: dz.t * 9 }; // 足ぶみして、はずむ
-    drawBlob(c, v.x, v.y, uni ? '#dfe4f4' : C[shown.color].hex, v.f || 1, v.ph || 0, isGhost ? 0.45 : 1, isGhost, false, dOn ? dz : null);
+    drawBlob(c, v.x, v.y, uni ? '#dfe4f4' : C[shown.color].hex, v.f || 1, v.ph || 0, isGhost ? 0.45 : 1, isGhost, false, dOn ? dz : null, uni ? null : shown.ac);
     if (p.alive && (p.wv || (p.wf && tnow() - p.wf.at < 480))) drawRailgun(c, p, v, now, st); // 波動砲: ためている間、巨大なレールガンを構える
     if (p.sb && tnow() - p.sb.at < 900) drawShieldBubble(c, v.x, v.y, tnow() - p.sb.at); // シールドで防いだ瞬間だけ、エフェクトが出る
     if (uni) { if (o.id === S.pid) label(c, 'あなた', v.x, v.y - 34, '#ffffff'); }
     else label(c, shown.name, v.x, v.y - 34, ally ? '#ff8c9b' : (o.id === S.pid ? '#ffffff' : '#e9eef9'));
+    if (me && o.id !== S.pid && E.knowsGuest(me, p, st.settings) && !isGhost) label(c, '招待客', v.x, v.y - (dgOn && seeReal ? 70 : 52), '#ffd24d'); // 主催者には、招待客の印が見える
     if (dgOn && seeReal) { var dgt = E.shownAs(st, p, tnow()); label(c, '変装中: ' + dgt.name + ' ' + Math.max(0, Math.ceil((p.dg.until - tnow()) / 1000)) + '秒', v.x, v.y - 52, '#ffd24d'); }
     if (bitTimer >= 0) label(c, '噛 ' + bitTimer + '秒', v.x, v.y - 52, '#ff5d73');
     if (S.speaking[o.id]) drawSpeak(c, v.x, v.y - 52, now);
