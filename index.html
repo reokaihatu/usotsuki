@@ -1219,7 +1219,7 @@ function grid(o) {
       tq.one(['bri', 'A', '航路の入力', 'tune', '航路を合わせる']), tq.one(['bri', 'B', '星図の更新', 'simon', '星の並びを再現する']),
       tq.one(['cap', 'A', '航海日誌', 'seq', '日付順に並べる']), tq.one(['cap', 'B', '金庫の解錠', 'simon', '番号の順を再現する']),
       tq.one(['lng', 'A', '望遠鏡の調整', 'tune', 'ピントを合わせる']), tq.one(['lng', 'B', '照明の点検', 'lights', '全灯を点ける']),
-      tq.one(['cas', 'A', 'スロットの修理', 'wires', '配線をつなぐ']), tq.one(['cas', 'B', 'チップの仕分け', 'sort', 'チップを仕分ける']),
+      tq.one(['cas', [0.1, 0.5], 'スロットの修理', 'wires', '配線をつなぐ']), tq.one(['cas', [0.88, 0.8], 'チップの仕分け', 'sort', 'チップを仕分ける']),
       tq.one(['spa', 'A', '給湯の調整', 'timing', '湯を止める']),
       tq.one(['cab1', 'A', 'リネンの整理', 'sort', 'リネンを仕分ける']), tq.one(['cab1', 'B', '備品の補充', 'seq', '番号順に補充する']),
       tq.one(['kit', 'A', '食材の確認', 'sort', '食材を仕分ける']), tq.one(['kit', 'B', '火加減', 'timing', '火を止める']),
@@ -1240,7 +1240,7 @@ function grid(o) {
       tq.many('通信ログの送信', [['gym', 'C', 'codeShow', 'ログの番号を控える'], ['bri', 'C', 'codeEnter', '艦橋で送信する']]),
       tq.many('試料の運搬', [['med', 'C', 'fetch', '試料を採取する'], ['lng', 'C', 'lights', '解析機を起動する']]),
       tq.many('予備電源の接続', [['gen', 'C', 'fetch', 'ケーブルを取る'], ['thr', 'C', 'wires', '接続する']]),
-      tq.many('料理の配膳', [['kit', [0.22, 0.78], 'fetch', '料理を受け取る'], ['cas', 'C', 'sort', '席に並べる'], ['spa', 'B', 'seq', '順に配る']])
+      tq.many('料理の配膳', [['kit', [0.22, 0.78], 'fetch', '料理を受け取る'], ['cas', [0.9, 0.46], 'sort', '席に並べる'], ['spa', 'B', 'seq', '順に配る']])
     ],
     gimmicks: { doors: true, panel: aq('gen', [0.3, 0.86]) }
   };
@@ -1498,7 +1498,9 @@ function grid(o) {
       });
     }
     if (m.id === 'lab') ['bio', 'exp'].forEach(function (rid) { putSpot(m, rid, { k: 'potion', n: '薬品棚' }); });
-    if (m.id === 'queen') [0, 1, 2, 3].forEach(function (i) { putSpot(m, 'cas', { k: 'casino', n: 'スロットマシン' + (i + 1) }); }); // 台は4つ(4人まで同時に遊べる)
+    if (m.id === 'queen') { // カジノ: スロットマシンは4台(4人まで同時に遊べる)。部屋の上に2台、まんなかに2台を、横に並べる
+      [[1925, 140], [2075, 140], [1955, 225], [2045, 225]].forEach(function (q, i) { (m.spots = m.spots || []).push({ k: 'casino', n: 'スロットマシン' + (i + 1), x: q[0], y: q[1], r: 'cas' }); });
+    }
     if (m.id === 'castle') { // 跳ね橋: 霧の中庭の真ん中を南北に走る堀。橋が上がると、東西の行き来がふさがる(レバーは堀の両側)
       m.gimmicks.bridge = { x: 1432, y: 400, w: 56, h: 780 };
       (m.spots).push({ k: 'lever', n: '跳ね橋のレバー', x: 1310, y: 790, r: 'cy' }, { k: 'lever', n: '跳ね橋のレバー', x: 1610, y: 790, r: 'cy' });
@@ -4727,7 +4729,7 @@ var DECO_T = {
   dressing: 'wardrobe:.25,.07,90,30;wardrobe:.75,.07,90,30;rug:.5,.66,170,110;plant:.9,.9,26,26;lamp:.1,.92,26,26',
   dockctl: 'window:.5,.06,230,20;rack:.12,.16,56,34;rack:.88,.16,56,34;rug:.5,.64,220,130;lamp:.08,.92,26,26;lamp:.92,.92,26,26;plant:.1,.84,26,26',
   lounge: 'sofa:.2,.86,96,38;sofa:.8,.86,96,38;rtable:.5,.66,64,44;window:.5,.06,220,20;plant:.93,.2,26,26;rug:.5,.55,200,100',
-  casino: 'ftable:.2,.7,92,56;ftable:.5,.72,92,56;ftable:.8,.7,92,56;slot:.12,.14,34,40;slot:.88,.14,34,40;rug:.5,.5,280,150',
+  casino: 'ftable:.2,.7,92,56;ftable:.5,.72,92,56;ftable:.8,.7,92,56;rug:.5,.5,280,150',
   spa: 'pool:.5,.6,200,90;sofa:.14,.12,70,32;plant:.93,.15,26,26;plant:.07,.86,26,26',
   atrium: 'rug:.5,.5,300,300;pillar:.14,.12,34,34;pillar:.86,.12,34,34;pillar:.14,.9,34,34;pillar:.86,.9,34,34;chandelier:.5,.5,120,120',
   theatre: 'stage:.5,.12,230,44;sofa:.2,.62,80,26;sofa:.5,.62,80,26;sofa:.8,.62,80,26;sofa:.2,.86,80,26;sofa:.8,.86,80,26',
@@ -9053,7 +9055,14 @@ function nearestTarget(st, me, range, filter) {
   return b ? b.id : null;
 }
 // マップ固有のしかけに近づいたときの「使う」ボタン(ready=false なら、押せない理由を sub に出す)
-function spotItem(st, me, i) {
+function spotItem(st, me, i) { // 近くのしかけの「使う」ボタン。いま使えない理由があれば、押せない表示にして理由を出す
+  var it = spotItem0(st, me, i), sp = E.M.spots[i], now = tnow();
+  if (!it || !it.ready || sp.k === 'hullx') return it;
+  var why = E.ballMasked(st) ? '舞踏会中' : (me.dn || me.dd || E.dancing(me, now)) ? '踊り中' : (me.wv || (me.sh || 0) > now || me.ar) ? '使えない状態' : '';
+  if (why) { it.ready = false; it.sub = why; it.press = function () {}; }
+  return it;
+}
+function spotItem0(st, me, i) {
   var sp = E.M.spots[i], now = tnow(), imp = teamOf(me) === 'impostor', S1 = E.SPOT;
   function go(extra) { return function () { sendAct({ type: 'spot', i: i }); }; }
   var cd = function (t) { return t > now ? Math.ceil((t - now) / 1000) + '秒' : ''; };
