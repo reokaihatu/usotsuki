@@ -852,7 +852,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
   <div id="ov-color" class="ov solid" hidden>
     <div class="box">
       <div class="game-head"><h2 style="font-size:24px">着替え</h2><button id="btn-color-x" class="btn small" type="button">閉じる</button></div>
-      <p class="small mute">キャラクターの色と小物を選べます。ほかの人が使っている色は選べません。小物は、あたま・かお・くびに1つずつ付けられます(もう一度押すと外れます)。</p>
+      <p class="small mute">キャラクターの色と小物を選べます。ほかの人が使っている色は選べません。小物は、あたま・かお・くび・おなか・せなかに1つずつ付けられます(もう一度押すと外れます)。</p>
       <div id="color-grid" class="color-grid"></div>
       <h3 class="acc-h">小物</h3>
       <div id="acc-grid"></div>
@@ -1674,12 +1674,16 @@ function grid(o) {
       d: '誰とも組まない単独の殺し屋。壁を貫通するビームで倒していく。', goal: 'インポスターがいない状態で、生き残りの半数以上を自分たちにする。',
       abil: ['波動砲: 向いている方向に、壁を貫通するビームを放つ。ためているあいだは動けない。触れた人は(インポスター陣営も)倒れる'] }
   };
-  // 小物(待機室の鏡で付けられる)。スロットは あたま(h)・かお(f)・くび(n) で、それぞれ1つまで
-  var ACC_SLOTS = [['h', 'あたま'], ['f', 'かお'], ['n', 'くび']];
+  // 小物(待機室の鏡で付けられる)。スロットは あたま(h)・かお(f)・くび(n)・おなか(b)・せなか(w) で、それぞれ1つまで
+  var ACC_SLOTS = [['h', 'あたま'], ['f', 'かお'], ['n', 'くび'], ['b', 'おなか'], ['w', 'せなか']];
   var ACCS = {
-    h: [['crown', '王冠'], ['party', 'パーティー帽'], ['ribbon', 'リボン'], ['flower', 'お花'], ['tophat', 'シルクハット'], ['phones', 'ヘッドホン']],
-    f: [['glasses', 'まるメガネ'], ['shades', 'サングラス'], ['mustache', 'ひげ'], ['blush', 'ほっぺ'], ['monocle', '片眼鏡']],
-    n: [['bowtie', 'ちょうネクタイ'], ['scarf', 'マフラー'], ['bell', 'すずの首輪']]
+    h: [['crown', '王冠'], ['party', 'パーティー帽'], ['ribbon', 'リボン'], ['flower', 'お花'], ['tophat', 'シルクハット'], ['phones', 'ヘッドホン'],
+        ['leaf', '葉っぱ'], ['chef', 'コック帽'], ['antenna', '宇宙人の触角'], ['horns', '悪魔のつの'], ['wizard', '魔法使い帽'], ['halo', '天使の輪']],
+    f: [['glasses', 'まるメガネ'], ['shades', 'サングラス'], ['mustache', 'ひげ'], ['blush', 'ほっぺ'], ['monocle', '片眼鏡'],
+        ['scouter', 'スカウター'], ['plague', 'ペストマスク'], ['eyepatch', '眼帯'], ['clownnose', '赤い鼻']],
+    n: [['bowtie', '蝶ネクタイ'], ['scarf', 'マフラー'], ['bell', 'すずの首輪'], ['necktie', 'ネクタイ'], ['pearls', '真珠の首飾り'], ['medal', 'メダル']],
+    b: [['swirl', 'ぐるぐる'], ['heart', 'ハート'], ['star', 'ほし']],
+    w: [['devil', '悪魔の翼'], ['angel', '天使の翼'], ['fairy', '妖精の羽'], ['cape', 'マント']]
   };
   function accValid(slot, id) { return !!ACCS[slot] && ACCS[slot].some(function (a) { return a[0] === id; }); }
   var ROLE_ORDER = ['impostor', 'assassin', 'maskmaker', 'cleaner', 'sandworm', 'sniper', 'wavecannon', 'vampire', 'accomplice', 'jackal', 'wavejackal', 'arsonist', 'jester', 'detective', 'sheriff', 'guardian', 'engineer', 'fortune', 'niceguesser', 'shielder', 'organizer'];
@@ -2506,7 +2510,7 @@ function grid(o) {
     if (state.phase === 'lobby') {
       var lp = state.players[pid];
       if (a && a.type === 'setacc' && lp && !lp.left) { // 小物を付ける・外す(スロットごとに1つ。idが空なら外す)
-        var sl = String(a.r || ''); // r=スロット(h/f/n)
+        var sl = String(a.r || ''); // r=スロット(h/f/n/b/w)
         if (!ACCS[sl]) return { ok: false, err: 'acc' };
         var av = a.t ? String(a.t) : ''; // t=小物のid(空なら外す)
         if (av && !accValid(sl, av)) return { ok: false, err: 'acc' };
@@ -6474,12 +6478,14 @@ function drawCountOverlay() {
 /* ---------- 会議 ---------- */
 var WIN = { crew: ['クルーの勝利', 'crew'], impostor: ['インポスターの勝利', 'impostor'], jackal: ['ジャッカルの勝利', 'neutral'], arsonist: ['放火魔の勝利', 'neutral'], jester: ['ピエロの勝利', 'neutral'] };
 // 会議などで、名前の横に出すキャラクター(色の丸のかわり。付けている小物もいっしょに出る)
+// せなかの小物(翼・マント)は横にはみ出すので、小さな丸いアイコンや色カードでは外して描く
+function accNoBack(ac) { if (!ac || !ac.w) return ac || null; var o = {}; Object.keys(ac).forEach(function (k) { if (k !== 'w') o[k] = ac[k]; }); return Object.keys(o).length ? o : null; }
 function swatch(p, sm) {
   var W = sm ? 24 : 34, H = sm ? 31 : 44, cv = document.createElement('canvas');
   cv.className = 'swatch chr'; cv.setAttribute('data-pid', p.id);
   cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); cv.style.width = W + 'px'; cv.style.height = H + 'px';
   var c = cv.getContext('2d'); c.scale(DPR, DPR); c.translate(W / 2, H * 0.6); var k = W / 34 * 0.6; c.scale(k, k);
-  drawBlob(c, 0, 0, C[p.color].hex, 1, 0, p.alive ? 1 : 0.55, !p.alive, false, null, p.ac);
+  drawBlob(c, 0, 0, C[p.color].hex, 1, 0, p.alive ? 1 : 0.55, !p.alive, false, null, accNoBack(p.ac));
   return cv;
 }
 function renderMeeting() {
@@ -6701,9 +6707,9 @@ function renderColor(st) {
     var cvs = h('canvas', { width: 72, height: 88 });
     box.appendChild(h('button', { type: 'button', class: 'colcard' + (me.color === i ? ' on' : ''), disabled: !!owner, 'aria-pressed': me.color === i ? 'true' : 'false',
       'aria-label': col.name + (owner ? '(' + owner.name + 'さんが使用中)' : ''), onclick: function () { pickColor(i); } }, [cvs, h('span', { text: col.name }), owner ? h('small', { class: 'mute', text: owner.name }) : null]));
-    var c = cvs.getContext('2d'); c.save(); c.translate(36, 54); c.scale(1.4, 1.4); drawBlob(c, 0, 0, col.hex, 1, 0, 1, false, false, null, me.ac); c.restore();
+    var c = cvs.getContext('2d'); c.save(); c.translate(36, 57); c.scale(1.25, 1.25); drawBlob(c, 0, 0, col.hex, 1, 0, 1, false, false, null, accNoBack(me.ac)); c.restore();
   });
-  // 小物: あたま・かお・くびに、1つずつ付けられる(もう一度押すと外れる)
+  // 小物: あたま・かお・くび・おなか・せなかに、1つずつ付けられる(もう一度押すと外れる)
   var ab = $('acc-grid'); clear(ab);
   E.ACC_SLOTS.forEach(function (sl) {
     var slot = sl[0], cur = (me.ac && me.ac[slot]) || '';
@@ -6711,7 +6717,7 @@ function renderColor(st) {
     function card(id, name) {
       var cv = h('canvas', { width: 64, height: 88 }), ac = id ? (function (o) { o[slot] = id; return o; })({}) : null, on = cur === id;
       var b = h('button', { type: 'button', class: 'colcard acc' + (on ? ' on' : ''), 'aria-pressed': on ? 'true' : 'false', onclick: function () { pickAcc(slot, on ? '' : id); } }, [cv, h('span', { text: name })]);
-      var c = cv.getContext('2d'); c.save(); c.translate(32, 54); c.scale(1.3, 1.3); drawBlob(c, 0, 0, C[me.color].hex, 1, 0, 1, false, false, null, ac); c.restore();
+      var c = cv.getContext('2d'), sc = slot === 'w' ? 0.88 : 1.2; c.save(); c.translate(32, 56); c.scale(sc, sc); drawBlob(c, 0, 0, C[me.color].hex, 1, 0, 1, false, false, null, ac); c.restore();
       return b;
     }
     row.appendChild(card('', 'なし'));
@@ -7549,6 +7555,7 @@ function shade(hex, amt) {
   r = Math.round((t - r) * p + r); g = Math.round((t - g) * p + g); b = Math.round((t - b) * p + b);
   return 'rgb(' + r + ',' + g + ',' + b + ')';
 }
+function rgba(hex, a) { var n = parseInt(hex.slice(1), 16); return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')'; }
 function ell(c, x, y, rx, ry) { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 6.2832); }
 // キャラクター「かめん狐(めんこ)」: 仮面をつけた、まるいキツネ風の生き物。体の色がプレイヤーの色。
 //   f: 向き(1=右 -1=左)、ph: 歩きの位相、ghost: 幽霊(浮かぶ)、dead: 倒れた姿
@@ -7567,6 +7574,7 @@ function drawBlob(c, x, y, hex, f, ph, alpha, ghost, dead, dz, ac) { // dz: ダ�
     c.strokeStyle = '#ffe27a'; c.lineWidth = 2.6; ell(c, 0, -37, 8.5, 3); c.stroke();
   }
   var sw = Math.sin(ph), walking = !ghost && !dead;
+  if (ac && ac.w) drawAccBack(c, ac.w, f, hex); // せなかの小物(翼・マント)は、からだのうしろに描く
   // しっぽ(進む向きと反対側。歩くとゆれる)
   c.save(); c.translate(-f * 14, 10); c.rotate(-f * (0.75 + (dead ? 0 : Math.sin(ph * 0.5) * 0.18)));
   c.fillStyle = hex; ell(c, 0, -11, 6.2, 12.5); c.fill(); c.lineWidth = 2.2; c.strokeStyle = OUT; ell(c, 0, -11, 6.2, 12.5); c.stroke();
@@ -7618,15 +7626,24 @@ function drawBlob(c, x, y, hex, f, ph, alpha, ghost, dead, dz, ac) { // dz: ダ�
     c.beginPath(); c.arc(-2.4 + f * 1.5, 9.5, 2.4, 0.1, 3.0); c.stroke(); c.beginPath(); c.arc(2.4 + f * 1.5, 9.5, 2.4, 0.1, 3.0); c.stroke(); c.lineCap = 'butt';  // 口(ちいさな ω)
   }
   c.restore();
-  if (ac) drawAcc(c, ac, f, dead); // 小物(待機室の鏡で付けたもの)
+  if (ac) drawAcc(c, ac, f, dead, hex); // 小物(待機室の鏡で付けたもの)
   c.restore();
 }
-// ---------- 小物(あたま・かお・くび) ----------
+// ---------- 小物(あたま・かお・くび・おなか・せなか) ----------
 // ac = { h: 'crown', f: 'glasses', n: 'bowtie' } 。キャラクターの座標(からだの中心が原点、顔は少し上)で描く。f は向き(1 / -1)
-function drawAcc(c, ac, f, dead) {
+function drawAcc(c, ac, f, dead, hex) { // hex: キャラクターの色(体に生える系の小物は、この色に合わせる)
   var OUT = 'rgba(8,12,24,.9)', ex = function (sd) { return sd * 4.08 + f * 2.22; }, ey = -6.2;
   c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
   function st(w) { c.lineWidth = w || 1.8; c.strokeStyle = OUT; c.stroke(); }
+  // おなか(白いところ)
+  if (ac.b === 'swirl') {
+    c.beginPath(); for (var si = 0; si <= 64; si++) { var sa = si * 0.2, sr = 0.45 + sa * 0.5; c.lineTo(Math.cos(sa) * sr * 1.1, 10 + Math.sin(sa) * sr); }
+    c.lineWidth = 1.8; c.strokeStyle = shade(hex, -0.22); c.stroke();
+  } else if (ac.b === 'heart') {
+    c.save(); c.translate(0, 10.4); c.fillStyle = '#ff5c8a'; c.beginPath(); c.moveTo(0, 4.6); c.bezierCurveTo(-8, -1, -4.6, -6, 0, -2.2); c.bezierCurveTo(4.6, -6, 8, -1, 0, 4.6); c.closePath(); c.fill(); st(1.3); c.restore();
+  } else if (ac.b === 'star') {
+    c.save(); c.translate(0, 10.4); c.fillStyle = '#ffd24d'; c.beginPath(); for (var bi = 0; bi < 10; bi++) { var br = bi % 2 ? 2.8 : 6.2, ba = bi * 0.6283 - 1.5708; c.lineTo(Math.cos(ba) * br, Math.sin(ba) * br); } c.closePath(); c.fill(); st(1.3); c.restore();
+  }
   // くび(からだの前。顔のあとに描く)
   if (ac.n === 'scarf') {
     c.beginPath(); c.ellipse(0, 1.6, 15.4, 6.2, 0, 0.1 * Math.PI, 0.9 * Math.PI); c.lineWidth = 5.4; c.strokeStyle = OUT; c.stroke();
@@ -7644,6 +7661,21 @@ function drawAcc(c, ac, f, dead) {
     c.save(); c.translate(f * 1.2, 8.2); c.fillStyle = '#ffd24d'; c.beginPath(); c.arc(0, 0, 3.1, 0, 6.2832); c.fill(); st(1.5);
     c.strokeStyle = '#a97b12'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-2.6, 0.6); c.lineTo(2.6, 0.6); c.stroke(); c.fillStyle = '#7a5a0e'; c.beginPath(); c.arc(0, 1.9, 0.9, 0, 6.2832); c.fill(); c.restore();
   }
+  if (ac.n === 'necktie') {
+    c.save(); c.translate(f * 1.2, 2.2);
+    c.fillStyle = '#2f6fe0'; c.beginPath(); c.moveTo(-2.3, 0); c.lineTo(2.3, 0); c.lineTo(1.7, 3.2); c.lineTo(-1.7, 3.2); c.closePath(); c.fill(); st(1.3);
+    c.beginPath(); c.moveTo(-1.7, 3); c.lineTo(1.7, 3); c.lineTo(4, 14); c.lineTo(0, 18); c.lineTo(-4, 14); c.closePath(); c.fill(); st(1.5);
+    c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 1.3; c.beginPath(); c.moveTo(-2.6, 8.2); c.lineTo(2.6, 6.2); c.moveTo(-3.4, 12.2); c.lineTo(3.4, 10); c.stroke();
+    c.restore();
+  } else if (ac.n === 'pearls') {
+    for (var pi = 0; pi < 9; pi++) { var pa = (0.12 + pi * 0.095) * Math.PI; c.beginPath(); c.arc(Math.cos(pa) * 15.2, 1.6 + Math.sin(pa) * 5.6, 2, 0, 6.2832); c.fillStyle = '#fffaf0'; c.fill(); st(1.2); }
+  } else if (ac.n === 'medal') {
+    c.save(); c.translate(f * 1.2, 0);
+    c.fillStyle = '#e8495f'; [-1, 1].forEach(function (sd) { c.beginPath(); c.moveTo(sd * 8.6, 0.6); c.lineTo(sd * 4.4, 0.6); c.lineTo(sd * 0.4, 9.4); c.lineTo(sd * 4.6, 9.4); c.closePath(); c.fill(); st(1.3); });
+    c.fillStyle = '#ffd24d'; c.beginPath(); c.arc(0, 12.4, 4, 0, 6.2832); c.fill(); st(1.5);
+    c.fillStyle = '#d9a014'; c.beginPath(); for (var mi = 0; mi < 10; mi++) { var mr = mi % 2 ? 1.1 : 2.4, ma = mi * 0.6283 - 1.5708; c.lineTo(Math.cos(ma) * mr, 12.4 + Math.sin(ma) * mr); } c.closePath(); c.fill();
+    c.restore();
+  }
   // かお
   if (ac.f === 'blush') {
     c.fillStyle = 'rgba(255,110,145,.6)'; [-1, 1].forEach(function (sd) { c.beginPath(); c.ellipse(sd * 8.6 + f * 2, -2.6, 2.6, 1.8, 0, 0, 6.2832); c.fill(); });
@@ -7660,6 +7692,31 @@ function drawAcc(c, ac, f, dead) {
   } else if (ac.f === 'mustache') {
     c.save(); c.translate(f * 1.6, -0.6); c.fillStyle = '#5b3a24';
     [-1, 1].forEach(function (sd) { c.beginPath(); c.moveTo(0, -1.2); c.quadraticCurveTo(sd * 3.6, -3.6, sd * 8.2, -0.4); c.quadraticCurveTo(sd * 9.6, 1.6, sd * 7.2, 2.2); c.quadraticCurveTo(sd * 5, 0.2, sd * 3, 1); c.quadraticCurveTo(sd * 1.2, 1.8, 0, 1.2); c.closePath(); c.fill(); st(1.2); });
+    c.restore();
+  } else if (ac.f === 'scouter') { // 片目をおおう通信機のレンズ(緑)と、耳のうしろの本体
+    var sd0 = f >= 0 ? 1 : -1, lx = ex(sd0);
+    c.beginPath(); c.moveTo(lx + sd0 * 5.4, ey - 1); c.quadraticCurveTo(lx + sd0 * 11.4, ey - 3.6, lx + sd0 * 11, ey - 9); c.lineWidth = 2.2; c.strokeStyle = OUT; c.stroke(); c.lineWidth = 1.2; c.strokeStyle = '#3d8a52'; c.stroke();
+    c.fillStyle = '#3d8a52'; c.beginPath(); c.rect(lx + sd0 * 9 - 2.6, ey - 14, 5.2, 7); c.fill(); st(1.4);
+    c.fillStyle = '#ff5a5a'; c.beginPath(); c.arc(lx + sd0 * 9, ey - 12.2, 0.9, 0, 6.2832); c.fill();
+    c.beginPath(); c.moveTo(lx - 5.2, ey - 3.8); c.lineTo(lx + 5.2, ey - 3.8); c.lineTo(lx + 5.2, ey + 4); c.quadraticCurveTo(lx, ey + 6, lx - 5.2, ey + 4); c.closePath();
+    c.fillStyle = 'rgba(90,255,150,.45)'; c.fill(); st(1.6); c.strokeStyle = '#38c46d'; c.lineWidth = 1.1; c.stroke();
+    c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(lx - 3.4, ey - 2); c.lineTo(lx - 0.8, ey - 2); c.stroke();
+  } else if (ac.f === 'eyepatch') {
+    var sd1 = f >= 0 ? 1 : -1, px = ex(sd1);
+    c.beginPath(); c.moveTo(px - sd1 * 2, ey - 3.2); c.lineTo(ex(-sd1) - sd1 * 8, ey - 6.2); c.lineWidth = 1.5; c.strokeStyle = '#1b1f33'; c.stroke();
+    c.beginPath(); c.moveTo(px + sd1 * 2, ey - 3.2); c.lineTo(px + sd1 * 9, ey - 6.4); c.stroke();
+    c.beginPath(); c.ellipse(px, ey, 5.2, 4.5, -0.15, 0, 6.2832); c.fillStyle = '#1b1f33'; c.fill(); st(1.3);
+  } else if (ac.f === 'clownnose') {
+    c.beginPath(); c.arc(f * 2.4, -2.6, 3, 0, 6.2832); c.fillStyle = '#ff3b4e'; c.fill(); st(1.4);
+    c.fillStyle = 'rgba(255,255,255,.75)'; c.beginPath(); c.arc(f * 2.4 - 1, -3.6, 0.9, 0, 6.2832); c.fill();
+  } else if (ac.f === 'plague') { // ペストマスク: 顔をおおう面が、向いている側へ、ひとつながりでくちばしになる
+    c.save(); c.translate(f * 1.2, -5.5);
+    c.beginPath(); c.moveTo(-f * 10.8, -6); c.quadraticCurveTo(0, -12.6, f * 10.6, -6.4); c.quadraticCurveTo(f * 14, -3, f * 12.4, 0.2); c.quadraticCurveTo(f * 19.4, 0.8, f * 26.4, 10.8);
+    c.quadraticCurveTo(f * 15, 9.2, f * 7, 6.8); c.lineTo(0, 6.2); c.lineTo(-f * 5.4, 4.8); c.quadraticCurveTo(-f * 12.4, 2, -f * 10.8, -6); c.closePath();
+    c.fillStyle = '#ece3cc'; c.fill(); st(1.8);
+    c.strokeStyle = '#b3a584'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(f * 9.6, 4); c.quadraticCurveTo(f * 17, 4.4, f * 23.6, 10.2); c.stroke();
+    c.beginPath(); c.moveTo(-f * 8.6, -2.6); c.quadraticCurveTo(-f * 10.6, 1, -f * 8, 4); c.stroke();
+    [-1, 1].forEach(function (sd) { c.beginPath(); c.arc(sd * 4.2 + f * 0.6, -0.8, 3.7, 0, 6.2832); c.fillStyle = '#e6b94a'; c.fill(); st(1.7); c.fillStyle = 'rgba(255,255,255,.65)'; c.beginPath(); c.arc(sd * 4.2 + f * 0.6 - 1.1, -1.9, 1, 0, 6.2832); c.fill(); });
     c.restore();
   }
   // あたま(耳のあいだ。からだの上は y=-19)
@@ -7686,6 +7743,61 @@ function drawAcc(c, ac, f, dead) {
   } else if (ac.h === 'phones') {
     c.beginPath(); c.arc(0, -2.4, 20.2, 1.08 * Math.PI, 1.92 * Math.PI); c.lineWidth = 4.6; c.strokeStyle = OUT; c.stroke(); c.lineWidth = 2.6; c.strokeStyle = '#4a5072'; c.stroke();
     [-1, 1].forEach(function (sd) { c.fillStyle = '#e85d75'; c.beginPath(); c.ellipse(sd * 19.4, -4.6, 4.2, 6.2, 0, 0, 6.2832); c.fill(); st(1.7); });
+  } else if (ac.h === 'leaf') { // 頭にちょこんと生えた葉っぱ
+    c.beginPath(); c.moveTo(0.4, -18); c.quadraticCurveTo(1.4, -22, 0.8, -25.4); c.lineWidth = 3.8; c.strokeStyle = OUT; c.stroke(); c.lineWidth = 2; c.strokeStyle = '#4aa84e'; c.stroke();
+    [[-1, 8.6, 0.7], [1, 10.6, 0.8]].forEach(function (q) { var sd = q[0], L = q[1], k = q[2]; c.save(); c.translate(0.8, -25.4); c.rotate(sd * 0.25);
+      c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(sd * L * 0.5, -L * 0.85, sd * L * 1.15, -L * 0.45); c.quadraticCurveTo(sd * L * 0.7, L * 0.15, 0, 0); c.closePath(); c.fillStyle = sd < 0 ? '#5fc75e' : '#7ad36b'; c.fill(); st(1.7);
+      c.strokeStyle = '#3c8f45'; c.lineWidth = 1; c.beginPath(); c.moveTo(0, 0); c.lineTo(sd * L * 0.92, -L * 0.36 * k / 0.7 * 0.7); c.stroke(); c.restore(); });
+  } else if (ac.h === 'chef') {
+    c.beginPath(); c.moveTo(-7.6, -17.6); c.lineTo(-8.6, -26); c.bezierCurveTo(-16, -28, -13.4, -39.4, -5.4, -36.2); c.bezierCurveTo(-3.4, -43, 5.4, -43, 6.2, -36.2); c.bezierCurveTo(14, -39.4, 16, -28, 8.6, -26); c.lineTo(7.6, -17.6); c.closePath();
+    c.fillStyle = '#fffdf6'; c.fill(); st(1.8);
+    c.strokeStyle = '#c9c2b0'; c.lineWidth = 1.3; c.beginPath(); c.moveTo(-8.4, -22.6); c.lineTo(8.4, -22.6); c.moveTo(-3.2, -30); c.quadraticCurveTo(-2.4, -34, -3.8, -36.4); c.moveTo(3.4, -30); c.quadraticCurveTo(2.6, -34, 3.8, -36.4); c.stroke();
+  } else if (ac.h === 'antenna') { // 宇宙人の触角
+    [-1, 1].forEach(function (sd) {
+      c.beginPath(); c.moveTo(sd * 4.6, -18.6); c.quadraticCurveTo(sd * 6, -28, sd * 11, -32.4); c.lineWidth = 3.6; c.strokeStyle = OUT; c.stroke(); c.lineWidth = 1.8; c.strokeStyle = hex; c.stroke();
+      c.beginPath(); c.arc(sd * 11.4, -33, 3.3, 0, 6.2832); c.fillStyle = shade(hex, 0.25); c.fill(); st(1.7);
+      c.fillStyle = 'rgba(255,255,255,.7)'; c.beginPath(); c.arc(sd * 10.4, -34, 1, 0, 6.2832); c.fill();
+    });
+  } else if (ac.h === 'horns') {
+    [-1, 1].forEach(function (sd) {
+      c.beginPath(); c.moveTo(sd * 3.2, -18.4); c.quadraticCurveTo(sd * 2.6, -26, sd * 6.4, -30.6); c.quadraticCurveTo(sd * 8.6, -24, sd * 9.6, -18.2); c.closePath(); c.fillStyle = hex; c.fill(); st(1.7);
+      c.strokeStyle = 'rgba(255,255,255,.4)'; c.lineWidth = 1; c.beginPath(); c.moveTo(sd * 4.8, -20); c.quadraticCurveTo(sd * 4.6, -24.4, sd * 6.2, -27); c.stroke();
+    });
+  } else if (ac.h === 'wizard') {
+    c.fillStyle = '#4b3bb0'; c.beginPath(); c.ellipse(0, -18.4, 13.4, 3.4, 0, 0, 6.2832); c.fill(); st(1.7);
+    c.beginPath(); c.moveTo(-8.4, -19); c.quadraticCurveTo(-5, -30, 3.4, -35); c.quadraticCurveTo(10, -38.6, 14, -33.4); c.quadraticCurveTo(9, -34, 8.4, -19); c.closePath(); c.fill(); st(1.7);
+    c.fillStyle = '#ffd24d'; c.fillRect(-8.2, -22.8, 16.4, 3); c.beginPath(); c.arc(1.4, -28.4, 1.5, 0, 6.2832); c.fill(); c.beginPath(); c.arc(-1.8, -23.4, 0.9, 0, 6.2832); c.fill();
+  } else if (ac.h === 'halo') {
+    c.beginPath(); c.ellipse(0, -26.4, 9.6, 3.4, 0, 0, 6.2832); c.lineWidth = 4.2; c.strokeStyle = OUT; c.stroke(); c.lineWidth = 2.4; c.strokeStyle = '#ffe27a'; c.stroke();
+  }
+  c.restore();
+}
+// せなかの小物(翼・マント)。からだのうしろに描くので、drawBlob が先に呼ぶ
+function drawAccBack(c, id, f, hex) {
+  var OUT = 'rgba(8,12,24,.9)';
+  c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
+  function st(w) { c.lineWidth = w || 1.8; c.strokeStyle = OUT; c.stroke(); }
+  if (id === 'devil') {
+    [-1, 1].forEach(function (sd) {
+      c.beginPath(); c.moveTo(sd * 11, -5); c.quadraticCurveTo(sd * 21, -10, sd * 30, -25); c.quadraticCurveTo(sd * 30, -15, sd * 28.4, -9.6); c.quadraticCurveTo(sd * 25.4, -13, sd * 24, -4.2);
+      c.quadraticCurveTo(sd * 21, -9, sd * 18.4, 1); c.quadraticCurveTo(sd * 15.4, -2.4, sd * 12.4, 5); c.closePath(); c.fillStyle = hex; c.fill(); st(1.9);
+      c.strokeStyle = shade(hex, -0.4); c.lineWidth = 1.2; c.beginPath(); c.moveTo(sd * 12, -3); c.lineTo(sd * 28.4, -9.6); c.moveTo(sd * 12.4, -2); c.lineTo(sd * 24, -4.2); c.moveTo(sd * 12.8, -1); c.lineTo(sd * 18.4, 1); c.stroke();
+    });
+  } else if (id === 'angel') {
+    [-1, 1].forEach(function (sd) {
+      c.beginPath(); c.moveTo(sd * 11, -5); c.bezierCurveTo(sd * 18, -26, sd * 34, -30, sd * 33, -15); c.bezierCurveTo(sd * 36.4, -11, sd * 31, -7.6, sd * 29.6, -6.4);
+      c.bezierCurveTo(sd * 32, -2.6, sd * 26, 0.4, sd * 24, 0); c.bezierCurveTo(sd * 24.6, 4, sd * 18, 5.4, sd * 15, 4); c.closePath(); c.fillStyle = shade(hex, 0.5); c.fill(); st(1.9);
+      c.strokeStyle = shade(hex, 0.05); c.lineWidth = 1.2; c.beginPath(); c.moveTo(sd * 14, -9); c.quadraticCurveTo(sd * 24, -17, sd * 29.4, -12.6); c.moveTo(sd * 15, -4); c.quadraticCurveTo(sd * 22, -6, sd * 28, -6); c.stroke();
+    });
+  } else if (id === 'fairy') {
+    [[-1, 0.5, 15, -13, 5.6, 12.4], [1, 0.5, 15, -13, 5.6, 12.4], [-1, 0.2, 14.4, 2, 4.2, 8.4], [1, 0.2, 14.4, 2, 4.2, 8.4]].forEach(function (q) {
+      var sd = q[0]; c.beginPath(); c.ellipse(sd * q[2], q[3], q[4], q[5], sd * q[1] * 1.3, 0, 6.2832); c.fillStyle = rgba(hex, 0.62); c.fill(); st(1.5);
+      c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 1; c.beginPath(); c.ellipse(sd * q[2], q[3], q[4] * 0.55, q[5] * 0.6, sd * q[1] * 1.3, 0, 6.2832); c.stroke();
+    });
+  } else if (id === 'cape') {
+    c.beginPath(); c.moveTo(-13, -9); c.quadraticCurveTo(0, -13, 13, -9); c.quadraticCurveTo(23, 8, 25, 26); c.quadraticCurveTo(14, 22, 8, 27.4); c.quadraticCurveTo(0, 22.6, -8, 27.4); c.quadraticCurveTo(-14, 22, -25, 26); c.quadraticCurveTo(-23, 8, -13, -9); c.closePath();
+    c.fillStyle = '#c9263f'; c.fill(); st(1.9);
+    c.strokeStyle = 'rgba(255,255,255,.3)'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-9, 2); c.quadraticCurveTo(-13, 14, -14.6, 22); c.moveTo(9, 2); c.quadraticCurveTo(13, 14, 14.6, 22); c.stroke();
   }
   c.restore();
 }
