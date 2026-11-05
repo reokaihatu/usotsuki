@@ -6,7 +6,12 @@
 <meta name="theme-color" content="#0d1322">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="マスカレード">
 <meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <title>マスカレード</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Maru+Gothic:wght@400;500;700&display=swap">
 <style>
@@ -645,7 +650,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     <div class="wrap entry">
       <div class="entry-l">
         <header class="head-gear">
-          <h1 class="logo"><svg class="logo-svg lg-d" viewBox="0 0 780 184" role="img" aria-label="マスカレード (Masquerade)"><use href="#mq-logo"/></svg><svg class="logo-svg lg-l" viewBox="0 0 780 184" role="img" aria-label="マスカレード (Masquerade)"><use href="#mq-logo-l"/></svg></h1><button id="btn-gear-e" class="btn gear" type="button" aria-label="設定" title="設定"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button>
+          <h1 class="logo"><svg class="logo-svg lg-d" viewBox="0 0 780 184" role="img" aria-label="マスカレード (Masquerade)"><use href="#mq-logo"/></svg><svg class="logo-svg lg-l" viewBox="0 0 780 184" role="img" aria-label="マスカレード (Masquerade)"><use href="#mq-logo-l"/></svg></h1><button id="btn-fs-e" class="btn gear fsbtn" type="button" aria-label="全画面" title="全画面"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button><button id="btn-gear-e" class="btn gear" type="button" aria-label="設定" title="設定"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button>
         </header>
         <p class="lead">仮面をかぶった乗員たちの中に、うそつきが紛れている。タスクをこなし、怪しい相手を見抜き、会議で追放するか、逆に欺いて乗っ取る。役職もマップも自由に選べます。</p>
         <div class="stack">
@@ -726,7 +731,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     <div class="hud top">
       <div id="lob-chip" class="lobchip"></div><button id="btn-role" class="rolechip" type="button"><small id="rc-team"></small><span id="rc-name"></span></button>
       <div class="prog" id="prog"><div class="bar"><i id="prog-fill"></i></div><span id="prog-text"></span></div>
-      <div class="hgroup"><button id="btn-gear-g" class="hbtn gear" type="button" aria-label="設定" title="設定"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><button id="btn-mic" class="hbtn" type="button" hidden>マイクON</button><button id="btn-setview" class="hbtn" type="button">いまの設定</button><button id="btn-lobpanel" class="hbtn" type="button">参加者・設定</button><button id="btn-roles" class="hbtn" type="button">役職一覧</button><button class="hbtn lv-btn" type="button">退室</button><button id="btn-map" class="hbtn" type="button">マップ</button></div>
+      <div class="hgroup"><button id="btn-fs-g" class="hbtn gear fsbtn" type="button" aria-label="全画面" title="全画面"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button><button id="btn-gear-g" class="hbtn gear" type="button" aria-label="設定" title="設定"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button><button id="btn-mic" class="hbtn" type="button" hidden>マイクON</button><button id="btn-setview" class="hbtn" type="button">いまの設定</button><button id="btn-lobpanel" class="hbtn" type="button">参加者・設定</button><button id="btn-roles" class="hbtn" type="button">役職一覧</button><button class="hbtn lv-btn" type="button">退室</button><button id="btn-map" class="hbtn" type="button">マップ</button></div>
     </div>
     <div id="ballclock" class="ballclock" hidden></div>
     <div id="tasklist" class="tasklist"></div>
@@ -746,6 +751,8 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
       <section class="set-sec">
         <h3>画面</h3>
         <div class="field"><label>色(ロゴも切り替わります)</label><div id="theme-seg" class="seg" role="group" aria-label="画面の色"></div></div>
+        <div class="field" id="fs-field"><label>全画面</label><div id="fs-seg" class="seg" role="group" aria-label="全画面"></div>
+          <p id="fs-note" class="small mute"></p></div>
         <div class="field"><label>向き</label><div id="rot-seg" class="seg" role="group" aria-label="画面の向き"></div>
           <p class="small mute">横向きに持つと遊びやすいです。スマホが縦のまま固定されるときは「横向き表示」を選ぶと、画面だけ横に回ります。</p></div>
       </section>
@@ -5895,6 +5902,41 @@ function checkNotices(st) {
   if (cur < S.ntSeen) S.ntSeen = cur;
 }
 
+/* ---------- 全画面表示(ブラウザの上のバーなどを消す) ---------- */
+function fsSupported() { var d = document.documentElement; return !!(d.requestFullscreen || d.webkitRequestFullscreen); }
+function fsOn() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function setFs(on) {
+  if (!fsSupported()) { toast(IOS_FS_HOWTO); return; } // iPhone の Safari: やりかたを案内する
+  if (!on) {
+    try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) {}
+    try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e2) {}
+    return;
+  }
+  var d = document.documentElement, failed = function () { toast('この画面では全画面にできません。Chromeで開くか、「ホーム画面に追加」から開いてください'); };
+  try {
+    var p = (d.requestFullscreen || d.webkitRequestFullscreen).call(d, { navigationUI: 'hide' });
+    if (p && p.then) p.then(function () { // 向きが「自動」なら、横向きに固定する(できない端末では、そのまま)
+      try { if (S.rot === 'auto' && screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function () {}); } catch (e) {}
+    }, failed);
+  } catch (e3) { failed(); }
+}
+// iPhone の Safari は、ページの全画面表示(Fullscreen API)に対応していない。ホーム画面に追加して開くと、バーのない画面になる
+function isIos() { var ua = navigator.userAgent || ''; return /iPhone|iPod|iPad/.test(ua) || (/Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1); }
+function isStandalone() { try { return !!(navigator.standalone || (window.matchMedia && (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches))); } catch (e) { return false; } }
+var IOS_FS_HOWTO = 'Safariの下(または上)の共有ボタン(四角に上矢印)を押して、「ホーム画面に追加」を選びます。そのアイコンから開くと、バーのない全画面で遊べます。';
+function renderFsSeg() {
+  var ok = fsSupported(), ios = !ok && isIos() && !isStandalone(), fld = $('fs-field'), note = $('fs-note');
+  if (fld) fld.hidden = !(ok || ios);
+  ['btn-fs-e', 'btn-fs-g'].forEach(function (id) { var b = $(id); if (b) b.hidden = !(ok || ios); });
+  if (note) note.textContent = ok ? '上のバーなどを消して、画面いっぱいに表示します。ホーム画面に追加して開くと、最初から全画面になります。' : IOS_FS_HOWTO;
+  var seg = $('fs-seg'); if (!seg) return;
+  clear(seg); seg.hidden = !ok;
+  if (!ok) return;
+  [[false, '通常'], [true, '全画面']].forEach(function (a) {
+    seg.appendChild(h('button', { type: 'button', 'aria-pressed': fsOn() === a[0] ? 'true' : 'false', text: a[1], onclick: function () { setFs(a[0]); } }));
+  });
+}
+
 /* ---------- 入室画面 ---------- */
 var ROT_NAMES = { auto: '自動(端末のまま)', cw: '横向き(左に倒す)', ccw: '横向き(右に倒す)' };
 function renderRotSeg() {
@@ -5922,7 +5964,7 @@ function renderThemeSeg() {
 }
 // 設定画面(歯車)。入室・待機室・ゲーム中・会議中のどこからでも開ける
 function openSettings() {
-  renderThemeSeg(); renderRotSeg(); sndRefreshUi(); volRender(); vcRender();
+  renderThemeSeg(); renderRotSeg(); renderFsSeg(); sndRefreshUi(); volRender(); vcRender();
   if (KB.pc) { KB.cap = null; kbRender(); }
   $('ov-settings').hidden = false;
 }
@@ -9513,6 +9555,8 @@ function bindUi() {
   ['btn-mic', 'btn-mt-mic'].forEach(function (id) { $(id).addEventListener('click', function () { if (!VC.on) vcStart(); else if (VC.noMic) { vcStop(); vcStart(); } else vcSetMuted(!VC.muted); }); });
   volLoad();
   ['btn-gear-e', 'btn-gear-l', 'btn-gear-g', 'btn-gear-m'].forEach(function (id) { $(id).addEventListener('click', openSettings); });
+  ['btn-fs-e', 'btn-fs-g'].forEach(function (id) { var b = $(id); if (b) b.addEventListener('click', function () { setFs(!fsOn()); }); });
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) { document.addEventListener(ev, function () { renderFsSeg(); }); });
   $('btn-set-x').addEventListener('click', closeSettings);
   $('btn-skip').addEventListener('click', function () { sendAct({ type: 'vote', t: 'skip' }); renderMeeting(); });
   $('btn-chat').addEventListener('click', function () { var i = $('chat-inp'); sendChat(i.value); i.value = ''; renderChat(); });
@@ -9524,7 +9568,7 @@ function boot() {
   S.name = store('uso.name') || '';
   $('inp-name').value = S.name;
   var rm = store('uso.rot'); S.rot = rm === 'cw' || rm === 'ccw' ? rm : 'auto';
-  applyTheme(store('uso.theme')); drawShip(); applyRot(); renderRotSeg(); bindInput(); bindUi(); bindSnd(); bindKeys();
+  applyTheme(store('uso.theme')); drawShip(); applyRot(); renderRotSeg(); renderFsSeg(); bindInput(); bindUi(); bindSnd(); bindKeys();
   updateEntryStatus();
   initCaps().then(function () {
     if (S.standalone) { var m = /^#?([A-Za-z0-9]{4})$/.exec(location.hash || ''); if (m) $('inp-code').value = m[1].toUpperCase(); }
