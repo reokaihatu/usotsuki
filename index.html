@@ -863,7 +863,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
   <div id="ov-color" class="ov solid" hidden>
     <div class="box">
       <div class="game-head"><h2 style="font-size:24px">着替え</h2><button id="btn-color-x" class="btn small" type="button">閉じる</button></div>
-      <p class="small mute">キャラクターの色と小物を選べます。ほかの人が使っている色は選べません。小物は、あたま・かお・くび・おなか・せなかに1つずつ付けられます(もう一度押すと外れます)。</p>
+      <p class="small mute">キャラクターの色と小物を選べます。ほかの人が使っている色は選べません。小物は、あたま・かお・くび・うで・おなか・せなかに1つずつ付けられます(もう一度押すと外れます)。</p>
       <div id="color-grid" class="color-grid"></div>
       <h3 class="acc-h">小物</h3>
       <div id="acc-grid"></div>
@@ -1688,15 +1688,17 @@ function grid(o) {
       abil: ['波動砲: 向いている方向に、壁を貫通するビームを放つ。ためているあいだは動けない。触れた人は(インポスター陣営も)倒れる'] }
   };
   // 小物(待機室の鏡で付けられる)。スロットは あたま(h)・かお(f)・くび(n)・おなか(b)・せなか(w) で、それぞれ1つまで
-  var ACC_SLOTS = [['h', 'あたま'], ['f', 'かお'], ['n', 'くび'], ['b', 'おなか'], ['w', 'せなか']];
+  var ACC_SLOTS = [['k', 'きぐるみ'], ['h', 'あたま'], ['f', 'かお'], ['n', 'くび'], ['a', 'うで'], ['b', 'おなか'], ['w', 'せなか']];
   var ACCS = {
+    k: [['tile', '麻雀牌の「中」'], ['frog', 'かえる'], ['fish', 'さかな'], ['penguin', 'ペンギン'], ['chick', 'ひよこ'], ['panda', 'パンダ'], ['dino', 'きょうりゅう']],
     h: [['crown', '王冠'], ['party', 'パーティー帽'], ['ribbon', 'リボン'], ['flower', 'お花'], ['tophat', 'シルクハット'], ['phones', 'ヘッドホン'],
-        ['leaf', '葉っぱ'], ['chef', 'コック帽'], ['antenna', '宇宙人の触角'], ['horns', '悪魔のつの'], ['wizard', '魔法使い帽'], ['halo', '天使の輪']],
+        ['leaf', '葉っぱ'], ['chef', 'コック帽'], ['antenna', '宇宙人の触角'], ['horns', '悪魔のつの'], ['wizard', '魔法使い帽'], ['halo', '天使の輪'], ['bunny', 'うさ耳'], ['frogcap', 'かえるの帽子']],
     f: [['glasses', 'まるメガネ'], ['shades', 'サングラス'], ['mustache', 'ひげ'], ['blush', 'ほっぺ'], ['monocle', '片眼鏡'],
         ['scouter', 'スカウター'], ['plague', 'ペストマスク'], ['eyepatch', '眼帯'], ['clownnose', '赤い鼻']],
     n: [['bowtie', '蝶ネクタイ'], ['scarf', 'マフラー'], ['bell', 'すずの首輪'], ['necktie', 'ネクタイ'], ['pearls', '真珠の首飾り'], ['medal', 'メダル']],
-    b: [['swirl', 'ぐるぐる'], ['heart', 'ハート'], ['star', 'ほし']],
-    w: [['devil', '悪魔の翼'], ['angel', '天使の翼'], ['fairy', '妖精の羽'], ['cape', 'マント']]
+    a: [['captain', 'キャプテンマーク']],
+    b: [['swirl', 'ぐるぐる'], ['heart', 'ハート'], ['star', 'ほし'], ['abs', 'シックスパック']],
+    w: [['devil', '悪魔の翼'], ['angel', '天使の翼'], ['fairy', '妖精の羽'], ['cape', 'マント'], ['archer', '弓と矢筒']]
   };
   function accValid(slot, id) { return !!ACCS[slot] && ACCS[slot].some(function (a) { return a[0] === id; }); }
   var ROLE_ORDER = ['impostor', 'assassin', 'maskmaker', 'cleaner', 'sandworm', 'sniper', 'wavecannon', 'vampire', 'accomplice', 'jackal', 'wavejackal', 'arsonist', 'jester', 'detective', 'sheriff', 'guardian', 'engineer', 'fortune', 'niceguesser', 'shielder', 'organizer'];
@@ -6807,7 +6809,7 @@ function renderColor(st) {
     }
     row.appendChild(card('', 'なし'));
     E.ACCS[slot].forEach(function (a) { row.appendChild(card(a[0], a[1])); });
-    ab.appendChild(h('div', { class: 'acc-sec' }, [h('div', { class: 'acc-ttl', text: sl[1] }), row]));
+    ab.appendChild(h('div', { class: 'acc-sec' }, [h('div', { class: 'acc-ttl', text: sl[1] + (slot === 'k' ? '(着ると、あたま・くび・おなか・せなかの小物は隠れます)' : '') }), row]));
   });
 }
 function pickAcc(slot, id) {
@@ -7643,7 +7645,9 @@ function resize() {
   var ap = $('app'); ap.classList.toggle('land', VW > VH * 1.1); ap.classList.toggle('short', VH < 560 && VW > VH * 1.1);
 }
 function shade(hex, amt) {
-  var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255, t = amt < 0 ? 0 : 255, p = Math.abs(amt);
+  var r, g, b, m = /^rgb\((\d+),(\d+),(\d+)\)$/.exec(hex); // shade() の結果(rgb(...))にも、もう一度かけられる
+  if (m) { r = +m[1]; g = +m[2]; b = +m[3]; } else { var n = parseInt(hex.slice(1), 16); r = n >> 16; g = (n >> 8) & 255; b = n & 255; }
+  var t = amt < 0 ? 0 : 255, p = Math.abs(amt);
   r = Math.round((t - r) * p + r); g = Math.round((t - g) * p + g); b = Math.round((t - b) * p + b);
   return 'rgb(' + r + ',' + g + ',' + b + ')';
 }
@@ -7653,7 +7657,9 @@ function ell(c, x, y, rx, ry) { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 6.2
 //   f: 向き(1=右 -1=左)、ph: 歩きの位相、ghost: 幽霊(浮かぶ)、dead: 倒れた姿
 function drawBlob(c, x, y, hex, f, ph, alpha, ghost, dead, dz, ac) { // dz: ダンス中のポーズ {t: 経過秒}
   c.save(); c.globalAlpha = alpha; c.translate(x, y);
-  var OUT = 'rgba(8,12,24,.9)', light = shade(hex, 0.3), dark = shade(hex, -0.3), CREAM = '#fbf6ea';
+  var kg = ac && ac.k ? KG[ac.k] : null, kc = kg ? kgColors(ac.k, hex) : null, B = kc ? kc.b : hex; // 着ぐるみ: 色はキャラクターの色から作る(足は本人の色のまま)
+  if (kg) ac = { k: ac.k, f: ac.f, a: ac.a }; // 着ぐるみを着ると、あたま・くび・おなか・せなかの小物は隠れる
+  var OUT = 'rgba(8,12,24,.9)', light = shade(B, 0.3), dark = shade(hex, -0.3), CREAM = '#fbf6ea';
   if (!dead) { c.fillStyle = 'rgba(0,0,0,.3)'; ell(c, 0, ghost ? 29 : 24, ghost ? 11 : 15, 5); c.fill(); }
   if (dz) { // ダンス: からだをゆらし、ときどきくるっと回る
     var dtw = dz.t, tw = (dtw % 3.4) / 0.9;
@@ -7668,13 +7674,16 @@ function drawBlob(c, x, y, hex, f, ph, alpha, ghost, dead, dz, ac) { // dz: ダ�
   var sw = Math.sin(ph), walking = !ghost && !dead;
   if (ac && ac.w) drawAccBack(c, ac.w, f, hex); // せなかの小物(翼・マント)は、からだのうしろに描く
   // しっぽ(進む向きと反対側。歩くとゆれる)
+  if (kg) drawKgBack(c, ac.k, f, kc, ph, dead);
+  if (!kg || kg.tail) {
   c.save(); c.translate(-f * 14, 10); c.rotate(-f * (0.75 + (dead ? 0 : Math.sin(ph * 0.5) * 0.18)));
-  c.fillStyle = hex; ell(c, 0, -11, 6.2, 12.5); c.fill(); c.lineWidth = 2.2; c.strokeStyle = OUT; ell(c, 0, -11, 6.2, 12.5); c.stroke();
-  c.fillStyle = CREAM; c.beginPath(); c.ellipse(0, -20.5, 4.6, 4.4, 0, 0, 6.2832); c.fill();
+  c.fillStyle = B; ell(c, 0, -11, 6.2, 12.5); c.fill(); c.lineWidth = 2.2; c.strokeStyle = OUT; ell(c, 0, -11, 6.2, 12.5); c.stroke();
+  if (!kg) { c.fillStyle = CREAM; c.beginPath(); c.ellipse(0, -20.5, 4.6, 4.4, 0, 0, 6.2832); c.fill(); }
   c.restore();
+  }
   // 耳(体のうしろに描く)
-  [-1, 1].forEach(function (sd) {
-    c.fillStyle = hex; c.beginPath(); c.moveTo(sd * 14, -10); c.quadraticCurveTo(sd * 16, -22, sd * 10.5, -30); c.quadraticCurveTo(sd * 5, -25, sd * 2, -17); c.closePath(); c.fill();
+  if (!kg) [-1, 1].forEach(function (sd) {
+    c.fillStyle = B; c.beginPath(); c.moveTo(sd * 14, -10); c.quadraticCurveTo(sd * 16, -22, sd * 10.5, -30); c.quadraticCurveTo(sd * 5, -25, sd * 2, -17); c.closePath(); c.fill();
     c.lineWidth = 2.2; c.strokeStyle = OUT; c.stroke();
     c.fillStyle = '#ffc9d3'; c.beginPath(); c.moveTo(sd * 12, -14.5); c.quadraticCurveTo(sd * 13, -21, sd * 10, -25); c.quadraticCurveTo(sd * 7, -21, sd * 6, -16.5); c.closePath(); c.fill();
   });
@@ -7690,15 +7699,21 @@ function drawBlob(c, x, y, hex, f, ph, alpha, ghost, dead, dz, ac) { // dz: ダ�
     });
   }
   // 体
-  c.fillStyle = hex; ell(c, 0, 0, 17, 19); c.fill();
-  c.fillStyle = CREAM; ell(c, 0, 9.5, 9, 8.5); c.fill();                          // おなかの白
+  if (kg && kg.tile) drawKgTile(c, hex, kc, OUT); else {
+  c.fillStyle = B; ell(c, 0, 0, 17, 19); c.fill();
+  c.fillStyle = (kc && kc.bl) || CREAM; ell(c, 0, 9.5, 9, 8.5); c.fill();                          // おなかの白
   c.fillStyle = light; ell(c, -7 * f, -11, 4.5, 5); c.fill();                      // つや
   c.lineWidth = 2.5; c.strokeStyle = OUT; ell(c, 0, 0, 17, 19); c.stroke();
+  }
   // うで(あしと逆に振る)。体の前、よこに出す
   [-1, 1].forEach(function (sd) {
     var swing = walking ? sw * sd * -0.55 : ghost ? Math.sin(ph * 0.4 + sd) * 0.3 : 0;
     c.save(); c.translate(sd * 15.5, -3); c.rotate(dz ? sd * -(1.4 + 0.85 * Math.sin(dz.t * 6.4 + (sd > 0 ? 0 : Math.PI))) : sd * -0.3 + swing * -sd * 0 + swing); // ダンス中は、うでを交互にふりあげる
-    c.fillStyle = hex; ell(c, 0, 6.5, 4.4, 8.8); c.fill(); c.lineWidth = 2.1; c.strokeStyle = OUT; ell(c, 0, 6.5, 4.4, 8.8); c.stroke();
+    c.fillStyle = (kc && kc.arm) || B; ell(c, 0, 6.5, 4.4, 8.8); c.fill(); c.lineWidth = 2.1; c.strokeStyle = OUT; ell(c, 0, 6.5, 4.4, 8.8); c.stroke();
+    if (ac && ac.a === 'captain' && sd === 1) { // サッカーのキャプテンマーク(うでの動きにあわせて、うでの上に巻く)
+      c.save(); c.fillStyle = '#ffd23d'; c.beginPath(); c.rect(-4.9, 0.8, 9.8, 5.4); c.fill(); c.lineWidth = 1.5; c.strokeStyle = OUT; c.stroke();
+      c.strokeStyle = '#1b1f33'; c.lineWidth = 1.3; c.lineCap = 'round'; c.beginPath(); c.arc(0.2, 3.5, 1.7, 0.55, 5.75); c.stroke(); c.restore();
+    }
     c.fillStyle = CREAM; c.beginPath(); c.arc(0, 13.2, 3.3, 0, 6.2832); c.fill(); c.lineWidth = 1.7; c.stroke();   // 手の白
     c.restore();
   });
@@ -7718,6 +7733,7 @@ function drawBlob(c, x, y, hex, f, ph, alpha, ghost, dead, dz, ac) { // dz: ダ�
     c.beginPath(); c.arc(-2.4 + f * 1.5, 9.5, 2.4, 0.1, 3.0); c.stroke(); c.beginPath(); c.arc(2.4 + f * 1.5, 9.5, 2.4, 0.1, 3.0); c.stroke(); c.lineCap = 'butt';  // 口(ちいさな ω)
   }
   c.restore();
+  if (kg) drawKg(c, ac.k, f, kc); // 着ぐるみ(フード・飾り)
   if (ac) drawAcc(c, ac, f, dead, hex); // 小物(待機室の鏡で付けたもの)
   c.restore();
 }
@@ -7727,6 +7743,10 @@ function drawAcc(c, ac, f, dead, hex) { // hex: キャラクターの色(体に�
   var OUT = 'rgba(8,12,24,.9)', ex = function (sd) { return sd * 4.08 + f * 2.22; }, ey = -6.2;
   c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
   function st(w) { c.lineWidth = w || 1.8; c.strokeStyle = OUT; c.stroke(); }
+  if (ac.w === 'archer') { // 矢筒の肩ひも: かたから反対側のこしへ、むねを斜めに通る
+    c.beginPath(); c.moveTo(-f * 15.8, -2.4); c.lineTo(f * 12.6, 16.6); c.lineWidth = 4.8; c.strokeStyle = OUT; c.stroke(); c.lineWidth = 2.8; c.strokeStyle = '#8a5a2b'; c.stroke();
+    c.strokeStyle = '#c99a5b'; c.lineWidth = 0.8; c.setLineDash([1.6, 1.6]); c.beginPath(); c.moveTo(-f * 15.8, -2.4); c.lineTo(f * 12.6, 16.6); c.stroke(); c.setLineDash([]);
+  }
   // おなか(白いところ)
   if (ac.b === 'swirl') {
     c.beginPath(); for (var si = 0; si <= 64; si++) { var sa = si * 0.2, sr = 0.45 + sa * 0.5; c.lineTo(Math.cos(sa) * sr * 1.1, 10 + Math.sin(sa) * sr); }
@@ -7735,6 +7755,16 @@ function drawAcc(c, ac, f, dead, hex) { // hex: キャラクターの色(体に�
     c.save(); c.translate(0, 10.4); c.fillStyle = '#ff5c8a'; c.beginPath(); c.moveTo(0, 4.6); c.bezierCurveTo(-8, -1, -4.6, -6, 0, -2.2); c.bezierCurveTo(4.6, -6, 8, -1, 0, 4.6); c.closePath(); c.fill(); st(1.3); c.restore();
   } else if (ac.b === 'star') {
     c.save(); c.translate(0, 10.4); c.fillStyle = '#ffd24d'; c.beginPath(); for (var bi = 0; bi < 10; bi++) { var br = bi % 2 ? 2.8 : 6.2, ba = bi * 0.6283 - 1.5708; c.lineTo(Math.cos(ba) * br, Math.sin(ba) * br); } c.closePath(); c.fill(); st(1.3); c.restore();
+  }
+  if (ac.b === 'abs') { // シックスパック: おなかの白いところに、割れた腹筋(2列×3段)
+    c.save(); c.beginPath(); c.ellipse(0, 9.5, 9, 8.5, 0, 0, 6.2832); c.clip();
+    c.fillStyle = 'rgba(196,150,98,.62)';
+    [[2.8, 6.8], [7.6, 11.2], [12.2, 16.2]].forEach(function (r) { [-1, 1].forEach(function (sd) { c.beginPath(); c.moveTo(sd * 0.8, r[0] + 0.6); c.quadraticCurveTo(sd * 0.8, r[0], sd * 1.6, r[0]); c.lineTo(sd * 7.4, r[0]); c.quadraticCurveTo(sd * 8.4, (r[0] + r[1]) / 2, sd * 7.2, r[1]); c.lineTo(sd * 1.6, r[1]); c.quadraticCurveTo(sd * 0.8, r[1], sd * 0.8, r[1] - 0.6); c.closePath(); c.fill(); }); });
+    c.strokeStyle = '#7d5a34'; c.lineWidth = 1.5; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(0, 2.2); c.lineTo(0, 18);
+    [7.2, 11.9].forEach(function (yy) { c.moveTo(-8, yy); c.quadraticCurveTo(0, yy + 1.4, 8, yy); });
+    c.stroke();
+    c.strokeStyle = 'rgba(255,248,230,.75)'; c.lineWidth = 1; c.beginPath(); [[3.4, 1], [8.2, 1], [12.8, 1]].forEach(function (q) { [-1, 1].forEach(function (sd) { c.moveTo(sd * 2.2, q[0] + 0.6); c.lineTo(sd * 4.6, q[0] + 0.2); }); }); c.stroke(); c.restore(); // つや
   }
   // くび(からだの前。顔のあとに描く)
   if (ac.n === 'scarf') {
@@ -7859,6 +7889,26 @@ function drawAcc(c, ac, f, dead, hex) { // hex: キャラクターの色(体に�
     c.fillStyle = '#4b3bb0'; c.beginPath(); c.ellipse(0, -18.4, 13.4, 3.4, 0, 0, 6.2832); c.fill(); st(1.7);
     c.beginPath(); c.moveTo(-8.4, -19); c.quadraticCurveTo(-5, -30, 3.4, -35); c.quadraticCurveTo(10, -38.6, 14, -33.4); c.quadraticCurveTo(9, -34, 8.4, -19); c.closePath(); c.fill(); st(1.7);
     c.fillStyle = '#ffd24d'; c.fillRect(-8.2, -22.8, 16.4, 3); c.beginPath(); c.arc(1.4, -28.4, 1.5, 0, 6.2832); c.fill(); c.beginPath(); c.arc(-1.8, -23.4, 0.9, 0, 6.2832); c.fill();
+  } else if (ac.h === 'bunny') { // うさ耳(カチューシャ)。片方はちょっと折れている
+    c.beginPath(); c.moveTo(-9, -16.4); c.quadraticCurveTo(0, -21.4, 9, -16.4); c.lineWidth = 3.4; c.strokeStyle = OUT; c.stroke(); c.lineWidth = 1.8; c.strokeStyle = '#ff7aa5'; c.stroke();
+    [-1, 1].forEach(function (sd) {
+      c.save(); c.translate(sd * 5.6, -18.4); c.rotate(sd * 0.2);
+      c.beginPath(); c.moveTo(-3.6, 0); c.bezierCurveTo(-5.6, -9, -3.4, -19, sd > 0 ? 1.2 : 0, -22.4); c.bezierCurveTo(sd > 0 ? 6.8 : 4.4, -19, 5.4, -9, 3.6, 0); c.closePath();
+      c.fillStyle = '#fff8f2'; c.fill(); st(1.8);
+      c.beginPath(); c.moveTo(-1.8, -1.6); c.bezierCurveTo(-3, -9, -1.6, -15, 0.4, -18); c.bezierCurveTo(2.6, -15, 3, -9, 1.8, -1.6); c.closePath(); c.fillStyle = '#ffb9cb'; c.fill();
+      c.restore();
+    });
+  } else if (ac.h === 'frogcap') { // かえるの帽子: 緑の帽子の上に、まんまるの目が2つ
+    c.beginPath(); c.moveTo(-12.6, -17.2); c.bezierCurveTo(-14.6, -32, 14.6, -32, 12.6, -17.2); c.quadraticCurveTo(0, -13.8, -12.6, -17.2); c.closePath();
+    c.fillStyle = '#6fc24a'; c.fill(); st(1.9);
+    c.strokeStyle = '#4c9a32'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-10.4, -19.2); c.quadraticCurveTo(0, -15.8, 10.4, -19.2); c.stroke();
+    [-1, 1].forEach(function (sd) {
+      c.beginPath(); c.arc(sd * 6.6, -28.6, 5.6, 0, 6.2832); c.fillStyle = '#6fc24a'; c.fill(); st(1.8);
+      c.beginPath(); c.arc(sd * 6.6, -28.6, 4.1, 0, 6.2832); c.fillStyle = '#fff'; c.fill(); c.lineWidth = 1; c.strokeStyle = '#3c8a2b'; c.stroke();
+      c.beginPath(); c.arc(sd * 6.6 + f * 1.3, -28.2, 2.2, 0, 6.2832); c.fillStyle = '#0b1020'; c.fill();
+      c.fillStyle = '#fff'; c.beginPath(); c.arc(sd * 6.6 + f * 1.3 - 0.7, -29, 0.7, 0, 6.2832); c.fill();
+    });
+    c.fillStyle = 'rgba(255,120,150,.55)'; [-1, 1].forEach(function (sd) { c.beginPath(); c.ellipse(sd * 9.2, -20.2, 1.7, 1.1, 0, 0, 6.2832); c.fill(); });
   } else if (ac.h === 'halo') {
     c.beginPath(); c.ellipse(0, -26.4, 9.6, 3.4, 0, 0, 6.2832); c.lineWidth = 4.2; c.strokeStyle = OUT; c.stroke(); c.lineWidth = 2.4; c.strokeStyle = '#ffe27a'; c.stroke();
   }
@@ -7886,10 +7936,132 @@ function drawAccBack(c, id, f, hex) {
       var sd = q[0]; c.beginPath(); c.ellipse(sd * q[2], q[3], q[4], q[5], sd * q[1] * 1.3, 0, 6.2832); c.fillStyle = rgba(hex, 0.62); c.fill(); st(1.5);
       c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 1; c.beginPath(); c.ellipse(sd * q[2], q[3], q[4] * 0.55, q[5] * 0.6, sd * q[1] * 1.3, 0, 6.2832); c.stroke();
     });
+  } else if (id === 'archer') { // 背負った矢筒(矢が3本のぞく)と、ななめに掛けた弓
+    // 弓(進む向きの側。木の弧と、ぴんと張った弦)
+    c.beginPath(); c.moveTo(f * 18, -27); c.quadraticCurveTo(f * 41, -3, f * 18, 21); c.lineWidth = 4.4; c.strokeStyle = OUT; c.stroke(); c.lineWidth = 2.6; c.strokeStyle = '#b5712f'; c.stroke();
+    c.beginPath(); c.moveTo(f * 33.6, -9.4); c.lineTo(f * 33.6, 3.6); c.lineWidth = 3.6; c.strokeStyle = OUT; c.stroke(); c.lineWidth = 2; c.strokeStyle = '#6b4423'; c.stroke();
+    c.beginPath(); c.moveTo(f * 18, -27); c.lineTo(f * 18, 21); c.lineWidth = 1; c.strokeStyle = '#f4ecd2'; c.stroke();
+    // 矢筒(進む向きと反対側。すこし外にかたむける)
+    c.save(); c.translate(-f * 12.6, -2); c.rotate(-f * 0.28);
+    [[-3.4, -0.22, '#e8495f'], [0.2, 0.02, '#fff8ea'], [3.6, 0.24, '#4aa8ff']].forEach(function (q) { // 矢(筒からのぞく羽)
+      c.save(); c.translate(q[0], -15); c.rotate(q[1]); c.beginPath(); c.moveTo(0, 4); c.lineTo(0, -8.4); c.lineWidth = 2.6; c.strokeStyle = OUT; c.stroke(); c.lineWidth = 1.2; c.strokeStyle = '#dcb877'; c.stroke();
+      c.fillStyle = q[2]; c.beginPath(); c.moveTo(0, -8.8); c.lineTo(-2.7, -12.8); c.lineTo(0, -11.2); c.lineTo(2.7, -12.8); c.closePath(); c.fill(); c.lineWidth = 1.2; c.strokeStyle = OUT; c.stroke();
+      c.beginPath(); c.moveTo(0, -5.6); c.lineTo(-2.4, -9.4); c.lineTo(0, -8); c.lineTo(2.4, -9.4); c.closePath(); c.fill(); c.stroke(); c.restore(); });
+    c.beginPath(); c.moveTo(-5.2, -15); c.lineTo(5.2, -15); c.lineTo(4.4, 14.4); c.quadraticCurveTo(0, 16.4, -4.4, 14.4); c.closePath(); c.fillStyle = '#9a6a35'; c.fill(); st(1.9);
+    c.fillStyle = '#6b4423'; c.fillRect(-5.1, -15.4, 10.2, 3.6); c.fillRect(-4.6, 9.4, 9.2, 3.2);
+    c.strokeStyle = 'rgba(255,230,180,.4)'; c.lineWidth = 1; c.beginPath(); c.moveTo(-2.2, -9); c.lineTo(-1.8, 8); c.stroke();
+    c.restore();
   } else if (id === 'cape') {
     c.beginPath(); c.moveTo(-13, -9); c.quadraticCurveTo(0, -13, 13, -9); c.quadraticCurveTo(23, 8, 25, 26); c.quadraticCurveTo(14, 22, 8, 27.4); c.quadraticCurveTo(0, 22.6, -8, 27.4); c.quadraticCurveTo(-14, 22, -25, 26); c.quadraticCurveTo(-23, 8, -13, -9); c.closePath();
     c.fillStyle = '#c9263f'; c.fill(); st(1.9);
     c.strokeStyle = 'rgba(255,255,255,.3)'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-9, 2); c.quadraticCurveTo(-13, 14, -14.6, 22); c.moveTo(9, 2); c.quadraticCurveTo(13, 14, 14.6, 22); c.stroke();
+  }
+  c.restore();
+}
+// ---------- 着ぐるみ(あたまのフード・からだ・しっぽを、まるごと着がえる) ----------
+// b: からだの色(なければ本人の色のまま) bl: おなかの色 arm: うでの色 tail: 1ならふつうのしっぽを、からだの色で付ける keep: 1ならからだは本人の色のまま(麻雀牌のように、上から着る)
+// 足と、顔のまわりのふちは、着ぐるみを着ても本人の色のまま(だれか分かるように)
+var KG = { tile: { tile: 1 }, frog: {}, fish: {}, penguin: {}, chick: {}, panda: {}, dino: { tail: 1 } };
+// 着ぐるみの色は、キャラクターの色から作る(麻雀牌だけは、象牙色の牌のふちと手足にキャラクターの色が出る)
+function kgColors(id, hex) {
+  var kc = { b: hex, bl: shade(hex, 0.78), arm: hex, dk: shade(hex, -0.3), lt: shade(hex, 0.42), rim: shade(hex, 0.42) };
+  if (id === 'penguin') { kc.b = shade(hex, -0.5); kc.arm = kc.b; kc.bl = shade(hex, 0.92); kc.rim = hex; }
+  else if (id === 'panda') { kc.b = shade(hex, 0.82); kc.bl = shade(hex, 0.92); kc.arm = shade(hex, -0.62); kc.rim = hex; }
+  else if (id === 'tile') { kc.b = '#fbf7ea'; kc.rim = hex; kc.arm = hex; }
+  return kc;
+}
+// からだのうしろ(しっぽ・ひれ)。ふつうのしっぽのかわりに描く
+function drawKgBack(c, id, f, kc, ph, dead) {
+  var B = kc.b, OUT = 'rgba(8,12,24,.9)', d = -f, sw = dead ? 0 : Math.sin(ph * 0.5) * 0.14;
+  c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
+  function st(w) { c.lineWidth = w || 1.9; c.strokeStyle = OUT; c.stroke(); }
+  if (id === 'fish') { // 魚のしっぽびれ(2つに割れている)
+    c.translate(d * 14, 8); c.rotate(d * (-0.2) + sw * d);
+    c.beginPath(); c.moveTo(0, 1); c.quadraticCurveTo(d * 8, -9, d * 18, -13); c.quadraticCurveTo(d * 12, -3, d * 14, 3); c.quadraticCurveTo(d * 12, 9, d * 19, 16); c.quadraticCurveTo(d * 8, 14, 0, 5); c.closePath();
+    c.fillStyle = shade(B, -0.12); c.fill(); st(1.9);
+    c.strokeStyle = shade(B, -0.38); c.lineWidth = 1; c.beginPath(); c.moveTo(d * 3, 3); c.lineTo(d * 14, -8); c.moveTo(d * 3, 3); c.lineTo(d * 14, 12); c.stroke();
+  } else if (id === 'dino') { // きょうりゅうの太いしっぽ(背中のとげ付き)
+    c.translate(d * 12, 10); c.rotate(d * 0.18 + sw * d);
+    c.beginPath(); c.moveTo(0, -5); c.quadraticCurveTo(d * 13, -9, d * 25, 1); c.quadraticCurveTo(d * 14, 6, 0, 8); c.closePath(); c.fillStyle = B; c.fill(); st(2);
+    c.fillStyle = kc.lt; [[5, -7.4], [12, -8.4], [19, -5.2]].forEach(function (q) { c.beginPath(); c.moveTo(d * (q[0] - 2.8), q[1] + 1.4); c.lineTo(d * q[0], q[1] - 4.4); c.lineTo(d * (q[0] + 2.8), q[1] + 1.2); c.closePath(); c.fill(); st(1.4); });
+  } else if (id === 'panda') { // ふわふわの丸いしっぽ
+    c.translate(d * 14, 9 + sw * 6);
+    c.fillStyle = kc.bl;
+    [[0, 0, 5.8], [d * 3.4, -3.8, 4.4], [d * 3.6, 3.6, 4]].forEach(function (q) { c.beginPath(); c.arc(q[0], q[1], q[2], 0, 6.2832); c.fill(); st(1.7); });
+    c.beginPath(); c.arc(0, 0, 4.9, 0, 6.2832); c.fill();
+  } else if (id === 'penguin') { // ペンギンの、ちいさなしっぽ
+    c.translate(d * 13, 12); c.rotate(d * 0.5 + sw * d);
+    c.beginPath(); c.moveTo(0, -3); c.quadraticCurveTo(d * 8, -2, d * 13, 4); c.quadraticCurveTo(d * 5, 5, 0, 3); c.closePath(); c.fillStyle = B; c.fill(); st(1.8);
+  } else if (id === 'chick') { // ひよこの、ふさふさのしっぽ
+    c.translate(d * 13, 7 + sw * 4);
+    [[-0.5, 9], [0.1, 10.5], [0.7, 9]].forEach(function (q) { c.save(); c.rotate(d * q[0] - d * 0.4); c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(d * 4, -q[1] * 0.4, d * q[1] * 1.1, -q[1] * 0.2); c.quadraticCurveTo(d * 4.4, q[1] * 0.3, 0, 0); c.closePath(); c.fillStyle = kc.lt; c.fill(); st(1.6); c.restore(); });
+  }
+  c.restore();
+}
+// フード(顔のまわりのわっか)。顔の部分はくり抜いて、ふちを本人の色にする
+function kgRing(c, f, fill, P, rx) {
+  var OUT = 'rgba(8,12,24,.9)', R = rx || 18;
+  c.beginPath(); c.ellipse(0, -9.5, R, 15.4, 0, 0, 6.2832); c.moveTo(f * 1.2 + 12.4, -6.2); c.ellipse(f * 1.2, -6.2, 12.4, 8.8, 0, 0, 6.2832); c.fillStyle = fill; c.fill('evenodd');
+  c.beginPath(); c.ellipse(0, -9.5, R, 15.4, 0, 0, 6.2832); c.lineWidth = 2.2; c.strokeStyle = OUT; c.stroke();
+  c.beginPath(); c.ellipse(f * 1.2, -6.2, 12.4, 8.8, 0, 0, 6.2832); c.lineWidth = 4.8; c.strokeStyle = OUT; c.stroke(); c.lineWidth = 2.9; c.strokeStyle = P; c.stroke();
+}
+// 麻雀牌の「中」の着ぐるみ: 頭からこしまでをすっぽり包む大きな牌。うしろの層(牌のふち)はキャラクターの色
+function drawKgTile(c, hex, kc, OUT) {
+  function body(dy, fill) { c.beginPath(); c.moveTo(-11.6, -30 + dy); c.lineTo(11.6, -30 + dy); c.quadraticCurveTo(17.6, -30 + dy, 17.6, -24 + dy); c.lineTo(17.6, 11.8 + dy); c.quadraticCurveTo(17.6, 17.6 + dy, 11.6, 17.6 + dy); c.lineTo(-11.6, 17.6 + dy); c.quadraticCurveTo(-17.6, 17.6 + dy, -17.6, 11.8 + dy); c.lineTo(-17.6, -24 + dy); c.quadraticCurveTo(-17.6, -30 + dy, -11.6, -30 + dy); c.closePath(); c.fillStyle = fill; c.fill(); c.lineWidth = 2.3; c.strokeStyle = OUT; c.stroke(); }
+  body(2.6, hex); body(0, kc.b);
+  c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 1.4; c.lineCap = 'round'; c.beginPath(); c.moveTo(-14.2, -22); c.lineTo(-14.2, -10); c.stroke(); // つや
+}
+// 着ぐるみのフード・もよう・飾り(顔のあとに描く)
+function drawKg(c, id, f, kc) {
+  var B = kc.b, P = kc.rim, OUT = 'rgba(8,12,24,.9)', C = '#fbf6ea';
+  c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
+  function st(w) { c.lineWidth = w || 1.9; c.strokeStyle = OUT; c.stroke(); }
+  function circ(x, y, r, fill, w) { c.beginPath(); c.arc(x, y, r, 0, 6.2832); c.fillStyle = fill; c.fill(); st(w || 1.6); }
+  function tri(x1, y1, x2, y2, x3, y3, fill, w) { c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.lineTo(x3, y3); c.closePath(); c.fillStyle = fill; c.fill(); st(w || 1.5); }
+  if (id === 'tile') { // 麻雀牌の「中」: 顔のまわりを赤い「口」でかこみ、上下に縦線を引く(牌の本体はからだの段階で描く)
+    c.beginPath(); c.ellipse(f * 1.2, -6.2, 12.4, 8.8, 0, 0, 6.2832); c.lineWidth = 4.8; c.strokeStyle = OUT; c.stroke(); c.lineWidth = 2.9; c.strokeStyle = P; c.stroke();
+    // 牌のバランス優先: 「中」は牌の中心(y=-6.2)にそろえ、横は牌の約7割、縦は約8割。顔にかかる部分は切れてよい
+    c.strokeStyle = '#d8232a'; c.lineWidth = 2.4; c.lineCap = 'butt'; c.lineJoin = 'miter';
+    c.beginPath(); c.rect(-12.8, -18.4, 25.6, 24.8); c.moveTo(0, -25.6); c.lineTo(0, -18.4); c.moveTo(0, 6.4); c.lineTo(0, 13.2); c.stroke();
+    c.restore(); return;
+  }
+  // フードのうしろの飾り
+  if (id === 'panda') { circ(-12.6, -22.4, 5.8, kc.arm, 1.8); circ(12.6, -22.4, 5.8, kc.arm, 1.8); circ(-12.6, -22.4, 2.8, shade(kc.arm, 0.2), 0); circ(12.6, -22.4, 2.8, shade(kc.arm, 0.2), 0); }
+  if (id === 'fish') { // 背びれ(頭の上)
+    c.beginPath(); c.moveTo(-8, -22.4); c.quadraticCurveTo(-6, -31, 0, -33); c.quadraticCurveTo(4, -29, 8, -22.4); c.closePath(); c.fillStyle = shade(B, -0.14); c.fill(); st(1.9);
+    c.strokeStyle = shade(B, -0.38); c.lineWidth = 1; c.beginPath(); c.moveTo(-3.6, -23.4); c.lineTo(-2.6, -29); c.moveTo(0.4, -23.2); c.lineTo(0.8, -30); c.moveTo(4.4, -23.4); c.lineTo(3.4, -28); c.stroke();
+  }
+  if (id === 'dino') { // 頭のうしろのとげ
+    [[-9.4, -22, 4.6], [0, -25, 5.8], [9.4, -22, 4.6]].forEach(function (q) { tri(q[0] - q[2] * 0.75, q[1] + 3, q[0], q[1] - q[2], q[0] + q[2] * 0.75, q[1] + 3, kc.lt, 1.7); });
+  }
+  // フード
+  kgRing(c, f, B, P, 18);
+  // フードの前の飾り・もよう
+  if (id === 'frog') {
+    [-1, 1].forEach(function (sd) { circ(sd * 7.4, -23.4, 5.6, B, 1.8); circ(sd * 7.4, -23.4, 4.1, '#fff', 1); circ(sd * 7.4 + f * 1.3, -23, 2.2, '#0b1020', 0); circ(sd * 7.4 + f * 1.3 - 0.7, -23.8, 0.7, '#fff', 0); });
+    c.fillStyle = 'rgba(255,120,150,.55)'; [-1, 1].forEach(function (sd) { c.beginPath(); c.ellipse(sd * 14.4, -4.8, 1.7, 1.1, 0, 0, 6.2832); c.fill(); });
+    c.fillStyle = kc.dk; [[-12, 3, 1.5], [-9, 10, 1.2], [12, 6, 1.6], [9.4, 13, 1.2], [-13, 12, 1]].forEach(function (q) { c.beginPath(); c.arc(q[0], q[1], q[2], 0, 6.2832); c.fill(); });
+  } else if (id === 'fish') {
+    c.strokeStyle = shade(B, -0.32); c.lineWidth = 1.2; [-1, 1].forEach(function (sd) { [-12, -8].forEach(function (y) { c.beginPath(); c.moveTo(sd * 14.2, y); c.quadraticCurveTo(sd * 16.4, y + 2, sd * 14.4, y + 4.6); c.stroke(); }); });
+    c.strokeStyle = shade(B, -0.22); c.lineWidth = 1; [[-8, 4], [0, 4], [8, 4], [-4, 8.4], [4, 8.4], [-12, 8.4], [12, 8.4], [-8, 13], [0, 13], [8, 13]].forEach(function (q) { if (Math.abs(q[0]) < 9.4 && q[1] > 4 && q[1] < 8) return; c.beginPath(); c.arc(q[0], q[1] + 4, 3.3, 0.15 * Math.PI, 0.85 * Math.PI); c.stroke(); });
+    c.fillStyle = '#e8495f'; [-1, 1].forEach(function (sd) { c.beginPath(); c.ellipse(sd * 14.8, -4, 1.7, 1.1, 0, 0, 6.2832); c.fill(); });
+  } else if (id === 'penguin') {
+    c.beginPath(); c.ellipse(0, 9.6, 9.6, 10.2, 0, 0, 6.2832); c.fillStyle = kc.bl; c.fill(); st(1.7);
+    tri(f * 2.2 - 3.4, -3.6, f * 2.2 + 3.4, -3.6, f * 2.2, 1.8, '#ffa530', 1.5);
+    c.fillStyle = 'rgba(255,150,150,.5)'; [-1, 1].forEach(function (sd) { c.beginPath(); c.ellipse(sd * 14.2, -3.4, 1.8, 1.1, 0, 0, 6.2832); c.fill(); });
+  } else if (id === 'chick') {
+    tri(f * 2.2 - 3.2, -3.6, f * 2.2 + 3.2, -3.6, f * 2.2, 1.8, '#ff9a3a', 1.5);
+    c.strokeStyle = '#ffc928'; c.lineWidth = 2.4; [[-3, -4], [0, 0], [3, 4]].forEach(function (q) { c.beginPath(); c.moveTo(q[1] * 0.4, -23.6); c.quadraticCurveTo(q[0] + q[1], -28, q[0] * 2 + q[1] * 1.6, -29.4); c.lineWidth = 3.6; c.strokeStyle = OUT; c.stroke(); c.lineWidth = 2; c.strokeStyle = B; c.stroke(); });
+    c.fillStyle = 'rgba(255,140,70,.6)'; [-1, 1].forEach(function (sd) { c.beginPath(); c.ellipse(sd * 14.4, -3.4, 1.9, 1.2, 0, 0, 6.2832); c.fill(); });
+    c.beginPath(); c.arc(0, 11, 8.6, 0.12 * Math.PI, 0.88 * Math.PI); c.strokeStyle = shade(B, -0.18); c.lineWidth = 1.3; c.stroke(); // おなかのふわふわ
+  } else if (id === 'panda') {
+    [-1, 1].forEach(function (sd) { c.fillStyle = kc.arm; c.beginPath(); c.ellipse(sd * 15.2, -8, 3.4, 4.8, sd * 0.3, 0, 6.2832); c.fill(); st(1.3); });
+    c.fillStyle = 'rgba(255,150,170,.5)'; [-1, 1].forEach(function (sd) { c.beginPath(); c.ellipse(sd * 14.2, -3.4, 1.8, 1.1, 0, 0, 6.2832); c.fill(); });
+  } else if (id === 'dino') {
+    [-1, 1].forEach(function (sd) { circ(sd * 8.6, -22.6, 3.4, '#fff', 1.6); circ(sd * 8.6 + f, -22.4, 1.7, '#0b1020', 0); }); // 頭の上の目
+    c.fillStyle = '#fff'; [-8.4, -4.2, 0, 4.2, 8.4].forEach(function (x) { c.beginPath(); c.moveTo(x - 2, -13.4 + Math.abs(x) * -0.12); c.lineTo(x + 2, -13.4 + Math.abs(x) * -0.12); c.lineTo(x, -9.4 + Math.abs(x) * -0.12); c.closePath(); c.fill(); st(1.1); }); // フードのふちの牙
+    c.fillStyle = kc.bl; ell(c, 0, 9.5, 9, 8.5); c.fill(); c.strokeStyle = shade(kc.bl, -0.2); c.lineWidth = 1; [[-6, 6, 6, 6.6], [-6.6, 10, 6.6, 10.6], [-5.6, 14, 5.6, 14.6]].forEach(function (q) { c.beginPath(); c.moveTo(q[0], q[1]); c.lineTo(q[2], q[3]); c.stroke(); });
+    c.fillStyle = kc.dk; [[-12, 2, 1.6], [12, 4, 1.8], [-11, 13, 1.4], [11.6, 12, 1.5]].forEach(function (q) { c.beginPath(); c.arc(q[0], q[1], q[2], 0, 6.2832); c.fill(); });
   }
   c.restore();
 }
