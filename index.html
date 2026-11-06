@@ -597,7 +597,9 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 /* 会議などで名前の横に出す、キャラクター(色の丸のかわり) */
 .swatch.chr { background: none; border: 0; border-radius: 0; display: block; flex: none; }
 .swatch.chr.speaking { box-shadow: none; filter: drop-shadow(0 0 2px rgba(95, 208, 138, .95)) drop-shadow(0 0 4px rgba(95, 208, 138, .8)); }
-.card .top .swatch.chr { margin: -4px 0 -4px -2px; }
+.card .top .swatch.chr { margin: -4px 0 -4px -2px; transition: opacity .25s; }
+.vcdim .card .top .swatch.chr { opacity: .35; } /* 会議中: 話していない人は半透明 */
+.vcdim .card .top .swatch.chr.talking { opacity: 1; }
 /* 鏡の小物 */
 .acc-h { margin: 18px 0 4px; font-size: 16px; }
 .acc-sec { margin-top: 10px; }
@@ -767,6 +769,8 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
         <h3>音量とマイク(ボイスチャット)</h3>
         <div class="row"><button id="btn-vc" class="btn" type="button">マイクを許可して参加</button><button id="btn-vc-mic" class="btn" type="button" hidden>マイクON</button></div>
         <p id="vc-text" class="small mute"></p>
+        <div class="row"><button id="btn-spk" class="btn" type="button" aria-pressed="true">話している表示: ON</button></div>
+        <p class="small mute">ロビーで、話している人の頭の上や、参加者一覧に出る緑のマークを出すかどうかを選べます。ゲームが始まると、会議中も含めて、いつも表示されません。この設定は、この端末にだけ保存されます。</p>
         <p class="small mute">聞こえる大きさを、相手ごとに変えられます(0〜200%)。この設定は、この端末にだけ保存されます。</p>
         <div id="vol-list" class="vol-list"></div>
       </section>
@@ -1667,7 +1671,7 @@ function grid(o) {
     fortune: { n: '占い師', team: 'crew', tasks: true, threat: false,
       d: '会議中に1人を選んで、その人の役職を知れる。', goal: 'クルーと同じ。占った結果を会議で共有する。',
       abil: ['占い: 会議中に生きている1人を選ぶと、その人の役職がわかる(回数制限あり)'] },
-    niceguesser: { n: 'ナイスゲッサー', team: 'crew', tasks: true, threat: false,
+    niceguesser: { n: 'ミーティングシェリフ', team: 'crew', tasks: true, threat: false,
       d: '会議中に、怪しい1人を「クルー陣営ではない」と見抜いて倒せる。クルー陣営を選ぶと自分が倒れる。', goal: 'クルーと同じ。',
       abil: ['看破: 会議中に1人を選ぶ。クルー陣営以外なら相手が、クルー陣営なら自分が倒れる(回数制限あり)'] },
     shielder: { n: 'シールダー', team: 'crew', tasks: true, threat: false,
@@ -1718,7 +1722,7 @@ function grid(o) {
     { g: 'role', k: 'r_guardian', role: 'guardian', label: '守護者', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_engineer', role: 'engineer', label: '技師', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_fortune', role: 'fortune', label: '占い師', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
-    { g: 'role', k: 'r_niceguesser', role: 'niceguesser', label: 'ナイスゲッサー', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
+    { g: 'role', k: 'r_niceguesser', role: 'niceguesser', label: 'ミーティングシェリフ', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_shielder', role: 'shielder', label: 'シールダー', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
     { g: 'role', k: 'r_organizer', role: 'organizer', label: '主催者', min: 0, max: MAX_PLAYERS, step: 1, def: 0, unit: '人' },
 
@@ -2369,6 +2373,12 @@ function grid(o) {
   }
 
   // ---------- 勝利判定 ----------
+  // 生き残っているインポスター陣営の人数(勝敗の勘定と同じ。共犯者は、クルー側と同じ1人として数えるので含めない)
+  function impLeft(state) {
+    var n = 0;
+    alivePlayers(state).forEach(function (p) { var R = ROLES[p.role]; if (R && R.team === 'impostor' && !R.helper) n++; });
+    return n;
+  }
   function evalWin(state) {
     var al = alivePlayers(state);
     var total = al.length;
@@ -2556,7 +2566,7 @@ function grid(o) {
       return { ok: true };
     }
 
-    // 会議中の能力(イビルゲッサー・占い師・ナイスゲッサー)
+    // 会議中の能力(イビルゲッサー・占い師・ミーティングシェリフ)
     if (a.type === 'assassinate' || a.type === 'fortune' || a.type === 'nicekill') {
       var mm = state.meeting;
       if (state.phase !== 'meeting' || !mm || (mm.stage !== 'discuss' && mm.stage !== 'vote') || !p.alive) return { ok: false };
@@ -3156,6 +3166,7 @@ function grid(o) {
       if (P.role === 'vampire') vampFall(state, ctx, P); // 追放されたヴァンパイアの眷属は、同時に倒れる(噛みつきも取り消し)
       var ei = state.settings.ejectInfo | 0; // 追放された人の情報: 0=明かさない 1=役職 2=陣営だけ
       if (ei === 1) m.res.reveal = P.role; else if (ei === 2) m.res.revealTeam = ROLES[P.role].team;
+      if (ei === 1 || ei === 2) m.res.il = impLeft(state); // 役職・陣営を明かす設定のときは、インポスター陣営の残り人数もいっしょに明かす
       if (P.role === 'jester') { finish(state, 'jester', 'ピエロが追放された', ej, ctx.now); return; }
     }
     checkWin(state, ctx.now);
@@ -4025,6 +4036,16 @@ var SND = (function () {
       tone(c, d, { f: 90, f2: 36, t: t, d: 0.6, v: 0.5 });
       tone(c, d, { type: 'square', f: 1400, f2: 300, t: t, d: 0.12, v: 0.12 });
     },
+    slay: function (c, d, t) { // 自分が倒した: 生卵を握りつぶしたような「ぐちゃっ」。投げた音に聞こえないよう、音程や周波数を動かさず、細かい粒をたたみかけて「つぶれる」感じにする
+      noise(c, d, { t: t, d: 0.012, v: 0.7, ft: 'bandpass', f: 3200, q: 1.2, a: 0.001 }); // つぶれ始めの、一瞬のぷち
+      var fr = [2100, 1400, 3100, 1700, 2600, 1300, 3600, 1600, 2300, 1100, 2900, 1800, 1400, 1000];
+      fr.forEach(function (f, i) { // 中身がはじける、細かい湿った粒
+        noise(c, d, { t: t + 0.006 + i * 0.011 + (i % 3) * 0.003, d: 0.02 + (i % 4) * 0.006, v: 1.1 * (1 - i * 0.05), ft: 'bandpass', f: f, q: 4.5, a: 0.002 });
+      });
+      noise(c, d, { t: t + 0.004, d: 0.24, v: 1.6, ft: 'lowpass', f: 900, q: 0.9, a: 0.004 }); // くぐもった、つぶれた中身
+      tone(c, d, { f: 170, f2: 135, t: t, d: 0.15, v: 0.7 }); // 手応え(音程はほとんど動かさない)
+      tone(c, d, { f: 650, f2: 1050, t: t + 0.17, d: 0.04, v: 0.16, a: 0.006 }); // 最後に、ぷちゅっと小さな泡
+    },
     killnear: function (c, d, t) { // 近くで誰かが倒れた
       noise(c, d, { t: t, d: 0.3, v: 0.3, ft: 'lowpass', f: 2500, f2: 250 });
       tone(c, d, { type: 'sawtooth', f: 200, f2: 50, t: t, d: 0.4, v: 0.2, lp: 900 });
@@ -4653,6 +4674,7 @@ function startOnline() {
   }
   S.lastSig = ''; sendPresence(true);
   S.uiRev = -1;
+  if (typeof vcAuto === 'function') vcAuto(); // 入った時点で、ボイスチャットに自動で参加する
 }
 function netLost(msg) { toast(msg); leaveRoom(); renderUI(); }
 async function createRoom() {
@@ -5255,7 +5277,11 @@ if (typeof module !== 'undefined' && module.exports && typeof window === 'undefi
  * 相手の声は、Web Audio で人ごとに音量をかけてから鳴らす。音量は VOICE.gain(距離・生死・場面)で決まる。
  * 相手のIDは、各自の参加情報に入れた vi(PeerJS のID)で知る。IDの小さいほうが電話をかける。 */
 var VC = { on: false, ctx: null, out: null, mic: null, micSrc: null, micGain: null, micAn: null, muted: false, noMic: false, peers: {}, calls: {}, tickT: 0, connT: 0, busy: false, level: 0 };
-S.speaking = {}; S.vcId = null;
+S.speaking = {}; S.talk = {}; S.vcId = null;
+// 「話している」表示は、ロビーだけ。ロビーでの表示・非表示は端末ごとに選べる(ゲームが始まると、いつも出ない)
+S.spkShow = store('uso.spk') !== '0';
+function spkRender() { var b = $('btn-spk'); if (b) { b.textContent = '話している表示: ' + (S.spkShow ? 'ON' : 'OFF'); b.setAttribute('aria-pressed', S.spkShow ? 'true' : 'false'); b.classList.toggle('off', !S.spkShow); } }
+function spkSet(on) { S.spkShow = !!on; store('uso.spk', on ? '1' : '0'); spkRender(); if (!on) { S.speaking = {}; vcApplySpeaking(); } }
 
 function vcSupported() {
   return !!(S.standalone && NET.available && NET.available() && (window.AudioContext || window.webkitAudioContext) && navigator.mediaDevices);
@@ -5264,6 +5290,13 @@ function vcRms(an, buf) {
   an.getByteTimeDomainData(buf);
   var s = 0, i; for (i = 0; i < buf.length; i++) { var v = (buf[i] - 128) / 128; s += v * v; }
   return Math.sqrt(s / buf.length);
+}
+// 部屋に入った時点で、ボイスチャットに自動で参加する(抜けることはできない。マイクのミュートだけできる)。
+// ブラウザが自動の開始を止めたとき・失敗したときは、画面を触った次のタイミングで、つなぎ直す(10秒に1回まで)
+function vcAuto() {
+  if (VC.on || VC.busy || !vcSupported() || S.mode !== 'online' || !S.joined) return;
+  var now = Date.now(); if (VC.autoAt && now - VC.autoAt < 10000) return;
+  VC.autoAt = now; vcStart();
 }
 async function vcStart() {
   if (VC.on || VC.busy || !vcSupported() || S.mode !== 'online') return;
@@ -5307,7 +5340,7 @@ function vcStop() {
   try { if (VC.mic) VC.mic.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
   try { if (VC.ctx) VC.ctx.close(); } catch (e) {}
   VC.on = false; VC.ctx = null; VC.out = null; VC.mic = null; VC.micSrc = null; VC.micGain = null; VC.micAn = null; VC.peers = {}; VC.peerRef = null; VC.level = 0;
-  S.speaking = {}; VC.hold = {};
+  S.speaking = {}; S.talk = {}; VC.hold = {};
   if (S.vcId) { S.vcId = null; if (S.mode === 'online') sendPresence(true); }
   vcRender();
 }
@@ -5403,13 +5436,18 @@ function vcTick() {
     if (VC.level > 0.03) hold[S.pid] = now + 350;
   } else delete hold[S.pid];
   Object.keys(hold).forEach(function (k) { if (hold[k] > now) sp[k] = true; else delete hold[k]; });
-  S.speaking = sp;
+  S.talk = sp; // 実際に話している人(会議のカードの半透明に使う)
+  S.speaking = (phase === 'lobby' && S.spkShow) ? sp : {}; // 緑のマークは、ロビーだけ
   vcApplySpeaking();
 }
 // 会議の画面の「話している」印
 function vcApplySpeaking() {
   var els = document.querySelectorAll('[data-pid]');
-  for (var i = 0; i < els.length; i++) els[i].classList.toggle('speaking', !!S.speaking[els[i].getAttribute('data-pid')]);
+  var talk = S.talk || {};
+  for (var i = 0; i < els.length; i++) { var q = els[i].getAttribute('data-pid'); els[i].classList.toggle('speaking', !!S.speaking[q]); els[i].classList.toggle('talking', !!talk[q]); }
+  // 会議の話し合い・投票のあいだ、ボイスチャットにつないでいれば、話していない人のキャラクターを半透明にする
+  var cards = $('mt-cards'), st = S.state;
+  if (cards) cards.classList.toggle('vcdim', !!(VC.on && st && st.phase === 'meeting' && st.meeting && (st.meeting.stage === 'discuss' || st.meeting.stage === 'vote')));
 }
 /* ---------- 人ごとの音量(この端末にだけ保存) ---------- */
 var VOL = { m: {}, all: 1, prev: {} };
@@ -5444,13 +5482,14 @@ function vcRender() {
   var sup = vcSupported() && S.mode === 'online';
   var bj = $('btn-vc'), tx = $('vc-text'), bm = $('btn-vc-mic');
   if (bj) {
-    bj.textContent = VC.busy ? 'つないでいます…' : VC.on ? (VC.noMic ? 'マイクを許可してつなぎ直す' : 'ボイスチャットから抜ける') : 'マイクを許可して参加';
+    bj.textContent = VC.busy ? 'つないでいます…' : VC.noMic ? 'マイクを許可してつなぎ直す' : 'ボイスチャットにつなぐ';
     bj.disabled = VC.busy || !sup;
+    bj.hidden = !!(VC.on && !VC.noMic); // つながっているあいだは、抜けるボタンを出さない(ミュートだけできる)
   }
   if (bm) { bm.hidden = !(VC.on && sup && !VC.noMic); bm.textContent = VC.muted ? 'マイクがミュート中(押すとON)' : 'マイクON(押すとミュート)'; bm.classList.toggle('off', VC.muted); }
   if (tx) tx.textContent = !sup ? (S.mode === 'online' ? 'この端末では、ボイスチャットを使えません。' : 'ボイスチャットは、「みんなで遊ぶ」で部屋に入ると使えます。')
-    : VC.on ? (VC.noMic ? '聞くだけで参加中(マイクが使えません)。ブラウザのマイクの許可を確認して、「つなぎ直す」を押してください。' : VC.muted ? '参加中。マイクはミュートです。' : '参加中。マイクがオンです。')
-    : 'マイクを使って、近くの人と話せます。イヤホンをおすすめします。';
+    : VC.on ? (VC.noMic ? '聞くだけで参加中(マイクが使えません)。ブラウザのマイクの許可を確認して、「つなぎ直す」を押してください。' : VC.muted ? 'つながっています。マイクはミュートです。' : 'つながっています。マイクがオンです。')
+    : (VC.busy ? 'つないでいます…' : '部屋に入ると、ボイスチャットに自動でつながります(ブラウザの確認が出たら、マイクを許可してください)。イヤホンをおすすめします。');
   ['btn-mic', 'btn-mt-mic'].forEach(function (id) {
     var b = $(id); if (!b) return;
     b.hidden = !sup;
@@ -6037,8 +6076,9 @@ function readName() {
 var EJ_OPTS = [[0, '明かさない', '追放されても、役職も陣営も分かりません。'], [1, '役職を明かす', '追放された人の役職が、追放の演出と結果で明かされます。'], [2, '陣営だけ明かす', '追放された人の役職は伏せて、クルー陣営・インポスター陣営・第三陣営のどれだったかだけが明かされます。']];
 // 追放された人について、結果画面や演出で明かす文(明かさない設定なら空)
 function ejInfoText(res) {
-  if (res && res.reveal) return '役職は「' + E.ROLES[res.reveal].n + '」だった。';
-  if (res && res.revealTeam) return '陣営は「' + E.TEAMS[res.revealTeam].name + '」だった。';
+  var left = res && typeof res.il === 'number' ? ' インポスター陣営の残りは ' + res.il + ' 人。' : ''; // 役職・陣営を明かす設定のとき、残り人数もいっしょに出す
+  if (res && res.reveal) return '役職は「' + E.ROLES[res.reveal].n + '」だった。' + left;
+  if (res && res.revealTeam) return '陣営は「' + E.TEAMS[res.revealTeam].name + '」だった。' + left;
   return '';
 }
 var PROG_OPTS = [[0, '会議のあとに表示', '進み具合は、会議が始まるたびに更新されます。それまでは前回の会議の時点の値です。'], [1, '完了するたび動く', 'タスクが終わるたびに、画面上部のバーがすぐ動きます。'], [2, '表示しない', '進み具合は出ません。決着はこれまでどおり、全タスク完了で付きます。']];
@@ -6584,6 +6624,7 @@ function renderMeeting() {
       btns.length ? h('div', { class: 'cbtn' }, btns) : null
     ]));
   });
+  vcApplySpeaking(); // 作り直した直後も、話している人の表示をすぐ合わせる
   var skip = $('mt-skip');
   skip.hidden = !(me && me.alive && m.stage === 'vote');
   $('btn-skip').disabled = !canVote;
@@ -6600,7 +6641,7 @@ function renderMeeting() {
     var sub = ej ? (ejInfoText(res) || '正体は明かされない。') : (res.skip ? 'スキップ ' + res.skip + ' 票' : '');
     rs.appendChild(h('div', { class: 'result' }, [h('div', { class: 'big', text: big }), h('div', { class: 'mute', text: sub })]));
   }
-  // 占い師・ナイスゲッサーの確認パネル
+  // 占い師・ミーティングシェリフの確認パネル
   var sk = $('mt-skill'); clear(sk);
   var cur = S.skill && st.players[S.skill.t] && st.players[S.skill.t].alive ? S.skill : null;
   if (cur && ((cur.k === 'fortune' && fort) || (cur.k === 'nicekill' && nice))) {
@@ -7236,7 +7277,7 @@ function playEject(st, m, el) {
 }
 
 
-/* ---------- 会議中に倒れた演出(イビルゲッサー・ナイスゲッサーの当て/外し) ----------
+/* ---------- 会議中に倒れた演出(イビルゲッサー・ミーティングシェリフの当て/外し) ----------
  * 約3秒。画面を暗くして、狙いを定める → 命中(または自爆) → 倒れる → 魂が昇る。会議の画面のうえにかぶせる。
  */
 var MK = { raf: 0, t0: 0, hex: '#fff', k: 'ag-hit', key: '' };
@@ -7329,11 +7370,12 @@ function sndSnap(st, me, now) {
     bl: st.blackoutUntil > now, jam: st.jamUntil > now, crisis: st.crisis ? 1 : 0,
     cfix: st.crisis ? st.crisis.fixed.filter(Boolean).length : 0,
     ms: !!(st.mapSab && st.mapSab.until > now), n: st.order.length, alive: {}, wv: {}, wf: {}, sh: {}, sb: {},
-    steps: 0, done: 0, fr: me && me.fr ? me.fr.length : 0, bites: 0, tu: me && me.tu ? 1 : 0, rc: me && me.rc || 0, tr: (st.trails || []).filter(function (e) { return e.sh; }).length, wvh: SP && SP.wvh || {}, tick: SP ? SP.tick : 0
+    kn: 0, steps: 0, done: 0, fr: me && me.fr ? me.fr.length : 0, bites: 0, tu: me && me.tu ? 1 : 0, rc: me && me.rc || 0, tr: (st.trails || []).filter(function (e) { return e.sh; }).length, wvh: SP && SP.wvh || {}, tick: SP ? SP.tick : 0
   };
   st.order.forEach(function (id) {
     var p = st.players[id]; if (!p || p.left) return;
     if (p.bt && me && p.bt.by === me.id) o.bites++;
+    if (p.kd && me && p.kd.by === me.id) o.kn += p.kd.n || 1; // 自分が倒した人の数
     o.alive[id] = !!p.alive; o.wv[id] = !!p.wv; o.wf[id] = p.wf ? p.wf.n : 0; o.sh[id] = (p.sh || 0) > now; o.sb[id] = p.sb ? p.sb.n : 0;
   });
   if (me && me.tasks) me.tasks.forEach(function (t) { if (t.done) o.done++; o.steps += t.p || 0; });
@@ -7371,9 +7413,15 @@ function sndSync() {
   // 倒れた人(近くだけ聞こえる)
   if (cur.phase === 'play' && pv.phase === 'play') {
     for (id in cur.alive) {
-      if (pv.alive[id] && !cur.alive[id] && id !== S.pid) { var kn = sndNear(id, 700); if (kn.vol > 0.05) SND.play('killnear', { vol: kn.vol, pan: kn.pan }); }
+      var vk = st.players[id] && st.players[id].kd;
+      if (pv.alive[id] && !cur.alive[id] && id !== S.pid && !(vk && vk.by === S.pid)) { // 自分が倒したときは、専用の音を下で鳴らす
+        var kn = sndNear(id, 700);
+        if (kn.vol > 0.05) SND.play('killnear', { vol: kn.vol, pan: kn.pan });
+      }
     }
   }
+  // 自分が倒したときの手応えの音(襲撃・射撃・狙撃・波動砲・反射)
+  if (cur.phase === 'play' && pv.phase === 'play' && cur.kn > pv.kn) SND.play('slay');
   // 波動砲・シールド
   for (id in cur.wv) {
     if (cur.wv[id] && !pv.wv[id]) {
@@ -9554,6 +9602,9 @@ function bindUi() {
   // ゲーム中・会議中のマイクのボタン: 参加していなければ参加、参加中ならミュートの切り替え(聞くだけのときは、許可をもう一度求める)
   ['btn-mic', 'btn-mt-mic'].forEach(function (id) { $(id).addEventListener('click', function () { if (!VC.on) vcStart(); else if (VC.noMic) { vcStop(); vcStart(); } else vcSetMuted(!VC.muted); }); });
   volLoad();
+  // ボイスチャットは部屋に入ると自動参加。自動で始められなかったとき・音が止められているときは、画面を触った時に、つなぎ直す
+  document.addEventListener('pointerdown', function () { if (S.mode !== 'online') return; if (!VC.on) vcAuto(); else if (VC.ctx && VC.ctx.state === 'suspended') { try { VC.ctx.resume(); } catch (e) {} } }, true);
+  spkRender(); $('btn-spk').addEventListener('click', function () { spkSet(!S.spkShow); });
   ['btn-gear-e', 'btn-gear-l', 'btn-gear-g', 'btn-gear-m'].forEach(function (id) { $(id).addEventListener('click', openSettings); });
   ['btn-fs-e', 'btn-fs-g'].forEach(function (id) { var b = $(id); if (b) b.addEventListener('click', function () { setFs(!fsOn()); }); });
   ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) { document.addEventListener(ev, function () { renderFsSeg(); }); });
