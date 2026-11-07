@@ -607,6 +607,12 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
 .acc-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 8px; }
 .colcard.acc canvas { width: 64px; height: 88px; }
 
+/* 通信の表示(設定でON): 画面の下の中央に、小さく出す */
+.nethud { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(6px + env(safe-area-inset-bottom, 0px)); z-index: 6; pointer-events: none; max-width: min(92vw, 420px); padding: 4px 8px; border-radius: 8px; background: rgba(8, 12, 22, .72); color: #e9eef8; font: 700 11px/1.45 "Zen Maru Gothic", sans-serif; white-space: nowrap; }
+.nethud .nh-row { display: flex; gap: 8px; justify-content: space-between; }
+.nethud .nh-n { overflow: hidden; text-overflow: ellipsis; max-width: 9em; }
+.nethud .g { color: #7be8a6; } .nethud .y { color: #ffd24d; } .nethud .r { color: #ff7a80; } .nethud .m { color: #9fb0cc; }
+
 </style>
 </head>
 <body>
@@ -737,6 +743,7 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
     </div>
     <div id="ballclock" class="ballclock" hidden></div>
     <div id="tasklist" class="tasklist"></div>
+    <div id="net-hud" class="nethud" hidden></div>
     <div id="banner" class="banner" hidden></div>
     <div id="ventarrows" class="ventarrows"></div>
     <div class="hud bot">
@@ -770,6 +777,8 @@ details.help ul { margin: 10px 0 0; padding-left: 1.2em; color: var(--mute); dis
         <div class="row"><button id="btn-vc" class="btn" type="button">マイクを許可して参加</button><button id="btn-vc-mic" class="btn" type="button" hidden>マイクON</button></div>
         <p id="vc-text" class="small mute"></p>
         <div class="row"><button id="btn-spk" class="btn" type="button" aria-pressed="true">話している表示: ON</button></div>
+        <div class="row"><button id="btn-net" class="btn" type="button" aria-pressed="false">通信の表示: OFF</button></div>
+        <p class="small mute">画面の下に、通信の遅れ(ping)・画面の滑らかさ(fps)・直通か中継かを出します。ホストの画面には、参加者ごとの一覧が出ます。動きがおかしい人を探すときに使います。</p>
         <p class="small mute">ロビーで、話している人の頭の上や、参加者一覧に出る緑のマークを出すかどうかを選べます。ゲームが始まると、会議中も含めて、いつも表示されません。この設定は、この端末にだけ保存されます。</p>
         <p class="small mute">聞こえる大きさを、相手ごとに変えられます(0〜200%)。この設定は、この端末にだけ保存されます。</p>
         <div id="vol-list" class="vol-list"></div>
@@ -3741,7 +3750,7 @@ var NET = (function () {
 
   /* ---- ホスト側: みんなの状態と部屋の状態を持ち、配る ---- */
   function makeHub(peer) {
-    var entries = {}, dirty = {}, removed = [], listeners = [], doc = null, docHas = false, snapCbs = [], docTimer = 0, peerTimer = 0, notifyT = 0, lastDocAt = 0;
+    var pst = {}, entries = {}, dirty = {}, removed = [], listeners = [], doc = null, docHas = false, snapCbs = [], docTimer = 0, peerTimer = 0, notifyT = 0, lastDocAt = 0;
     function notify() { if (notifyT) return; notifyT = setTimeout(function () { notifyT = 0; listeners.forEach(function (f) { try { f(); } catch (e) {} }); }, 16); }
     function flushPeers() {
       peerTimer = 0;
@@ -3776,13 +3785,23 @@ var NET = (function () {
       });
       c.on('data', function (m) {
         if (!m || typeof m !== 'object') return;
+        if (m.t === 'bye') { // 自分から退室した: 接続が切れるのを待たず、すぐ「抜けた」と伝える
+          var ep = entries[c.peer];
+          entries[c.peer] = { p: Object.assign({}, ep ? ep.p : {}, { j: 0, a: null }), u: Date.now() }; dirty[c.peer] = 1; schedulePeers(); notify();
+          return;
+        }
+        if (m.t === 'ping') { // 参加者の遅れの計測: すぐ返事を返し、参加者が報告した数値を覚える
+          send(c, { t: 'pong', s: m.s });
+          pst[c.peer] = { rtt: +m.rt || 0, mx: +m.mx || 0, f: +m.f || 0, rel: m.rel || '', at: Date.now(), buf: c.dataChannel ? c.dataChannel.bufferedAmount : 0, lt: m.lt | 0 };
+          return;
+        }
         if (m.t === 'pr' && m.p && typeof m.p === 'object') {
           entries[c.peer] = { p: m.p, u: Date.now() }; dirty[c.peer] = 1; schedulePeers(); notify();
         }
       });
       var gone = function () {
         if (st.conns[c.peer] !== c) return;
-        delete st.conns[c.peer]; delete entries[c.peer]; removed.push(c.peer); schedulePeers(); notify();
+        delete st.conns[c.peer]; delete entries[c.peer]; delete pst[c.peer]; removed.push(c.peer); schedulePeers(); notify();
       };
       c.on('close', gone); c.on('error', gone);
     }
@@ -3792,6 +3811,8 @@ var NET = (function () {
         return Object.keys(entries).map(function (k) { return { presence: entries[k].p, isMe: k === 'hub', updatedAt: entries[k].u, id: k }; });
       },
       presence: function (patch) { entries.hub = { p: patch, u: Date.now() }; dirty.hub = 1; schedulePeers(); return Promise.resolve(); },
+      // 参加者ごとの通信の様子(ホストだけ)。id は peers() の id と同じ
+      stats: function () { var o = {}; Object.keys(pst).forEach(function (k) { var c = st.conns[k]; o[k] = pst[k]; o[k].buf = c && c.dataChannel ? c.dataChannel.bufferedAmount : 0; }); return { hub: true, peers: o }; },
       onPeers: function (fn) { listeners.push(fn); }
     };
     var db = {
@@ -3817,6 +3838,37 @@ var NET = (function () {
     function notify() { if (notifyT) return; notifyT = setTimeout(function () { notifyT = 0; listeners.forEach(function (f) { try { f(); } catch (e) {} }); }, 16); }
     function emitDoc(d) { lastDoc = d; var snap = { exists: !!d, data: function () { return d; } }; snapCbs.forEach(function (f) { try { f(snap); } catch (e) {} }); }
     function flushSend() { sendT = 0; if (pending && conn && conn.open) { lastSend = Date.now(); send(conn, { t: 'pr', p: pending }); pending = null; } }
+    // 往復時間(ping)・直通か中継か・ホストからの最後の返事までの時間を測る
+    var dead = false;
+    st.bye = function () { dead = true; send(conn, { t: 'bye' }); };
+    var ms = { rtt: 0, mx: 0, hist: [], lastPong: 0, sent: 0, got: 0, rel: '', lt: 0 };
+    function relCheck() {
+      var pc = conn && conn.peerConnection; if (!pc || !pc.getStats) return;
+      pc.getStats().then(function (rep) {
+        var sel = null, cands = {};
+        rep.forEach(function (r) { if (r.type === 'local-candidate' || r.type === 'remote-candidate') cands[r.id] = r; });
+        rep.forEach(function (r) { if (r.type === 'candidate-pair' && (r.selected || (r.nominated && r.state === 'succeeded'))) sel = r; });
+        if (!sel) return;
+        var l = cands[sel.localCandidateId], rm = cands[sel.remoteCandidateId];
+        ms.rel = (l && l.candidateType === 'relay') || (rm && rm.candidateType === 'relay') ? 'relay' : 'direct';
+      }).catch(function () {});
+    }
+    var pingN = 0;
+    var pingT = setInterval(function () {
+      if (st.closed || dead) { if (dead) clearInterval(pingT); return; }
+      if (!conn || !conn.open) return;
+      if (++pingN % 5 === 1) relCheck();
+      var fps = (typeof S !== 'undefined' && S.fps) || 0;
+      ms.sent++;
+      send(conn, { t: 'ping', s: Date.now(), rt: Math.round(ms.rtt), mx: Math.round(ms.mx), f: fps, rel: ms.rel, lt: ms.sent - ms.got });
+    }, 2000);
+    function onPong(m) {
+      var r = Date.now() - (+m.s || 0); if (!(r >= 0 && r < 60000)) return;
+      ms.got = ms.sent; ms.lastPong = Date.now();
+      ms.rtt = ms.rtt ? ms.rtt * 0.6 + r * 0.4 : r;
+      ms.hist.push(r); if (ms.hist.length > 8) ms.hist.shift();
+      ms.mx = Math.max.apply(null, ms.hist);
+    }
     function attach(c) {
       conn = c;
       c.on('open', function () { st.tries = 0; reconnecting = false; if (my) { pending = my; flushSend(); } });
@@ -3828,12 +3880,13 @@ var NET = (function () {
           (m.rm || []).forEach(function (r) { delete entries[r]; });
           notify();
         } else if (m.t === 'doc') emitDoc(m.d || null);
+        else if (m.t === 'pong') onPong(m);
       });
-      var lost = function () { if (conn !== c || st.closed) return; retry(); };
+      var lost = function () { if (conn !== c || st.closed || dead) return; retry(); };
       c.on('close', lost); c.on('error', lost);
     }
     function retry() {
-      if (reconnecting || st.closed) return;
+      if (reconnecting || st.closed || dead) return;
       reconnecting = true;
       var go = function () {
         if (st.closed) return;
@@ -3860,13 +3913,24 @@ var NET = (function () {
         if (!sendT) sendT = setTimeout(flushSend, Math.max(0, 66 - (Date.now() - lastSend)));
         return Promise.resolve();
       },
-      onPeers: function (fn) { listeners.push(fn); }
+      onPeers: function (fn) { listeners.push(fn); },
+      stats: function () { return { hub: false, rtt: ms.rtt, mx: ms.mx, rel: ms.rel, silent: ms.lastPong ? Date.now() - ms.lastPong : (ms.sent ? ms.sent * 2000 : 0), lost: ms.sent - ms.got }; }
     };
     var db = { doc: function () { return { set: function () { return Promise.reject({ code: 'invalid_argument' }); }, onSnapshot: function (cb) { snapCbs.push(cb); if (lastDoc !== undefined) cb({ exists: !!lastDoc, data: function () { return lastDoc; } }); } }; } };
     return { room: room, db: db, first: first };
   }
 
+  // 自分から退室するとき: 先に「抜けます」を伝え、届く時間を少し待ってから切る(すぐ切ると、ホストの画面にキャラが残る)
+  function leaveSoft() {
+    var bye = st.bye, peer = st.peer, conns = st.conns;
+    if (!bye || !peer) { destroy(); return; }
+    st.bye = null;
+    try { bye(); } catch (e) {}
+    st.closed = true; st.peer = null; st.conns = {}; st.code = '';
+    setTimeout(function () { try { peer.destroy(); } catch (e) {} }, 400);
+  }
   function destroy() {
+    st.bye = null;
     st.closed = true;
     try { Object.keys(st.conns).forEach(function (k) { try { st.conns[k].close(); } catch (e) {} }); } catch (e) {}
     try { if (st.peer) st.peer.destroy(); } catch (e) {}
@@ -3913,7 +3977,7 @@ var NET = (function () {
     },
     turnState: function () { return ICE.state; },
     turnNote: function () { return ICE.note; },
-    leave: destroy
+    leave: leaveSoft
   };
 })();
 
@@ -5551,6 +5615,43 @@ function vcRender() {
     b.disabled = VC.busy;
     b.classList.toggle('off', !VC.on || VC.muted || VC.noMic || !!VC.bm);
   });
+}
+
+/* ---------- 通信の表示(遅れの見える化) ---------- */
+S.netHud = store('uso.net') === '1' || (typeof location !== 'undefined' && /[?&]net=1\b/.test(location.search || ''));
+function netRender() { var b = $('btn-net'); if (b) { b.textContent = '通信の表示: ' + (S.netHud ? 'ON' : 'OFF'); b.setAttribute('aria-pressed', S.netHud ? 'true' : 'false'); b.classList.toggle('off', !S.netHud); } }
+function netSet(on) { S.netHud = !!on; store('uso.net', on ? '1' : '0'); netRender(); netHudRender(); }
+function netEsc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
+function netCls(ms) { return ms < 90 ? 'g' : ms < 220 ? 'y' : 'r'; }
+function netFpsCls(f) { return !f ? 'm' : f >= 40 ? 'g' : f >= 24 ? 'y' : 'r'; }
+function netHudRender() {
+  var el = $('net-hud'); if (!el) return;
+  if (!S.netHud || S.mode !== 'online' || !S.room || !S.room.stats) { el.hidden = true; return; }
+  var s; try { s = S.room.stats(); } catch (e) { s = null; }
+  if (!s) { el.hidden = true; return; }
+  var rows = [], fps = S.fps || 0;
+  function relTx(r) { return r === 'relay' ? '中継' : r === 'direct' ? '直通' : '-'; }
+  function span(c, t) { return '<span class="' + c + '">' + t + '</span>'; }
+  if (!s.hub) {
+    var silent = s.silent > 6000;
+    var rtt = Math.round(s.rtt || 0), mx = Math.round(s.mx || 0);
+    rows.push('<div class="nh-row">' + (silent ? span('r', 'ホストから返事がありません(' + Math.round(s.silent / 1000) + '秒)') : span(netCls(rtt), 'ping ' + (rtt || '…') + 'ms') + span('m', '最大' + mx)) + span(netFpsCls(fps), fps + 'fps') + span(s.rel === 'relay' ? 'y' : 'g', relTx(s.rel)) + '</div>');
+  } else {
+    rows.push('<div class="nh-row">' + span('m', 'ホスト') + span(netFpsCls(fps), fps + 'fps') + '</div>');
+    var names = {}, list = [];
+    try { S.room.peers().forEach(function (p) { names[p.id] = p.presence && p.presence.n; }); } catch (e) {}
+    Object.keys(s.peers).forEach(function (id) {
+      var q = s.peers[id], age = Date.now() - q.at;
+      list.push({ n: names[id] || '?', rtt: q.rtt, mx: q.mx, f: q.f, rel: q.rel, buf: q.buf, silent: age > 7000, age: age, lt: q.lt });
+    });
+    list.sort(function (a, b) { return (b.silent ? 1e9 : b.rtt) - (a.silent ? 1e9 : a.rtt); });
+    list.slice(0, 8).forEach(function (q) {
+      var late = q.buf > 64000;
+      rows.push('<div class="nh-row"><span class="nh-n">' + netEsc(q.n) + '</span>' + (q.silent ? span('r', '応答なし ' + Math.round(q.age / 1000) + '秒') : span(netCls(q.rtt), (Math.round(q.rtt) || '…') + 'ms') + span('m', '最大' + Math.round(q.mx)) + span(netFpsCls(q.f), (q.f || '-') + 'fps') + span(q.rel === 'relay' ? 'y' : 'g', relTx(q.rel)) + (late ? span('r', '送信待ち') : '')) + '</div>');
+    });
+    if (!list.length) rows.push('<div class="nh-row">' + span('m', '参加者の計測を待っています…') + '</div>');
+  }
+  el.innerHTML = rows.join(''); el.hidden = false;
 }
 
 /* ---------- タスクのミニゲーム(11種) ----------
@@ -9809,6 +9910,7 @@ function frame(ts) {
   try { sndSync(); } catch (e) {}
   var dt = Math.min(0.06, (ts - (S.lastFrame || ts)) / 1000);
   S.lastFrame = ts;
+  S.fpsN = (S.fpsN || 0) + 1; if (!S.fpsT) S.fpsT = ts; if (ts - S.fpsT >= 1000) { S.fps = Math.round(S.fpsN * 1000 / (ts - S.fpsT)); S.fpsN = 0; S.fpsT = ts; }
   var st = S.state, me = myPlayer();
   if (st && S.mode) syncMap(st);
   var rev = st ? st.rev : -2;
@@ -9850,6 +9952,7 @@ function slowTick() {
   if (S.overlay === 'role' && Date.now() - (S.roleAt || 0) > 15000) S.overlay = null;
   if (S.mode) applyOverlays();
   if (S.mode === 'online' && !S.isHost) refreshPeers();
+  netHudRender();
 }
 function hostLoop() {
   var now = Date.now(), dt = Math.min(0.5, (now - (S.lastHostTick || now)) / 1000);
@@ -9922,6 +10025,9 @@ function bindUi() {
   volLoad();
   // ボイスチャットは部屋に入ると自動参加。自動で始められなかったとき・音が止められているときは、画面を触った時に、つなぎ直す
   document.addEventListener('pointerdown', function () { if (S.mode !== 'online') return; if (VC.ctx && VC.ctx.state !== 'running') { try { var rp = VC.ctx.resume(); if (rp && rp.catch) rp.catch(function () {}); } catch (e) {} } if (!VC.on) vcAuto(); }, true);
+  // タブを閉じる・ページを離れるときも、先に「抜けます」を伝える(別アプリへの切り替えでは働かない)
+  window.addEventListener('pagehide', function (e) { if (e && e.persisted) return; if (S.mode === 'online' && S.standalone && !S.isHost) { try { NET.leave(); } catch (x) {} } });
+  netRender(); $('btn-net').addEventListener('click', function () { netSet(!S.netHud); });
   spkRender(); $('btn-spk').addEventListener('click', function () { spkSet(!S.spkShow); });
   ['btn-gear-e', 'btn-gear-l', 'btn-gear-g', 'btn-gear-m'].forEach(function (id) { $(id).addEventListener('click', openSettings); });
   ['btn-fs-e', 'btn-fs-g'].forEach(function (id) { var b = $(id); if (b) b.addEventListener('click', function () { setFs(!fsOn()); }); });
